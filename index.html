@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>缠论多级别中枢分析 - 通用版</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #0d1117; color: #e6edf3; font-family: 'Microsoft YaHei', sans-serif; }
+.container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+
+/* 输入区域 */
+.input-section { text-align: center; margin-bottom: 24px; padding: 20px; background: #161b22; border: 1px solid #30363d; border-radius: 8px; }
+.input-section h1 { font-size: 22px; margin-bottom: 16px; }
+.input-box { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
+.input-box input { padding: 10px 16px; font-size: 16px; border: 1px solid #30363d; border-radius: 6px; background: #0d1117; color: #e6edf3; width: 160px; text-align: center; }
+.input-box input:focus { outline: none; border-color: #58a6ff; }
+.input-box button { padding: 10px 24px; font-size: 16px; border: none; border-radius: 6px; background: #238636; color: white; cursor: pointer; transition: background 0.2s; }
+.input-box button:hover { background: #2ea043; }
+.input-box button:disabled { background: #30363d; cursor: not-allowed; }
+.quick-links { margin-top: 16px; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+.quick-links span { color: #8b949e; font-size: 13px; }
+.quick-links a { color: #58a6ff; text-decoration: none; font-size: 13px; padding: 4px 10px; border: 1px solid #30363d; border-radius: 4px; transition: all 0.2s; }
+.quick-links a:hover { background: #58a6ff; color: #0d1117; }
+
+/* 图表区域 */
+.chart-box { background: #161b22; border: 1px solid #30363d; border-radius: 8px; position: relative; margin-bottom: 4px; }
+.kline-wrap { position: relative; height: 520px; padding: 10px; }
+.macd-wrap { position: relative; height: 160px; padding: 10px; }
+canvas { width: 100%; height: 100%; }
+.sidebar { position: absolute; top: 14px; left: 84px; z-index: 10; max-width: 290px; }
+.guide { background: rgba(13,17,23,0.95); border: 1.5px solid; border-radius: 10px; padding: 14px 16px; font-size: 12px; line-height: 1.9; }
+.guide.above { border-color: #ef5350; background: rgba(31,16,16,0.95); }
+.guide.below { border-color: #26a69a; background: rgba(15,31,24,0.95); }
+.guide.inside { border-color: #f39c12; background: rgba(31,26,10,0.95); }
+.guide h3 { font-size: 13px; margin-bottom: 6px; }
+.guide ul { padding-left: 16px; }
+.guide .warn { color: #f39c12; margin-top: 8px; font-weight: bold; }
+.legend { position: absolute; bottom: 10px; right: 14px; z-index: 10; display: flex; gap: 16px; font-size: 11px; color: #8b949e; }
+.legend span::before { content: ''; display: inline-block; width: 12px; height: 12px; border-radius: 2px; margin-right: 5px; vertical-align: middle; }
+.legend .zs::before { background: rgba(243,156,18,0.4); border: 1px solid #f39c12; }
+.legend .top::before { background: #ef5350; }
+.legend .bot::before { background: #26a69a; }
+.draggable { cursor: move; user-select: none; }
+.drag-handle { position: absolute; top: 2px; right: 4px; font-size: 16px; color: #58a6ff; cursor: grab; line-height: 1; opacity: 0.6; transition: opacity 0.2s; }
+.drag-handle:hover { opacity: 1; }
+.drag-handle:active { cursor: grabbing; }
+.sidebar.draggable .drag-handle { top: 4px; right: 6px; font-size: 20px; }
+.macd-legend.draggable .drag-handle { top: 4px; right: 6px; font-size: 18px; }
+.legend.draggable .drag-handle { top: 4px; right: 6px; font-size: 18px; }
+.macd-legend { position: absolute; top: 14px; left: 84px; z-index: 10; background: rgba(13,17,23,0.95); border: 1px solid #30363d; border-radius: 8px; padding: 10px 14px; font-size: 11px; color: #8b949e; line-height: 1.8; }
+.macd-legend .dif { color: #58a6ff; font-weight: bold; }
+.macd-legend .dea { color: #f78166; font-weight: bold; }
+.macd-legend .note { margin-top: 4px; color: #f39c12; }
+.chart-header { padding: 12px 16px; border-bottom: 1px solid #21262d; display: flex; justify-content: space-between; align-items: center; }
+.chart-header h2 { font-size: 15px; color: #e6edf3; }
+.chart-header .zs-info { font-size: 13px; color: #8b949e; }
+.chart-header .zs-info strong { color: #f39c12; }
+.chart-header .price-info { font-size: 16px; font-weight: bold; }
+.chart-header .price-info.up { color: #ef5350; }
+.chart-header .price-info.down { color: #26a69a; }
+.chart-header .price-info.mid { color: #f39c12; }
+.summary { margin-top: 20px; background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 20px; }
+.summary h2 { font-size: 16px; margin-bottom: 14px; }
+.summary table { width: 100%; border-collapse: collapse; }
+.summary th, .summary td { padding: 10px 14px; text-align: center; border-bottom: 1px solid #21262d; }
+.summary th { color: #8b949e; font-size: 12px; font-weight: normal; }
+.summary td { font-size: 14px; }
+.loading { text-align: center; padding: 80px; color: #8b949e; font-size: 16px; }
+.loading .spinner { display: inline-block; width: 30px; height: 30px; border: 3px solid #30363d; border-top-color: #58a6ff; border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 12px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.error { text-align: center; padding: 60px; color: #ef5350; font-size: 16px; }
+.hidden { display: none; }
+</style>
+</head>
+<body>
+<div class="container">
+  <!-- 输入区域 -->
+  <div class="input-section">
+    <h1>📊 缠论多级别中枢分析</h1>
+    <div class="input-box">
+      <input type="text" id="stockInput" placeholder="股票代码/名称，如：000001 或 腾讯" value="000001">
+      <button id="analyzeBtn" onclick="analyzeStock()">开始分析</button>
+    </div>
+    <div class="quick-links">
+      <span>快速选择：</span>
+      <a href="javascript:void(0)" onclick="setSymbol('000001')">上证指数</a>
+      <a href="javascript:void(0)" onclick="setSymbol('000938')">中材节能</a>
+      <a href="javascript:void(0)" onclick="setSymbol('600111')">北方稀土</a>
+      <a href="javascript:void(0)" onclick="setSymbol('688729')">屹通新材</a>
+      <a href="javascript:void(0)" onclick="setSymbol('600050')">中国联通</a>
+    </div>
+  </div>
+
+  <!-- 加载中 -->
+  <div id="loading" class="loading hidden">
+    <div class="spinner"></div>
+    <div>正在从东方财富获取数据并分析...</div>
+  </div>
+
+  <!-- 错误提示 -->
+  <div id="error" class="error hidden"></div>
+
+  <!-- 内容区域 -->
+  <div id="content" style="display:none">
+    <div class="section" id="sec-daily">
+      <div class="chart-header"><h2>📅 日线K线 · 缠论中枢</h2><div id="hdr-daily"></div></div>
+      <div class="chart-box">
+        <div class="kline-wrap"><canvas id="kline-daily"></canvas></div>
+      </div>
+      <div class="chart-box">
+        <div class="macd-wrap"><canvas id="macd-daily"></canvas></div>
+      </div>
+    </div>
+    <div class="section" id="sec-weekly">
+      <div class="chart-header"><h2>📅 周线K线 · 缠论中枢</h2><div id="hdr-weekly"></div></div>
+      <div class="chart-box">
+        <div class="kline-wrap"><canvas id="kline-weekly"></canvas></div>
+      </div>
+      <div class="chart-box">
+        <div class="macd-wrap"><canvas id="macd-weekly"></canvas></div>
+      </div>
+    </div>
+    <div class="section" id="sec-monthly">
+      <div class="chart-header"><h2>📅 月线K线 · 缠论中枢</h2><div id="hdr-monthly"></div></div>
+      <div class="chart-box">
+        <div class="kline-wrap"><canvas id="kline-monthly"></canvas></div>
+      </div>
+      <div class="chart-box">
+        <div class="macd-wrap"><canvas id="macd-monthly"></canvas></div>
+      </div>
+    </div>
+    <div class="summary" id="summary"></div>
+  </div>
+</div>
+
+<script>
+let currentSymbol = '';
+const KLT_MAP = { monthly: 103, weekly: 102, daily: 101 };
+const PERIOD_CN = { monthly: '月线', weekly: '周线', daily: '日线' };
+
+// 设置股票代码
+function setSymbol(symbol) {
+  document.getElementById('stockInput').value = symbol;
+  analyzeStock();
+}
+
+// 回车键触发分析
+document.getElementById('stockInput').addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') analyzeStock();
+});
+
+// 分析股票
+async function analyzeStock() {
+  const input = document.getElementById('stockInput').value.trim();
+  if (!input) {
+    alert('请输入股票代码或名称');
+    return;
+  }
+  
+  currentSymbol = input;
+  document.getElementById('loading').classList.remove('hidden');
+  document.getElementById('error').classList.add('hidden');
+  document.getElementById('content').style.display = 'none';
+  document.getElementById('analyzeBtn').disabled = true;
+  
+  try {
+    await init();
+  } catch(e) {
+    document.getElementById('loading').classList.add('hidden');
+    document.getElementById('error').classList.remove('hidden');
+    document.getElementById('error').innerHTML = `数据加载失败：${e.message}<br><br>请检查股票代码是否正确，或稍后重试`;
+  }
+  document.getElementById('analyzeBtn').disabled = false;
+}
+
+// ========= 数据获取 =========
+// 判断市场类型：6开头=上海主板(1.)，0/3开头=深圳(0.)，港股=港股通API
+function getSecid(symbol) {
+  // 港股代码（5位数字，如00700）
+  if (/^\d{5}$/.test(symbol)) return '116.' + symbol;  // 港股通
+  // 上海主板（6开头）
+  if (symbol.startsWith('6')) return '1.' + symbol;
+  // 科创板（688开头）
+  if (symbol.startsWith('688')) return '1.' + symbol;
+  // 北交所（8开头或43/83/87开头）
+  if (symbol.startsWith('8') || symbol.startsWith('43') || symbol.startsWith('83') || symbol.startsWith('87')) return '0.' + symbol;
+  // 默认深圳（0/3开头）
+  return '0.' + symbol;
+}
+
+function fetchKline(symbol, klt) {
+  return new Promise((resolve, reject) => {
+    const secid = getSecid(symbol);
+    const url = `https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=${secid}&fields1=f1,f2,f3,f4,f5,f6&fields2=f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61&klt=${klt}&fqt=1&end=20500101&lmt=300`;
+    fetch(url).then(r => r.json()).then(json => {
+      if (json.data && json.data.klines) {
+        resolve(json.data.klines.map(line => {
+          const p = line.split(',');
+          return { date: p[0], open: +p[1], close: +p[2], high: +p[3], low: +p[4], vol: +p[5] };
+        }));
+      } else reject('no data');
+    }).catch(reject);
+  });
+}
+
+// ========= 缠论核心 =========
+function processContain(data) {
+  const r = [data[0]];
+  for (let i = 1; i < data.length; i++) {
+    const c = data[i], p = r[r.length-1];
+    if ((c.high >= p.high && c.low <= p.low) || (c.high <= p.high && c.low >= p.low)) {
+      const up = r.length < 2 || p.high > r[r.length-2].high;
+      r[r.length-1] = { ...c, high: up ? Math.max(c.high, p.high) : Math.min(c.high, p.high), low: up ? Math.max(c.low, p.low) : Math.min(c.low, p.low) };
+    } else r.push(c);
+  }
+  return r;
+}
+
+function findFractals(data) {
+  const tops = [], bots = [];
+  for (let i = 2; i < data.length - 2; i++) {
+    const P2 = data[i-2], P1 = data[i-1], C = data[i], N1 = data[i+1], N2 = data[i+2];
+    if (C.high > P1.high && C.high > N1.high && C.high >= P2.high && C.high >= N2.high &&
+        C.low > P1.low && C.low > N1.low) {
+      tops.push({date:C.date, price:C.high, idx:i});
+    }
+    if (C.low < P1.low && C.low < N1.low && C.low <= P2.low && C.low <= N2.low &&
+        C.high < P1.high && C.high < N1.high) {
+      bots.push({date:C.date, price:C.low, idx:i});
+    }
+  }
+  return { tops, bots };
+}
+
+function buildPens(tops, bots, data) {
+  const pens = [];
+  let lastType = null, lastIdx = -1, lastPrice = 0;
+  const allF = [...tops.map(t=>({...t,type:'t',isUp:false})), ...bots.map(b=>({...b,type:'b',isUp:true}))].sort((a,b)=>a.idx-b.idx);
+  
+  for (const f of allF) {
+    if (lastType === null) {
+      lastType = f.type;
+      lastIdx = f.idx;
+      lastPrice = f.price;
+    } else if (lastType !== f.type && f.idx - lastIdx >= 2) {
+      const isUp = f.type === 't';
+      pens.push({
+        startIdx: lastIdx, endIdx: f.idx,
+        startDate: data[lastIdx].date, endDate: f.date,
+        isUp: isUp, startPrice: lastPrice, endPrice: f.price,
+        high: Math.max(lastPrice, f.price), low: Math.min(lastPrice, f.price)
+      });
+      lastType = f.type; lastIdx = f.idx; lastPrice = f.price;
+    } else if (lastType === f.type) {
+      const shouldReplace = f.type === 't' ? f.price > lastPrice : f.price < lastPrice;
+      if (shouldReplace) {
+        if (pens.length > 0) {
+          const lastPen = pens[pens.length - 1];
+          if (lastPen.endIdx === lastIdx) {
+            lastPen.endIdx = f.idx; lastPen.endDate = f.date;
+            lastPen.endPrice = f.price;
+            lastPen.high = Math.max(lastPen.startPrice, f.price);
+            lastPen.low = Math.min(lastPen.startPrice, f.price);
+          }
+        }
+        lastIdx = f.idx; lastPrice = f.price;
+      }
+    }
+  }
+  return pens;
+}
+
+function findZhongshu(data, tops, bots) {
+  const pens = buildPens(tops, bots, data);
+  if (pens.length < 3) {
+    const r = data.slice(Math.floor(data.length * 0.4));
+    const hs = r.map(d=>d.high).sort((a,b)=>a-b), ls = r.map(d=>d.low).sort((a,b)=>a-b);
+    return { top: hs[Math.floor(hs.length*0.75)], bot: ls[Math.floor(ls.length*0.25)], mid: r[Math.floor(r.length/2)].close, pens: [] };
+  }
+
+  const lastPrice = data[data.length - 1].close;
+  const prevPrice = data[Math.max(0, data.length - 20)].close;
+  const isUpTrend = lastPrice > prevPrice;
+
+  let best = null;
+  for (let i = pens.length - 3; i >= 0; i--) {
+    const windowPens = pens.slice(i, i + 3);
+    let isValid = false;
+    if (isUpTrend) isValid = windowPens[0].isUp && !windowPens[1].isUp && windowPens[2].isUp;
+    else isValid = !windowPens[0].isUp && windowPens[1].isUp && !windowPens[2].isUp;
+
+    if (!isValid) continue;
+    const zg = Math.min(windowPens[0].high, windowPens[1].high, windowPens[2].high);
+    const zd = Math.max(windowPens[0].low, windowPens[1].low, windowPens[2].low);
+
+    if (zg > zd) {
+      best = { top: zg, bot: zd, mid: (zg + zd) / 2, pens: windowPens, penStartIdx: windowPens[0].startIdx, penEndIdx: windowPens[2].endIdx, structure: isUpTrend ? '上下上' : '下上下' };
+      break;
+    }
+  }
+
+  if (!best) {
+    const r = data.slice(Math.floor(data.length * 0.4));
+    const hs = r.map(d=>d.high).sort((a,b)=>a-b), ls = r.map(d=>d.low).sort((a,b)=>a-b);
+    best = { top: hs[Math.floor(hs.length*0.75)], bot: ls[Math.floor(ls.length*0.25)], mid: r[Math.floor(r.length/2)].close, pens: [] };
+  }
+  return best;
+}
+
+function calcMACD(closes) {
+  const ema = (arr, sp) => { 
+    const k=2/(sp+1); 
+    const result = [arr[0]];
+    for (let i = 1; i < arr.length; i++) result.push(arr[i]*k + result[i-1]*(1-k));
+    return result;
+  };
+  const e12 = ema(closes, 12), e26 = ema(closes, 26);
+  const dif = e12.map((v,i) => v - e26[i]);
+  const dea = ema(dif, 9);
+  const macd = dif.map((v,i) => (v - dea[i]) * 2);
+  return { dif, dea, macd };
+}
+
+function analyze(data, zs) {
+  const cp = data[data.length-1].close;
+  let pos = cp > zs.top ? 'above' : cp < zs.bot ? 'below' : 'inside';
+  const posCN = pos === 'above' ? '中枢上方（上涨趋势区）' : pos === 'below' ? '中枢下方（下跌趋势区）' : '中枢内部（震荡盘整区）';
+  const { dif, dea, macd } = calcMACD(data.map(d => d.close));
+  const m = macd.slice(-50);
+  let div = false, divT = '';
+  if (m.length > 10) {
+    const h = Math.floor(m.length/2);
+    if (Math.abs(m.slice(h).reduce((a,b)=>a+b,0)) < Math.abs(m.slice(0,h).reduce((a,b)=>a+b,0)) * 0.75) {
+      div = true; divT = cp < zs.mid ? '底背驰' : '顶背驰';
+    }
+  }
+  return { pos, posCN, cp, dif, dea, macd, div, divT };
+}
+
+// ========= 绘图 =========
+function drawKline(canvasId, data, zs, fractals, analysis) {
+  const canvas = document.getElementById(canvasId);
+  const rect = canvas.parentElement.getBoundingClientRect();
+  const w = rect.width, h = rect.height;
+  canvas.width = w * 2; canvas.height = h * 2;
+  canvas.style.width = w+'px'; canvas.style.height = h+'px';
+  const ctx = canvas.getContext('2d'); ctx.scale(2,2);
+
+  const pL=60, pR=70, pT=30, pB=40;
+  const cw = w-pL-pR, ch = h-pT-pB;
+  const N = data.length, bw = cw/N;
+  const highs = data.map(d=>d.high), lows = data.map(d=>d.low);
+  const pMin = Math.min(...lows)*0.995, pMax = Math.max(...highs)*1.005;
+  const toX = i => pL + i*bw + bw/2;
+  const toY = p => pT + (1-(p-pMin)/(pMax-pMin))*ch;
+
+  ctx.strokeStyle='#21262d'; ctx.lineWidth=0.5;
+  for (let i=0;i<=6;i++) {
+    const y=pT+(ch/6)*i;
+    ctx.beginPath(); ctx.moveTo(pL,y); ctx.lineTo(w-pR,y); ctx.stroke();
+    ctx.fillStyle='#8b949e'; ctx.font='10px Microsoft YaHei'; ctx.textAlign='right';
+    ctx.fillText((pMax-(pMax-pMin)*(i/6)).toFixed(2), pL-8, y+3);
+  }
+
+  ctx.fillStyle='#8b949e'; ctx.font='9px Microsoft YaHei'; ctx.textAlign='center';
+  const step = Math.max(1,Math.floor(N/6));
+  for (let i=0;i<N;i+=step) {
+    const dateStr = data[i].date.substring(2);
+    ctx.fillText(dateStr, toX(i), h-10);
+  }
+
+  if (zs.pens && zs.pens.length === 3) {
+    const y1=toY(zs.top), y2=toY(zs.bot);
+    ctx.fillStyle='rgba(243,156,18,0.15)'; ctx.fillRect(pL, y1, cw, y2-y1);
+    ctx.setLineDash([8,4]); ctx.strokeStyle='#f39c12'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(pL,y1); ctx.lineTo(w-pR,y1); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(pL,y2); ctx.lineTo(w-pR,y2); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.font='bold 11px Microsoft YaHei'; ctx.fillStyle='#f39c12'; ctx.textAlign='left';
+    ctx.fillText('ZG ' + zs.top.toFixed(2), w-pR+5, y1+4);
+    ctx.fillText('ZD ' + zs.bot.toFixed(2), w-pR+5, y2+4);
+  }
+
+  if (zs.pens && zs.pens.length === 3) {
+    const penColors = ['rgba(255,107,107,0.4)', 'rgba(78,205,196,0.4)', 'rgba(255,230,109,0.4)'];
+    zs.pens.forEach((pen, idx) => {
+      ctx.strokeStyle=penColors[idx]; ctx.lineWidth=4;
+      const x1 = toX(pen.startIdx), y1 = toY(pen.startPrice);
+      const x2 = toX(pen.endIdx), y2 = toY(pen.endPrice);
+      ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+    });
+  }
+
+  data.forEach((d,i) => {
+    const x=toX(i), up=d.close>=d.open, col=up?'#ff6b6b':'#4ecdc4';
+    ctx.strokeStyle=col; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(x,toY(d.high)); ctx.lineTo(x,toY(d.low)); ctx.stroke();
+    const bt=toY(Math.max(d.open,d.close)), bb=toY(Math.min(d.open,d.close));
+    ctx.fillStyle=col; ctx.fillRect(x-bw*0.4, bt, bw*0.8, Math.max(bb-bt,1));
+  });
+
+  const curY=toY(analysis.cp);
+  const cc=analysis.pos==='above'?'#ff6b6b':analysis.pos==='below'?'#4ecdc4':'#f39c12';
+  ctx.strokeStyle=cc; ctx.lineWidth=1.5; ctx.setLineDash([5,3]);
+  ctx.beginPath(); ctx.moveTo(pL,curY); ctx.lineTo(w-pR,curY); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.font='bold 12px Microsoft YaHei'; ctx.fillStyle=cc; ctx.textAlign='right';
+  ctx.fillText(analysis.cp.toFixed(2), pL-8, curY+4);
+}
+
+function drawMACD(canvasId, data, analysis) {
+  const canvas = document.getElementById(canvasId);
+  const rect = canvas.parentElement.getBoundingClientRect();
+  const w = rect.width, h = rect.height;
+  canvas.width = w*2; canvas.height = h*2;
+  canvas.style.width = w+'px'; canvas.style.height = h+'px';
+  const ctx = canvas.getContext('2d'); ctx.scale(2,2);
+
+  const pL=60, pR=70, pT=20, pB=25;
+  const cw = w-pL-pR, ch = h-pT-pB;
+  const N = data.length, bw = cw/N;
+  const {dif,dea,macd} = analysis;
+  const allV=[...macd,...dif,...dea];
+  const mx=Math.max(...allV)*1.1, mn=Math.min(...allV)*1.1, vr=mx-mn||1;
+  const toX=i=>pL+i*bw+bw/2, toY=v=>pT+(1-(v-mn)/vr)*ch;
+
+  ctx.strokeStyle='#30363d'; ctx.lineWidth=0.8;
+  const zy=toY(0);
+  ctx.beginPath(); ctx.moveTo(pL,zy); ctx.lineTo(w-pR,zy); ctx.stroke();
+
+  macd.forEach((v,i) => {
+    ctx.fillStyle=v>=0?'rgba(255,107,107,0.8)':'rgba(78,205,196,0.8)';
+    const x=toX(i), barWidth = bw*0.7;
+    if (v >= 0) ctx.fillRect(x - barWidth/2, toY(v), barWidth, toY(0) - toY(v));
+    else ctx.fillRect(x - barWidth/2, toY(0), barWidth, toY(v) - toY(0));
+  });
+
+  [['#58a6ff',dif],['#f78166',dea]].forEach(([col,arr]) => {
+    ctx.strokeStyle=col; ctx.lineWidth=1.5; ctx.beginPath();
+    arr.forEach((v,i)=>i===0?ctx.moveTo(toX(i),toY(v)):ctx.lineTo(toX(i),toY(v)));
+    ctx.stroke();
+  });
+}
+
+function getGuideHTML(analysis) {
+  const g = analysis;
+  const dragHandle = `<div class="drag-handle" style="position:absolute;top:4px;right:6px;font-size:18px;color:#58a6ff;cursor:grab;line-height:1;opacity:0.6;">≡</div>`;
+  if (g.pos==='above') return `<div class="guide above draggable" style="position:relative;cursor:move;">${dragHandle}<h3>📍 中枢上方 → 上涨趋势</h3><ul><li>持仓者：继续持有，跟趋势走</li><li>等待回踩中枢上轨（ZG）</li><li>回踩守住 → 第三类买点 → 加仓</li><li>回踩跌破 → 减仓观望</li></ul><p class="warn">止损：跌破ZG减仓，跌入中枢清仓</p></div>`;
+  if (g.pos==='below') return `<div class="guide below draggable" style="position:relative;cursor:move;">${dragHandle}<h3>📍 中枢下方 → 下跌趋势</h3><ul><li>空仓者：不要抄底，等信号</li><li>观察MACD绿柱是否萎缩</li><li>绿柱萎缩+底分型 → 第一类买点</li><li>回调不破前低 → 第二类买点</li></ul><p class="warn">止损：买入后跌破前低立刻止损</p></div>`;
+  return `<div class="guide inside draggable" style="position:relative;cursor:move;">${dragHandle}<h3>📍 中枢内部 → 震荡盘整</h3><ul><li>中枢内不轻易操作</li><li>突破ZG+回踩不破 → 第三类买点</li><li>跌破ZD+反弹不过 → 第三类卖点</li></ul><p class="warn">假突破多，确认后再动，仓位宜轻</p></div>`;
+}
+
+function initDraggable() {
+  document.querySelectorAll('.draggable').forEach(el => {
+    const handle = el.querySelector('.drag-handle');
+    if (!handle) return;
+    let isDragging = false, startX, startY, initialLeft, initialTop;
+    
+    handle.addEventListener('mousedown', (e) => {
+      isDragging = true; startX = e.clientX; startY = e.clientY;
+      initialLeft = el.offsetLeft; initialTop = el.offsetTop;
+      handle.style.cursor = 'grabbing';
+      e.preventDefault(); e.stopPropagation();
+    });
+    
+    document.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      el.style.left = `${initialLeft + e.clientX - startX}px`;
+      el.style.top = `${initialTop + e.clientY - startY}px`;
+    });
+    
+    document.addEventListener('mouseup', () => {
+      if (isDragging) { isDragging = false; handle.style.cursor = 'grab'; }
+    });
+  });
+}
+
+async function init() {
+  const [monthly, weekly, daily] = await Promise.all([
+    fetchKline(currentSymbol, 103),
+    fetchKline(currentSymbol, 102),
+    fetchKline(currentSymbol, 101)
+  ]);
+
+  const allResults = {};
+  ['monthly','weekly','daily'].forEach((period, idx) => {
+    const raw = [monthly, weekly, daily][idx];
+    const processed = processContain(raw);
+    const fractals = findFractals(processed);
+    const zs = findZhongshu(raw, fractals.tops, fractals.bots);
+    const a = analyze(raw, zs);
+    allResults[period] = { raw, processed, fractals, zs, analysis: a };
+  });
+
+  document.getElementById('loading').classList.add('hidden');
+  document.getElementById('content').style.display = 'block';
+
+  ['daily','weekly','monthly'].forEach(period => {
+    const r = allResults[period];
+    const sec = document.getElementById('sec-'+period);
+
+    const klineWrap = sec.querySelector('.kline-wrap');
+    klineWrap.innerHTML = `<div class="sidebar">${getGuideHTML(r.analysis)}</div><canvas id="kline-${period}"></canvas>`;
+
+    const hdr = document.getElementById('hdr-'+period);
+    const posCls = r.analysis.pos==='above'?'up':r.analysis.pos==='below'?'down':'mid';
+    hdr.innerHTML = `<span class="zs-info">中枢：<strong>${r.zs.bot.toFixed(2)}</strong> ~ <strong>${r.zs.top.toFixed(2)}</strong></span><span class="price-info ${posCls}">${r.analysis.cp.toFixed(2)}</span>`;
+
+    const macdWrap = sec.querySelector('.macd-wrap');
+    macdWrap.innerHTML = `<canvas id="macd-${period}"></canvas>`;
+
+    drawKline('kline-'+period, r.raw, r.zs, r.fractals, r.analysis);
+    drawMACD('macd-'+period, r.raw, r.analysis);
+  });
+  
+  initDraggable();
+
+  const posDesc = p => p==='above'?'上涨趋势区':p==='below'?'下跌趋势区':'震荡盘整区';
+  const posCls = p => p==='above'?'up':p==='below'?'down':'mid';
+  let rows = '';
+  ['daily','weekly','monthly'].forEach(period => {
+    const r = allResults[period];
+    const div = r.analysis.div ? ` ⚠${r.analysis.divT}` : '';
+    rows += `<tr><td>${PERIOD_CN[period]}</td><td>${r.zs.bot.toFixed(2)} ~ ${r.zs.top.toFixed(2)}</td><td class="${posCls(r.analysis.pos)}">${posDesc(r.analysis.pos)}${div}</td><td class="${posCls(r.analysis.pos)}">${r.analysis.cp.toFixed(2)}</td></tr>`;
+  });
+  document.getElementById('summary').innerHTML = `
+    <h2>📋 ${currentSymbol} 缠论多级别中枢汇总</h2>
+    <table><tr><th>级别</th><th>中枢区间 (ZD ~ ZG)</th><th>当前位置</th><th>当前价</th></tr>${rows}</table>
+    <p style="margin-top:14px;color:#8b949e;font-size:12px">
+      💡 图例说明：<span style="color:#ff6b6b">红线=第1笔</span> | <span style="color:#4ecdc4">青线=第2笔</span> | <span style="color:#ffe66d">黄线=第3笔</span> | <span style="color:#f39c12">黄虚线=中枢区间</span>
+    </p>`;
+
+  window.addEventListener('resize', () => {
+    ['daily','weekly','monthly'].forEach(period => {
+      const r = allResults[period];
+      drawKline('kline-'+period, r.raw, r.zs, r.fractals, r.analysis);
+      drawMACD('macd-'+period, r.raw, r.analysis);
+    });
+  });
+}
+
+// 页面加载时自动分析默认股票
+window.onload = () => {
+  analyzeStock();
+};
+</script>
+</body>
+</html>

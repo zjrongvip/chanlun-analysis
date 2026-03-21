@@ -12,16 +12,13 @@ body { background: #0d1117; color: #e6edf3; font-family: 'Microsoft YaHei', sans
 /* 输入区域 */
 .input-section { text-align: center; margin-bottom: 24px; padding: 20px; background: #161b22; border: 1px solid #30363d; border-radius: 8px; }
 .input-section h1 { font-size: 22px; margin-bottom: 16px; }
-.input-box { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
+.input-box { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; align-items: center; }
 .input-box input { padding: 10px 16px; font-size: 16px; border: 1px solid #30363d; border-radius: 6px; background: #0d1117; color: #e6edf3; width: 160px; text-align: center; }
 .input-box input:focus { outline: none; border-color: #58a6ff; }
 .input-box button { padding: 10px 24px; font-size: 16px; border: none; border-radius: 6px; background: #238636; color: white; cursor: pointer; transition: background 0.2s; }
 .input-box button:hover { background: #2ea043; }
 .input-box button:disabled { background: #30363d; cursor: not-allowed; }
-.quick-links { margin-top: 16px; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
-.quick-links span { color: #8b949e; font-size: 13px; }
-.quick-links a { color: #58a6ff; text-decoration: none; font-size: 13px; padding: 4px 10px; border: 1px solid #30363d; border-radius: 4px; transition: all 0.2s; }
-.quick-links a:hover { background: #58a6ff; color: #0d1117; }
+.stock-name { color: #f39c12; font-size: 16px; font-weight: bold; }
 
 /* 图表区域 */
 .chart-box { background: #161b22; border: 1px solid #30363d; border-radius: 8px; position: relative; margin-bottom: 4px; }
@@ -87,14 +84,7 @@ canvas { width: 100%; height: 100%; }
     <div class="input-box">
       <input type="text" id="stockInput" placeholder="股票代码/名称，如：000001 或 腾讯" value="000001">
       <button id="analyzeBtn" onclick="analyzeStock()">开始分析</button>
-    </div>
-    <div class="quick-links">
-      <span>快速选择：</span>
-      <a href="javascript:void(0)" onclick="setSymbol('000001')">上证指数</a>
-      <a href="javascript:void(0)" onclick="setSymbol('000938')">中材节能</a>
-      <a href="javascript:void(0)" onclick="setSymbol('600111')">北方稀土</a>
-      <a href="javascript:void(0)" onclick="setSymbol('688729')">屹通新材</a>
-      <a href="javascript:void(0)" onclick="setSymbol('600050')">中国联通</a>
+      <span id="stockName" class="stock-name"></span>
     </div>
   </div>
 
@@ -198,12 +188,13 @@ function getSecid(symbol) {
 function fetchKline(symbol, klt) {
   return new Promise((resolve, reject) => {
     const secid = getSecid(symbol);
-    const url = `https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=${secid}&fields1=f1,f2,f3,f4,f5,f6&fields2=f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61&klt=${klt}&fqt=1&end=20500101&lmt=300`;
+    const url = `https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=${secid}&fields1=f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12,f13,f14,f15,f16,f17,f18,f19,f20,f21,f22,f23,f24,f25,f26,f27,f28,f29,f30,f31,f32,f33,f34,f35,f36,f37,f38,f39,f40,f41,f42,f43,f44,f45,f46,f47,f48,f49,f50,f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61,f62,f63,f64,f65,f66,f67,f68,f69,f70,f71,f72,f73,f74,f75,f76,f77,f78,f79,f80,f81,f82,f83,f84,f85,f86,f87,f88,f89,f90,f91,f92,f93,f94,f95,f96,f97,f98,f99,f100&fields2=f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61&klt=${klt}&fqt=1&end=20500101&lmt=300`;
     fetch(url).then(r => r.json()).then(json => {
       if (json.data && json.data.klines) {
+        const stockName = json.data.name || symbol;
         resolve(json.data.klines.map(line => {
           const p = line.split(',');
-          return { date: p[0], open: +p[1], close: +p[2], high: +p[3], low: +p[4], vol: +p[5] };
+          return { date: p[0], open: +p[1], close: +p[2], high: +p[3], low: +p[4], vol: +p[5], name: stockName };
         }));
       } else reject('no data');
     }).catch(reject);
@@ -384,8 +375,8 @@ function drawKline(canvasId, data, zs, fractals, analysis) {
     ctx.beginPath(); ctx.moveTo(pL,y2); ctx.lineTo(w-pR,y2); ctx.stroke();
     ctx.setLineDash([]);
     ctx.font='bold 11px Microsoft YaHei'; ctx.fillStyle='#f39c12'; ctx.textAlign='left';
-    ctx.fillText('ZG ' + zs.top.toFixed(2), w-pR+5, y1+4);
-    ctx.fillText('ZD ' + zs.bot.toFixed(2), w-pR+5, y2+4);
+    ctx.fillText('ZG ' + zs.top.toFixed(2), pL+5, y1+4);
+    ctx.fillText('ZD ' + zs.bot.toFixed(2), pL+5, y2+4);
   }
 
   if (zs.pens && zs.pens.length === 3) {
@@ -513,6 +504,10 @@ async function init() {
 
   document.getElementById('loading').classList.add('hidden');
   document.getElementById('content').style.display = 'block';
+  
+  // 显示股票名称（从返回数据中获取）
+  const stockName = daily[0] && daily[0].name ? daily[0].name : '';
+  document.getElementById('stockName').textContent = stockName;
 
   ['daily','weekly','monthly'].forEach(period => {
     const r = allResults[period];

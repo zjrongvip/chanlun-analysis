@@ -28,7 +28,13 @@ body { background: #0d1117; color: #e6edf3; font-family: 'Microsoft YaHei', sans
 .kline-wrap { position: relative; height: 520px; padding: 10px; }
 .macd-wrap { position: relative; height: 160px; padding: 10px; }
 canvas { width: 100%; height: 100%; }
-.sidebar { position: absolute; top: 14px; left: 84px; z-index: 10; max-width: 290px; }
+.sidebar { position: absolute; top: 14px; left: 10px; z-index: 10; max-width: 280px; transition: transform 0.3s ease; }
+.sidebar.collapsed { transform: translateX(-290px); }
+.toggle-btn { position: absolute; top: 10px; left: 10px; z-index: 20; background: #238636; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; opacity: 0.9; }
+.toggle-btn:hover { opacity: 1; }
+.zs-labels { position: absolute; top: 10px; left: 80px; z-index: 5; font-size: 11px; }
+.zs-labels .zg { color: #f39c12; margin-bottom: 4px; }
+.zs-labels .zd { color: #f39c12; }
 .guide { background: rgba(13,17,23,0.95); border: 1.5px solid; border-radius: 10px; padding: 14px 16px; font-size: 12px; line-height: 1.9; }
 .guide.above { border-color: #ef5350; background: rgba(31,16,16,0.95); }
 .guide.below { border-color: #26a69a; background: rgba(15,31,24,0.95); }
@@ -451,6 +457,18 @@ function getGuideHTML(analysis) {
   return `<div class="guide inside draggable" style="position:relative;cursor:move;">${dragHandle}<h3>📍 中枢内部 → 震荡盘整</h3><ul><li>中枢内不轻易操作</li><li>突破ZG+回踩不破 → 第三类买点</li><li>跌破ZD+反弹不过 → 第三类卖点</li></ul><p class="warn">假突破多，确认后再动，仓位宜轻</p></div>`;
 }
 
+function toggleSidebar(period) {
+  const sidebar = document.getElementById('sidebar-' + period);
+  const btn = sidebar.parentElement.querySelector('.toggle-btn');
+  if (sidebar.classList.contains('collapsed')) {
+    sidebar.classList.remove('collapsed');
+    btn.textContent = '收起提示';
+  } else {
+    sidebar.classList.add('collapsed');
+    btn.textContent = '显示提示';
+  }
+}
+
 function initDraggable() {
   document.querySelectorAll('.draggable').forEach(el => {
     const handle = el.querySelector('.drag-handle');
@@ -501,7 +519,14 @@ async function init() {
     const sec = document.getElementById('sec-'+period);
 
     const klineWrap = sec.querySelector('.kline-wrap');
-    klineWrap.innerHTML = `<div class="sidebar">${getGuideHTML(r.analysis)}</div><canvas id="kline-${period}"></canvas>`;
+    klineWrap.innerHTML = `
+      <button class="toggle-btn" onclick="toggleSidebar('${period}')">收起提示</button>
+      <div class="sidebar" id="sidebar-${period}">${getGuideHTML(r.analysis)}</div>
+      <div class="zs-labels" id="zslabels-${period}">
+        <div class="zg">ZG ${r.zs.top.toFixed(2)}</div>
+        <div class="zd">ZD ${r.zs.bot.toFixed(2)}</div>
+      </div>
+      <canvas id="kline-${period}"></canvas>`;
 
     const hdr = document.getElementById('hdr-'+period);
     const posCls = r.analysis.pos==='above'?'up':r.analysis.pos==='below'?'down':'mid';

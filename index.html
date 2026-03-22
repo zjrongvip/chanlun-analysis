@@ -89,7 +89,7 @@ canvas { width: 100%; height: 100%; }
   <!-- 加载中 -->
   <div id="loading" class="loading hidden">
     <div class="spinner"></div>
-    <div>正在从东方财富获取数据并分析...</div>
+    <div>正在获取行情数据并分析...</div>
   </div>
 
   <!-- 错误提示 -->
@@ -906,33 +906,57 @@ async function fetchStockName(symbol) {
   } catch(e) {}
 }
 
-// 判断市场类型：6开头=上海主板(1.)，0/3开头=深圳(0.)，港股=港股通API
+// 获取新浪市场前缀：6开头=sh，其余=sz
+function getSinaPrefix(symbol) {
+  if (symbol.startsWith('6')) return 'sh';
+  return 'sz';
+}
+
+// 获取东方财富 secid（备用数据源）
 function getSecid(symbol) {
-  // 港股代码（5位数字，如00700）
-  if (/^\d{5}$/.test(symbol)) return '116.' + symbol;  // 港股通
-  // 上海主板（6开头）
+  if (/^\d{5}$/.test(symbol)) return '116.' + symbol;
   if (symbol.startsWith('6')) return '1.' + symbol;
-  // 科创板（688开头）
-  if (symbol.startsWith('688')) return '1.' + symbol;
-  // 北交所（8开头或43/83/87开头）
   if (symbol.startsWith('8') || symbol.startsWith('43') || symbol.startsWith('83') || symbol.startsWith('87')) return '0.' + symbol;
-  // 默认深圳（0/3开头）
   return '0.' + symbol;
 }
 
-function fetchKline(symbol, klt) {
-  return new Promise((resolve, reject) => {
-    const secid = getSecid(symbol);
-    const url = `https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=${secid}&fields1=f1,f2,f3,f4,f5,f6&fields2=f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61&klt=${klt}&fqt=1&end=20500101&lmt=300`;
-    fetch(url).then(r => r.json()).then(json => {
-      if (json.data && json.data.klines) {
-        resolve(json.data.klines.map(line => {
-          const p = line.split(',');
-          return { date: p[0], open: +p[1], close: +p[2], high: +p[3], low: +p[4], vol: +p[5] };
-        }));
-      } else reject('no data');
-    }).catch(reject);
-  });
+// 获取K线数据：新浪API为主，东方财富为备
+async function fetchKline(symbol, klt) {
+  // 1. 新浪财经API（对浏览器fetch友好）
+  const scaleMap = { 101: 240, 102: 1680, 103: 7200 };
+  const scale = scaleMap[klt] || 240;
+  const sinaSymbol = getSinaPrefix(symbol) + symbol;
+  try {
+    const url = `https://money.finance.sina.com.cn/quotes_service/api/json_v2.php/CN_MarketData.getKLineData?symbol=${sinaSymbol}&scale=${scale}&ma=no&datalen=300`;
+    const res = await fetch(url);
+    const text = await res.text();
+    const data = JSON.parse(text);
+    if (Array.isArray(data) && data.length > 0) {
+      return data.map(item => ({
+        date: item.day,
+        open: parseFloat(item.open),
+        close: parseFloat(item.close),
+        high: parseFloat(item.high),
+        low: parseFloat(item.low),
+        vol: parseInt(item.volume)
+      }));
+    }
+  } catch(e) { /* 新浪失败，尝试东方财富 */ }
+
+  // 2. 东方财富API（备用）
+  const secid = getSecid(symbol);
+  try {
+    const res2 = await fetch(`https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=${secid}&fields1=f1,f2,f3,f4,f5,f6&fields2=f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61&klt=${klt}&fqt=1&end=20500101&lmt=300`);
+    const json = await res2.json();
+    if (json.data && json.data.klines) {
+      return json.data.klines.map(line => {
+        const p = line.split(',');
+        return { date: p[0], open: +p[1], close: +p[2], high: +p[3], low: +p[4], vol: +p[5] };
+      });
+    }
+  } catch(e) {}
+
+  throw new Error('数据获取失败，请稍后重试');
 }
 
 // ========= 缠论核心 =========

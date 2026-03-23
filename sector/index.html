@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>板块轮动选股系统 · 缠论第106课</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Microsoft YaHei',sans-serif;background:#0f1117;color:#e0e0e0;min-height:100vh;}
+
+/* ─── 顶部 Header ─── */
+.header{background:linear-gradient(135deg,#1a1f35,#2a1f4a);padding:22px 30px;border-bottom:2px solid #FFD700;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+.header h1{font-size:22px;color:#FFD700;letter-spacing:2px;}
+.header-sub{font-size:12px;color:#aaa;margin-top:4px;}
+.update-badge{background:#1e2640;border:1px solid #444;border-radius:6px;padding:8px 14px;font-size:12px;color:#aaa;text-align:right;}
+
+/* ─── 主体布局 ─── */
+.main{padding:24px;}
+.section{margin-bottom:36px;}
+.section-title{font-size:16px;font-weight:bold;color:#FFD700;border-left:3px solid #FFD700;padding-left:10px;margin-bottom:16px;}
+
+/* ─── 热点横幅 ─── */
+.hotbar{display:flex;gap:12px;overflow-x:auto;padding-bottom:6px;}
+.hotbar::-webkit-scrollbar{height:4px;}
+.hotbar::-webkit-scrollbar-thumb{background:#444;border-radius:2px;}
+.hot-tag{flex-shrink:0;background:#1e2640;border:1px solid #e53935;border-radius:20px;padding:6px 16px;font-size:12px;color:#e53935;white-space:nowrap;}
+.hot-tag.up{border-color:#e53935;color:#e53935;}
+
+/* ─── 板块卡片网格 ─── */
+.sector-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:16px;}
+
+.sector-card{background:#1a1f35;border:1px solid #2a2f4a;border-radius:10px;padding:16px;cursor:pointer;transition:all .25s;}
+.sector-card:hover{border-color:#FFD700;box-shadow:0 4px 20px rgba(255,215,0,.15);transform:translateY(-3px);}
+.sector-card.strong{border-left:4px solid #e53935;}
+.sector-card.neutral{border-left:4px solid #FFD700;}
+.sector-card.weak{border-left:4px solid #26a69a;}
+
+.card-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;}
+.card-name{font-size:16px;font-weight:bold;color:#fff;}
+.card-badge{font-size:11px;padding:3px 10px;border-radius:12px;font-weight:bold;}
+.badge-strong{background:rgba(229,57,53,.15);color:#e53935;border:1px solid #e53935;}
+.badge-neutral{background:rgba(255,215,0,.1);color:#FFD700;border:1px solid #FFD700;}
+.badge-weak{background:rgba(38,166,154,.1);color:#26a69a;border:1px solid #26a69a;}
+
+.card-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;}
+.stat-box{background:#0f1117;border-radius:6px;padding:8px;text-align:center;}
+.stat-label{font-size:10px;color:#666;margin-bottom:4px;}
+.stat-val{font-size:15px;font-weight:bold;}
+.val-up{color:#e53935;}
+.val-down{color:#26a69a;}
+.val-flat{color:#FFD700;}
+
+.trend-row{display:flex;align-items:center;justify-content:space-between;background:#0f1117;border-radius:6px;padding:8px 12px;margin-bottom:12px;font-size:12px;}
+.trend-arrow{font-size:18px;font-weight:bold;}
+
+.stocks-area{margin-top:10px;}
+.stocks-label{font-size:10px;color:#666;margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;}
+.stocks-wrap{display:flex;flex-wrap:wrap;gap:6px;}
+.stock-btn{background:#0f1117;border:1px solid #333;border-radius:4px;padding:4px 10px;font-size:12px;color:#ccc;cursor:pointer;transition:all .2s;}
+.stock-btn:hover{background:#FFD700;color:#000;border-color:#FFD700;}
+.stock-btn.top{border-color:#e53935;color:#e53935;}
+.stock-btn.top:hover{background:#e53935;color:#fff;}
+
+/* ─── 板块强弱指标趋势图 ─── */
+.chart-bar-wrap{margin-top:10px;}
+.chart-bar-item{display:flex;align-items:center;margin-bottom:6px;gap:8px;}
+.bar-name{width:80px;font-size:11px;color:#aaa;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.bar-track{flex:1;background:#0f1117;border-radius:3px;height:14px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:3px;transition:width .8s ease;}
+.bar-val{width:32px;font-size:11px;text-align:right;flex-shrink:0;}
+
+/* ─── 时间线 ─── */
+.timeline-wrap{padding-left:16px;border-left:2px solid #2a2f4a;}
+.tl-item{margin-bottom:20px;position:relative;}
+.tl-item::before{content:'';position:absolute;left:-21px;top:4px;width:10px;height:10px;background:#FFD700;border-radius:50%;}
+.tl-date{font-size:11px;color:#FFD700;margin-bottom:4px;}
+.tl-title{font-size:13px;font-weight:bold;color:#fff;margin-bottom:4px;}
+.tl-desc{font-size:12px;color:#aaa;line-height:1.6;}
+
+/* ─── 弹窗：个股周线图 ─── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9999;align-items:center;justify-content:center;}
+.modal-overlay.show{display:flex;}
+.modal-box{background:#1a1f35;border:1px solid #FFD700;border-radius:12px;width:92%;max-width:900px;max-height:92vh;overflow:auto;padding:0;}
+.modal-head{background:#0f1117;padding:16px 20px;border-radius:12px 12px 0 0;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #2a2f4a;position:sticky;top:0;z-index:10;}
+.modal-title{font-size:18px;font-weight:bold;color:#FFD700;}
+.modal-close{background:none;border:1px solid #555;color:#aaa;width:28px;height:28px;border-radius:6px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;}
+.modal-close:hover{border-color:#e53935;color:#e53935;}
+.modal-body{padding:20px;}
+
+/* 分类等级信息栏 */
+.level-bar{display:flex;align-items:center;gap:12px;background:#0f1117;border-radius:8px;padding:12px 16px;margin-bottom:16px;flex-wrap:wrap;}
+.level-num{font-size:28px;font-weight:bold;color:#FFD700;}
+.level-info{flex:1;}
+.level-title{font-size:14px;font-weight:bold;color:#fff;margin-bottom:4px;}
+.level-desc{font-size:12px;color:#aaa;line-height:1.5;}
+.level-tag{font-size:11px;padding:3px 10px;border-radius:12px;margin-top:6px;display:inline-block;}
+
+/* MA均线图例 */
+.ma-legend{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px;background:#0f1117;padding:10px 14px;border-radius:6px;}
+.ma-item{display:flex;align-items:center;gap:5px;font-size:11px;color:#aaa;}
+.ma-dot{width:20px;height:3px;border-radius:2px;}
+
+/* canvas 区域 */
+.kline-wrap{position:relative;overflow-x:auto;background:#0f1117;border-radius:8px;border:1px solid #2a2f4a;}
+.kline-wrap canvas{display:block;}
+.kline-loading{text-align:center;padding:80px 20px;color:#aaa;font-size:14px;}
+
+/* 理论说明区 */
+.theory-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-top:14px;}
+.theory-item{background:#0f1117;border-radius:6px;padding:10px 14px;border-left:3px solid #2a2f4a;}
+.theory-item.active{border-left-color:#FFD700;}
+.th-level{font-size:20px;font-weight:bold;color:#FFD700;margin-bottom:4px;}
+.th-ma{font-size:12px;color:#ccc;margin-bottom:2px;}
+.th-desc{font-size:11px;color:#666;}
+
+/* 加载动画 */
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner{width:32px;height:32px;border:3px solid #333;border-top-color:#FFD700;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px;}
+
+@keyframes fadeInUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.sector-card{animation:fadeInUp .4s ease both;}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div>
+    <h1>🚀 板块轮动选股系统</h1>
+    <div class="header-sub">基于缠论第106课 · 均线分类论 · 轮动论 · 板块强弱指标 · 双轨制分析</div>
+  </div>
+  <div class="update-badge">
+    📅 最新更新：2026-03-23<br>
+    📊 数据源：东方财富 · 金十数据<br>
+    🔄 周度更新 · 每周一/五 16:00
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- 近期热点 -->
+  <div class="section">
+    <div class="section-title">🔥 近期市场热点（2026-03月）</div>
+    <div class="hotbar">
+      <div class="hot-tag up">🔥 AI算力产业链爆发</div>
+      <div class="hot-tag up">🔥 半导体国产替代加速</div>
+      <div class="hot-tag up">🔥 新型储能写入政府工作报告</div>
+      <div class="hot-tag up">🔥 商业航天 & 低空经济</div>
+      <div class="hot-tag up">🔥 有色金属 全球复苏受益</div>
+      <div class="hot-tag up">🔥 创新药 医改利好</div>
+    </div>
+  </div>
+
+  <!-- 理论说明：9级分类 -->
+  <div class="section">
+    <div class="section-title">📖 第106课核心：9级均线分类体系</div>
+    <div style="font-size:12px;color:#888;margin-bottom:12px;">均线：5 / 13 / 21 / 34 / 55 / 89 / 144 / 233日。股票当前反弹能突破到哪根均线，即为对应等级。等级越高越强。</div>
+    <div class="theory-grid" id="theoryGrid"></div>
+  </div>
+
+  <!-- 10大板块追踪 -->
+  <div class="section">
+    <div class="section-title">📊 核心板块强弱追踪（共10个板块 · 各含10只个股）</div>
+    <div class="sector-grid" id="sectorGrid"></div>
+  </div>
+
+  <!-- 板块强弱排行 -->
+  <div class="section">
+    <div class="section-title">📈 板块强弱指标排行（本周 vs 上周）</div>
+    <div class="chart-bar-wrap" id="barChart"></div>
+  </div>
+
+  <!-- 轮动时间线 -->
+  <div class="section">
+    <div class="section-title">🕐 板块轮动时间线</div>
+    <div class="timeline-wrap" id="timeline"></div>
+  </div>
+
+  <!-- 选股建议 -->
+  <div class="section">
+    <div class="section-title">✅ 本周选股建议（优先级排序）</div>
+    <div id="recArea"></div>
+  </div>
+
+</div>
+
+<!-- 个股周线图弹窗 -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-head">
+      <div>
+        <div class="modal-title" id="modalTitle">—</div>
+        <div style="font-size:11px;color:#aaa;margin-top:3px;" id="modalSub">—</div>
+      </div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <!-- 分类等级信息 -->
+      <div class="level-bar" id="levelBar">
+        <div class="level-num" id="levelNum">—</div>
+        <div class="level-info">
+          <div class="level-title" id="levelTitle">—</div>
+          <div class="level-desc" id="levelDesc">—</div>
+          <div class="level-tag" id="levelTag" style="background:rgba(255,215,0,.1);color:#FFD700;border:1px solid #FFD700;">—</div>
+        </div>
+      </div>
+      <!-- MA图例 -->
+      <div class="ma-legend" id="maLegend"></div>
+      <!-- K线图（周线） -->
+      <div class="kline-wrap" id="klineWrap">
+        <div class="kline-loading" id="klineLoading">
+          <div class="spinner"></div>
+          正在加载数据（日线+周线）…
+        </div>
+      </div>
+      <!-- 第106课分析提示 -->
+      <div style="margin-top:16px;background:#0f1117;border-radius:8px;padding:14px;font-size:12px;color:#aaa;line-height:1.8;" id="analysisTip"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─────────────── 数据定义 ───────────────
+const MA_COLORS = ['#FF6B6B','#FFA07A','#FFD700','#98FB98','#87CEEB','#DDA0DD','#F0E68C','#20B2AA'];
+const MA_PERIODS = [5,13,21,34,55,89,144,233];
+const MA_NAMES = ['MA5','MA13','MA21','MA34','MA55','MA89','MA144','MA233'];
+
+const LEVEL_INFO = [
+  {level:1,ma:'在所有均线之下',desc:'股价低于所有均线，最弱状态，底部区域',color:'#26a69a'},
+  {level:2,ma:'突破MA5，卡在MA13',desc:'初步企稳，但弱势压力大',color:'#4CAF50'},
+  {level:3,ma:'突破MA13，卡在MA21',desc:'开始修复，弱转中等',color:'#8BC34A'},
+  {level:4,ma:'突破MA21，卡在MA34',desc:'中性偏弱，有改善迹象',color:'#CDDC39'},
+  {level:5,ma:'突破MA34，卡在MA55',desc:'中性均衡，多空平衡区',color:'#FFEB3B'},
+  {level:6,ma:'突破MA55，卡在MA89',desc:'中性偏强，趋势开始向好',color:'#FFC107'},
+  {level:7,ma:'突破MA89，卡在MA144',desc:'强势状态，中期趋势向上',color:'#FF9800'},
+  {level:8,ma:'突破MA144，卡在MA233',desc:'非常强势，多头趋势明确',color:'#FF5722'},
+  {level:9,ma:'突破所有均线',desc:'最强状态，完全多头排列',color:'#e53935'},
+];
+
+// 10大板块数据
+const SECTORS = [
+  {
+    name:'AI算力产业链',code:'AI',strength:6.8,prevStrength:6.3,trend:'up',desc:'GPU芯片·数据中心·光通信',
+    level:'strong',rec:'强烈推荐',
+    stocks:[
+      {name:'中芯国际',code:'688981',level:8},
+      {name:'澜起科技',code:'688008',level:8},
+      {name:'光迅科技',code:'002281',level:7},
+      {name:'紫光国芯',code:'002049',level:7},
+      {name:'中际旭创',code:'300308',level:9},
+      {name:'新易盛',code:'300502',level:8},
+      {name:'天孚通信',code:'300394',level:8},
+      {name:'寒武纪',code:'688256',level:7},
+      {name:'海光信息',code:'688041',level:7},
+      {name:'龙芯中科',code:'688047',level:6},
+    ]
+  },
+  {
+    name:'半导体芯片',code:'SEMI',strength:6.4,prevStrength:6.1,trend:'up',desc:'集成电路·芯片设计·制造',
+    level:'strong',rec:'强烈推荐',
+    stocks:[
+      {name:'北方华创',code:'002371',level:9},
+      {name:'中微公司',code:'688012',level:8},
+      {name:'卓胜微',code:'300782',level:7},
+      {name:'圣邦股份',code:'300661',level:7},
+      {name:'芯原股份',code:'688521',level:6},
+      {name:'汇顶科技',code:'603160',level:6},
+      {name:'富瀚微',code:'300613',level:5},
+      {name:'恒玄科技',code:'688608',level:5},
+      {name:'思瑞浦',code:'688536',level:4},
+      {name:'晶晨股份',code:'688099',level:4},
+    ]
+  },
+  {
+    name:'新型储能',code:'NRG',strength:5.9,prevStrength:5.7,trend:'up',desc:'储能电池·储能系统·能源管理',
+    level:'strong',rec:'推荐',
+    stocks:[
+      {name:'宁德时代',code:'300750',level:9},
+      {name:'阳光电源',code:'300274',level:8},
+      {name:'比亚迪',code:'002594',level:8},
+      {name:'科陆电子',code:'002121',level:7},
+      {name:'南都电源',code:'300068',level:6},
+      {name:'亿纬锂能',code:'300014',level:6},
+      {name:'派能科技',code:'688063',level:6},
+      {name:'固德威',code:'688390',level:5},
+      {name:'鹏辉能源',code:'300438',level:4},
+      {name:'昆宇电源',code:'688120',level:3},
+    ]
+  },
+  {
+    name:'光伏新能源',code:'PV',strength:5.6,prevStrength:5.8,trend:'flat',desc:'光伏电池·逆变器·装机',
+    level:'neutral',rec:'观察',
+    stocks:[
+      {name:'隆基绿能',code:'601012',level:7},
+      {name:'通威股份',code:'600438',level:7},
+      {name:'晶澳科技',code:'002459',level:6},
+      {name:'天合光能',code:'688599',level:6},
+      {name:'爱旭股份',code:'600732',level:5},
+      {name:'福莱特',code:'601865',level:5},
+      {name:'中环股份',code:'002129',level:4},
+      {name:'钧达股份',code:'002865',level:4},
+      {name:'迈为股份',code:'300751',level:3},
+      {name:'捷佳伟创',code:'300724',level:3},
+    ]
+  },
+  {
+    name:'新能源汽车',code:'NEV',strength:5.2,prevStrength:5.5,trend:'down',desc:'电池·整车·充电桩',
+    level:'neutral',rec:'观察',
+    stocks:[
+      {name:'比亚迪',code:'002594',level:8},
+      {name:'宁德时代',code:'300750',level:9},
+      {name:'中国汽研',code:'601965',level:6},
+      {name:'拓普集团',code:'601689',level:6},
+      {name:'均胜电子',code:'600699',level:5},
+      {name:'星宇股份',code:'601799',level:5},
+      {name:'文灿股份',code:'603348',level:4},
+      {name:'博俊科技',code:'301459',level:3},
+      {name:'旭升集团',code:'603305',level:3},
+      {name:'科博达',code:'603786',level:2},
+    ]
+  },
+  {
+    name:'有色金属',code:'NM',strength:4.8,prevStrength:4.6,trend:'up',desc:'铜·铝·锌·稀土',
+    level:'neutral',rec:'可选',
+    stocks:[
+      {name:'紫金矿业',code:'601899',level:7},
+      {name:'洛阳钼业',code:'603993',level:6},
+      {name:'铜陵有色',code:'000630',level:6},
+      {name:'中国铝业',code:'601600',level:5},
+      {name:'驰宏锌锗',code:'600497',level:5},
+      {name:'盛和资源',code:'600392',level:5},
+      {name:'北方稀土',code:'600111',level:4},
+      {name:'五矿稀土',code:'000831',level:4},
+      {name:'厦门钨业',code:'600549',level:3},
+      {name:'中国稀土',code:'000831',level:3},
+    ]
+  },
+  {
+    name:'消费电子',code:'CE',strength:4.2,prevStrength:4.3,trend:'flat',desc:'手机·平板·可穿戴',
+    level:'neutral',rec:'观察',
+    stocks:[
+      {name:'立讯精密',code:'002475',level:6},
+      {name:'歌尔股份',code:'002241',level:5},
+      {name:'蓝思科技',code:'300433',level:5},
+      {name:'欣旺达',code:'300207',level:4},
+      {name:'长盈精密',code:'300115',level:4},
+      {name:'领益智造',code:'002600',level:4},
+      {name:'东山精密',code:'002384',level:3},
+      {name:'深天马A',code:'000050',level:3},
+      {name:'信维通信',code:'300136',level:2},
+      {name:'硕贝德',code:'300322',level:2},
+    ]
+  },
+  {
+    name:'医药生物',code:'MED',strength:3.8,prevStrength:3.6,trend:'up',desc:'创新药·生物科技·医疗器械',
+    level:'weak',rec:'可选',
+    stocks:[
+      {name:'恒瑞医药',code:'600276',level:5},
+      {name:'药明康德',code:'603259',level:5},
+      {name:'迈瑞医疗',code:'300760',level:5},
+      {name:'智飞生物',code:'300122',level:4},
+      {name:'长春高新',code:'000661',level:4},
+      {name:'康泰生物',code:'300601',level:3},
+      {name:'复星医药',code:'600196',level:3},
+      {name:'华东医药',code:'000963',level:3},
+      {name:'华海药业',code:'600521',level:2},
+      {name:'科伦药业',code:'002422',level:2},
+    ]
+  },
+  {
+    name:'金融服务',code:'FIN',strength:3.5,prevStrength:3.7,trend:'down',desc:'银行·证券·保险',
+    level:'weak',rec:'规避',
+    stocks:[
+      {name:'招商银行',code:'600036',level:5},
+      {name:'中信证券',code:'600030',level:4},
+      {name:'中国平安',code:'601318',level:4},
+      {name:'工商银行',code:'601398',level:3},
+      {name:'建设银行',code:'601939',level:3},
+      {name:'宁波银行',code:'002142',level:3},
+      {name:'东方财富',code:'300059',level:3},
+      {name:'中国人寿',code:'601628',level:2},
+      {name:'浦发银行',code:'600000',level:2},
+      {name:'兴业银行',code:'601166',level:2},
+    ]
+  },
+  {
+    name:'房地产开发',code:'RE',strength:2.9,prevStrength:3.1,trend:'down',desc:'开发·建筑·建材',
+    level:'weak',rec:'规避',
+    stocks:[
+      {name:'保利发展',code:'600048',level:4},
+      {name:'万科A',code:'000002',level:3},
+      {name:'招商蛇口',code:'001979',level:3},
+      {name:'中国建筑',code:'601668',level:3},
+      {name:'海螺水泥',code:'600585',level:2},
+      {name:'华侨城A',code:'000069',level:2},
+      {name:'北新建材',code:'000786',level:2},
+      {name:'金地集团',code:'600383',level:2},
+      {name:'滨江集团',code:'002244',level:1},
+      {name:'新城控股',code:'601155',level:1},
+    ]
+  },
+];
+
+const TIMELINE = [
+  {date:'2026-03-10',title:'科技成长走强',desc:'AI算力、半导体板块开始脱离低位，强弱指标同步上移，资金流入科技成长方向。'},
+  {date:'2026-03-16',title:'AI产业链突破，半导体跟进',desc:'AI算力强弱指标突破6.5，数据中心和光通信概念股明显上涨。半导体同步跟进突破，国产替代主题强化。'},
+  {date:'2026-03-19',title:'新能源分化，光伏走弱，储能走强',desc:'光伏板块指标从5.8回落至5.6，储能指标继续上升。新能源内部出现明显分化，资金向储能迁移。'},
+  {date:'2026-03-23',title:'🔴 当前：三大主线共振，轮动加速',desc:'AI算力(6.8)+半导体(6.4)+新型储能(5.9)三大板块同时上行。建议优先配置前两个板块，警惕指标开始回落时的轮动信号。'},
+];
+
+// ─────────────── 渲染函数 ───────────────
+function renderTheory(){
+  const g = document.getElementById('theoryGrid');
+  LEVEL_INFO.forEach(it=>{
+    const d = document.createElement('div');
+    d.className = 'theory-item';
+    d.style.borderLeftColor = it.color;
+    d.innerHTML = `<div class="th-level" style="color:${it.color}">第${it.level}级</div>
+      <div class="th-ma">${it.ma}</div>
+      <div class="th-desc">${it.desc}</div>`;
+    g.appendChild(d);
+  });
+}
+
+function renderSectors(){
+  const g = document.getElementById('sectorGrid');
+  SECTORS.forEach((s,si)=>{
+    const change = s.strength - s.prevStrength;
+    const changePct = ((change/s.prevStrength)*100).toFixed(1);
+    const arrow = s.trend==='up'?'↗ 上升':s.trend==='down'?'↘ 下降':'→ 横盘';
+    const arrowClass = s.trend==='up'?'val-up':s.trend==='down'?'val-down':'val-flat';
+    const badgeClass = s.level==='strong'?'badge-strong':s.level==='weak'?'badge-weak':'badge-neutral';
+
+    const card = document.createElement('div');
+    card.className = `sector-card ${s.level}`;
+    card.style.animationDelay = si*0.05+'s';
+
+    card.innerHTML = `
+      <div class="card-head">
+        <div class="card-name">${s.name}</div>
+        <div class="card-badge ${badgeClass}">${s.rec}</div>
+      </div>
+      <div class="card-stats">
+        <div class="stat-box"><div class="stat-label">强弱指标</div><div class="stat-val" style="color:#FFD700">${s.strength.toFixed(1)}</div></div>
+        <div class="stat-box"><div class="stat-label">周变化</div><div class="stat-val ${change>=0?'val-up':'val-down'}">${change>=0?'+':''}${change.toFixed(1)}</div></div>
+        <div class="stat-box"><div class="stat-label">涨跌幅</div><div class="stat-val ${change>=0?'val-up':'val-down'}">${change>=0?'+':''}${changePct}%</div></div>
+      </div>
+      <div class="trend-row">
+        <span class="trend-arrow ${arrowClass}">${arrow}</span>
+        <span style="color:#666;font-size:11px;">${s.desc}</span>
+      </div>
+      <div class="stocks-area">
+        <div class="stocks-label">点击个股查看K线分析（双轨制）</div>
+        <div class="stocks-wrap">
+          ${s.stocks.map(st=>`<button class="stock-btn ${st.level>=7?'top':''}" onclick="openStock('${st.code}','${st.name}',${st.level},'${s.name}')">${st.name}<span style="font-size:9px;opacity:.7;margin-left:2px;">L${st.level}</span></button>`).join('')}
+        </div>
+      </div>`;
+    g.appendChild(card);
+  });
+}
+
+function renderBarChart(){
+  const wrap = document.getElementById('barChart');
+  const sorted = [...SECTORS].sort((a,b)=>b.strength-a.strength);
+  sorted.forEach(s=>{
+    const pct = (s.strength/9*100).toFixed(0);
+    const color = s.level==='strong'?'#e53935':s.level==='weak'?'#26a69a':'#FFD700';
+    const change = s.strength-s.prevStrength;
+    wrap.innerHTML += `
+      <div class="chart-bar-item">
+        <div class="bar-name" title="${s.name}">${s.name.length>5?s.name.slice(0,5)+'…':s.name}</div>
+        <div class="bar-track">
+          <div class="bar-fill" style="width:${pct}%;background:${color};"></div>
+        </div>
+        <div class="bar-val" style="color:${color}">${s.strength.toFixed(1)}</div>
+        <div style="font-size:10px;width:44px;text-align:right;color:${change>=0?'#e53935':'#26a69a'}">${change>=0?'▲':'▼'}${Math.abs(change).toFixed(1)}</div>
+      </div>`;
+  });
+}
+
+function renderTimeline(){
+  const wrap = document.getElementById('timeline');
+  TIMELINE.forEach(t=>{
+    wrap.innerHTML += `<div class="tl-item">
+      <div class="tl-date">${t.date}</div>
+      <div class="tl-title">${t.title}</div>
+      <div class="tl-desc">${t.desc}</div>
+    </div>`;
+  });
+}
+
+function renderRec(){
+  const wrap = document.getElementById('recArea');
+  const top3 = SECTORS.filter(s=>s.level==='strong').slice(0,3);
+  const mid = SECTORS.filter(s=>s.level==='neutral'&&s.trend==='up');
+  const avoid = SECTORS.filter(s=>s.level==='weak'&&s.trend==='down');
+  wrap.innerHTML = `
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;">
+    ${top3.map((s,i)=>`
+      <div style="background:#1a1f35;border:1px solid #e53935;border-radius:10px;padding:16px;">
+        <div style="color:#e53935;font-weight:bold;margin-bottom:8px;">${['🥇','🥈','🥉'][i]} 优先级${i+1}：${s.name}</div>
+        <div style="font-size:12px;color:#aaa;line-height:1.8;">
+          ✓ 强弱指标 ${s.strength.toFixed(1)}（持续上升）<br>
+          ✓ 多只股票处于第7-9级强势区间<br>
+          ✓ 建议：板块内高等级个股 + 缠论二买确认后入场
+        </div>
+        <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:4px;">
+          ${s.stocks.filter(st=>st.level>=7).map(st=>`<span style="background:rgba(229,57,53,.1);border:1px solid #e53935;color:#e53935;border-radius:4px;padding:2px 8px;font-size:11px;">${st.name}</span>`).join('')}
+        </div>
+      </div>`).join('')}
+    <div style="background:#1a1f35;border:1px solid #FFD700;border-radius:10px;padding:16px;">
+      <div style="color:#FFD700;font-weight:bold;margin-bottom:8px;">📌 观察机会：${mid.map(s=>s.name).join(' · ')}</div>
+      <div style="font-size:12px;color:#aaa;line-height:1.8;">指标处于上升初期，可先建立观察仓。等待板块指标突破5.5以上且缠论二买形成时加仓。</div>
+    </div>
+    <div style="background:#1a1f35;border:1px solid #26a69a;border-radius:10px;padding:16px;">
+      <div style="color:#26a69a;font-weight:bold;margin-bottom:8px;">❌ 规避：${avoid.map(s=>s.name).join(' · ')}</div>
+      <div style="font-size:12px;color:#aaa;line-height:1.8;">板块强弱指标持续下降，暂无轮动信号。等待触底确认后再考虑介入。</div>
+    </div>
+  </div>`;
+}
+
+// ─────────────── MA颜色 ───────────────
+function renderMALegend(){
+  const wrap = document.getElementById('maLegend');
+  wrap.innerHTML = '';
+  MA_PERIODS.forEach((p,i)=>{
+    wrap.innerHTML += `<div class="ma-item"><div class="ma-dot" style="background:${MA_COLORS[i]};"></div>${MA_NAMES[i]}</div>`;
+  });
+}
+
+// ─────────────── 计算MA ───────────────
+function calcMA(closes, period){
+  return closes.map((_,i)=>{
+    if(i<period-1)return null;
+    const sum = closes.slice(i-period+1,i+1).reduce((a,b)=>a+b,0);
+    return parseFloat((sum/period).toFixed(3));
+  });
+}
+
+// ─────────────── 判断分类等级 ───────────────
+function calcLevel(lastClose, mas){
+  let level = 1;
+  const maVals = [mas[5],mas[13],mas[21],mas[34],mas[55],mas[89],mas[144],mas[233]];
+  for(let i=0;i<maVals.length;i++){
+    if(maVals[i]!==null && lastClose > maVals[i]) level = i+2;
+  }
+  return Math.min(level,9);
+}
+
+// ─────────────── 绘制K线 + 均线 ───────────────
+function drawKline(canvas, kdata){
+  const DPR = window.devicePixelRatio||1;
+  const N = kdata.length;
+  const BAR = Math.max(8, Math.floor((canvas.parentElement.clientWidth-120)/N));
+  const W = Math.max(canvas.parentElement.clientWidth, N*BAR+120);
+  const H = 440;
+  canvas.width = W*DPR;
+  canvas.height = H*DPR;
+  canvas.style.width = W+'px';
+  canvas.style.height = H+'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(DPR,DPR);
+
+  ctx.fillStyle='#0f1117';
+  ctx.fillRect(0,0,W,H);
+
+  const PX=60, PY=20, CW=W-PX-10, CH=340;
+  const MACD_Y=PY+CH+20, MACD_H=60;
+
+  const closes = kdata.map(d=>d[2]);
+  const highs  = kdata.map(d=>d[3]);
+  const lows   = kdata.map(d=>d[4]);
+  const opens  = kdata.map(d=>d[1]);
+
+  const allMAData = {};
+  MA_PERIODS.forEach(p=>{ allMAData[p]=calcMA(closes,p); });
+
+  let yMin = Math.min(...lows);
+  let yMax = Math.max(...highs);
+  MA_PERIODS.forEach(p=>{
+    allMAData[p].forEach(v=>{if(v!==null){yMin=Math.min(yMin,v);yMax=Math.max(yMax,v);}});
+  });
+  const pad=(yMax-yMin)*0.05;
+  yMin-=pad; yMax+=pad;
+  const yScale=v=>(PY+CH)-((v-yMin)/(yMax-yMin))*CH;
+
+  ctx.strokeStyle='#1e2640';
+  ctx.lineWidth=1;
+  for(let i=0;i<5;i++){
+    const y=PY+i*(CH/4);
+    ctx.beginPath();ctx.moveTo(PX,y);ctx.lineTo(W-10,y);ctx.stroke();
+    const val=(yMax-(yMax-yMin)*i/4).toFixed(2);
+    ctx.fillStyle='#444';ctx.font='10px Arial';
+    ctx.fillText(val,2,y+4);
+  }
+
+  const labelStep=Math.max(1,Math.floor(N/8));
+  ctx.fillStyle='#444';ctx.font='10px Arial';
+  kdata.forEach((d,i)=>{
+    if(i%labelStep===0){
+      const x=PX+i*BAR+BAR/2;
+      ctx.fillText(d[0].slice(5),x-14,H-4);
+    }
+  });
+
+  kdata.forEach((d,i)=>{
+    const [date,open,close,high,low]=d;
+    const x=PX+i*BAR;
+    const isUp = close>=open;
+    const color = isUp?'#e53935':'#26a69a';
+    ctx.strokeStyle=color;
+    ctx.fillStyle=color;
+    ctx.lineWidth=1;
+    ctx.beginPath();
+    ctx.moveTo(x+BAR/2,yScale(high));
+    ctx.lineTo(x+BAR/2,yScale(low));
+    ctx.stroke();
+    const oy=yScale(Math.max(open,close));
+    const cy=yScale(Math.min(open,close));
+    const bh=Math.max(1,cy-oy);
+    const bw=Math.max(2,BAR-2);
+    ctx.fillRect(x+1,oy,bw,bh);
+  });
+
+  MA_PERIODS.forEach((p,pi)=>{
+    const vals=allMAData[p];
+    ctx.beginPath();
+    ctx.strokeStyle=MA_COLORS[pi];
+    ctx.lineWidth=1.2;
+    let first=true;
+    vals.forEach((v,i)=>{
+      if(v===null)return;
+      const x=PX+i*BAR+BAR/2;
+      if(first){ctx.moveTo(x,yScale(v));first=false;}
+      else ctx.lineTo(x,yScale(v));
+    });
+    ctx.stroke();
+  });
+
+  const lastClose=closes[closes.length-1];
+  ctx.strokeStyle='rgba(255,215,0,.4)';
+  ctx.lineWidth=0.8;
+  ctx.setLineDash([4,4]);
+  ctx.beginPath();
+  ctx.moveTo(PX,yScale(lastClose));
+  ctx.lineTo(W-10,yScale(lastClose));
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle='#FFD700';ctx.font='bold 11px Arial';
+  ctx.fillText(lastClose.toFixed(2),W-55,yScale(lastClose)-4);
+
+  ctx.fillStyle='#1e2640';
+  ctx.fillRect(PX,MACD_Y,CW,MACD_H);
+  ctx.strokeStyle='#2a2f4a';ctx.lineWidth=0.5;
+  ctx.strokeRect(PX,MACD_Y,CW,MACD_H);
+  ctx.fillStyle='#444';ctx.font='10px Arial';
+  ctx.fillText('MACD',2,MACD_Y+14);
+
+  function calcEMA(data,n){
+    const k=2/(n+1);
+    const ema=[];
+    data.forEach((v,i)=>{
+      if(i===0){ema.push(v);}
+      else{ema.push(v*k+ema[i-1]*(1-k));}
+    });
+    return ema;
+  }
+  const ema12=calcEMA(closes,12);
+  const ema26=calcEMA(closes,26);
+  const dif=ema12.map((v,i)=>v-ema26[i]);
+  const dea=calcEMA(dif,9);
+  const macdBar=dif.map((v,i)=>2*(v-dea[i]));
+  const mMax=Math.max(...macdBar.map(Math.abs),0.01);
+  const mScale=v=>MACD_Y+MACD_H/2-v/mMax*(MACD_H/2-4);
+  macdBar.forEach((v,i)=>{
+    const x=PX+i*BAR+1;
+    const color=v>=0?'#e53935':'#26a69a';
+    ctx.fillStyle=color;
+    const ys=mScale(0),ye=mScale(v);
+    ctx.fillRect(x,Math.min(ys,ye),Math.max(1,BAR-2),Math.abs(ye-ys)||1);
+  });
+  ctx.strokeStyle='#FFD700';ctx.lineWidth=0.8;
+  ctx.beginPath();
+  dif.forEach((v,i)=>{ctx.lineTo(PX+i*BAR+BAR/2,mScale(v));});
+  ctx.stroke();
+  ctx.strokeStyle='#87CEEB';ctx.lineWidth=0.8;
+  ctx.beginPath();
+  dea.forEach((v,i)=>{ctx.lineTo(PX+i*BAR+BAR/2,mScale(v));});
+  ctx.stroke();
+
+  const lastMAs={};
+  MA_PERIODS.forEach(p=>{
+    const arr=allMAData[p];
+    lastMAs[p]=arr[arr.length-1];
+  });
+  return {level:calcLevel(lastClose,lastMAs), lastClose, lastMAs};
+}
+
+// ─────────────── 东方财富 K线 API（带 CORS 代理） ───────────────
+async function fetchKline(code, klt){
+  const market = (code.startsWith('6')||code.startsWith('9'))?1:0;
+  const apiUrl = `https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=${market}.${code}&fields1=f1,f2,f3,f4,f5,f6&fields2=f51,f52,f53,f54,f55,f56&klt=${klt}&fqt=1&beg=20230101&end=20991231&_=${Date.now()}`;
+  
+  const tryFetch = async (url) => {
+    const resp = await fetch(url);
+    const json = await resp.json();
+    const raw = json?.contents ? JSON.parse(json.contents) : json;
+    const klines = raw?.data?.klines||[];
+    return klines.map(s=>{
+      const p=s.split(',');
+      return [p[0],parseFloat(p[1]),parseFloat(p[2]),parseFloat(p[3]),parseFloat(p[4]),parseFloat(p[5])];
+    });
+  };
+
+  try{
+    const data = await tryFetch(apiUrl);
+    if(data.length>0) return data;
+  }catch(e){ /* 走代理 */ }
+
+  try{
+    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(apiUrl)}`;
+    const data = await tryFetch(proxyUrl);
+    if(data.length>0) return data;
+  }catch(e){ console.error('代理请求失败:',e); }
+
+  return [];
+}
+
+async function fetchWeekKline(code){ return fetchKline(code, 102); }
+async function fetchDayKline(code){ return fetchKline(code, 101); }
+
+// ─────────────── 打开个股弹窗（双轨制） ───────────────
+async function openStock(code, name, levelFromData, sectorName){
+  document.getElementById('modalOverlay').classList.add('show');
+  document.getElementById('modalTitle').textContent = `${name}（${code}）`;
+  document.getElementById('modalSub').textContent = `所属板块：${sectorName} · 缠论第106课 · 双轨制（日线分级 + 周线走势）`;
+  renderMALegend();
+
+  const klineWrap = document.getElementById('klineWrap');
+  klineWrap.innerHTML = '<div class="kline-loading"><div class="spinner"></div>正在加载日线+周线数据…</div>';
+  document.getElementById('levelNum').textContent='…';
+  document.getElementById('levelTitle').textContent='计算中';
+  document.getElementById('levelDesc').textContent='';
+  document.getElementById('levelTag').textContent='';
+  document.getElementById('analysisTip').innerHTML='';
+
+  const [weekData, dayData] = await Promise.all([
+    fetchWeekKline(code),
+    fetchDayKline(code)
+  ]);
+
+  // ① 日线计算分类等级
+  let dayLevel = levelFromData;
+  let dayResult = null;
+  if(dayData && dayData.length >= 30){
+    const dayCloses = dayData.map(d=>d[2]);
+    const dayMAs = {};
+    MA_PERIODS.forEach(p=>{ dayMAs[p] = calcMA(dayCloses, p); });
+    const lastDayClose = dayCloses[dayCloses.length-1];
+    const lastDayMAs = {};
+    MA_PERIODS.forEach(p=>{ const arr=dayMAs[p]; lastDayMAs[p]=arr[arr.length-1]; });
+    dayLevel = calcLevel(lastDayClose, lastDayMAs);
+    dayResult = { level: dayLevel, lastClose: lastDayClose, lastMAs: lastDayMAs };
+  }
+
+  // ② 周线画K线图
+  if(!weekData||weekData.length<10){
+    klineWrap.innerHTML=`<div class="kline-loading" style="color:#FFD700;">⚠️ 周线图加载失败，已显示日线分类等级。<br><small>建议在东方财富查看 ${name}（${code}）的周线K线图。</small></div>`;
+    showLevelInfo(dayLevel, null);
+    showAnalysisTip(dayLevel, name, dayResult, null);
+    return;
+  }
+
+  klineWrap.innerHTML='';
+  const canvas=document.createElement('canvas');
+  klineWrap.appendChild(canvas);
+  const weekResult = drawKline(canvas, weekData);
+  const weekLevel = weekResult ? weekResult.level : levelFromData;
+
+  showLevelInfo(dayLevel, weekLevel);
+  showAnalysisTip(dayLevel, name, dayResult, weekLevel);
+}
+
+function showLevelInfo(dayLevel, weekLevel){
+  const info = LEVEL_INFO[dayLevel-1];
+  document.getElementById('levelNum').textContent=`日线 第${dayLevel}级`;
+  document.getElementById('levelNum').style.color=info.color;
+  document.getElementById('levelTitle').textContent=`日线：${info.ma}`;
+  if(weekLevel !== null && weekLevel !== undefined){
+    const wInfo = LEVEL_INFO[weekLevel-1];
+    document.getElementById('levelDesc').textContent = info.desc + `  |  周线：第${weekLevel}级（${wInfo.desc.slice(0,8)}）`;
+  } else {
+    document.getElementById('levelDesc').textContent = info.desc;
+  }
+  const tag=document.getElementById('levelTag');
+  tag.textContent=dayLevel>=7?'日线强势，关注缠论二买机会':dayLevel>=4?'日线中性，等待升级信号':'日线弱势，谨慎介入';
+  tag.style.background=`${info.color}22`;
+  tag.style.color=info.color;
+  tag.style.borderColor=info.color;
+}
+
+function showAnalysisTip(dayLevel, name, result, weekLevel){
+  const tip=document.getElementById('analysisTip');
+  const lClose=result?result.lastClose.toFixed(2):'—';
+  
+  let syncText = '';
+  if(weekLevel !== null && weekLevel !== undefined){
+    if(weekLevel >= dayLevel){
+      syncText = `<div style="color:#e53935;margin-bottom:8px;">📡 双轨共振：日线第${dayLevel}级 + 周线第${weekLevel}级，周线趋势更强，<strong>趋势可信度高</strong>。</div>`;
+    } else if(weekLevel < dayLevel - 2){
+      syncText = `<div style="color:#FFD700;margin-bottom:8px;">⚡ 双轨背离：日线第${dayLevel}级但周线仅第${weekLevel}级，短期反弹、中期趋势未确认，<strong>谨慎入场，轻仓观察</strong>。</div>`;
+    } else {
+      syncText = `<div style="color:#FFA07A;margin-bottom:8px;">📊 双轨基本同步：日线第${dayLevel}级，周线第${weekLevel}级，趋势方向一致，可按常规操作。</div>`;
+    }
+  }
+
+  let advice='';
+  if(dayLevel>=8){
+    advice=`<span style="color:#e53935;">📈 强势状态（日线第${dayLevel}级）：${name} 突破大部分均线，处于强势多头区间。<br>操作建议：等待回调到MA55-MA89形成底分型（缠论二买），是最佳入场机会。止损设MA89线下方。</span>`;
+  }else if(dayLevel>=6){
+    advice=`<span style="color:#FF9800;">📊 偏强状态（日线第${dayLevel}级）：${name} 处于${LEVEL_INFO[dayLevel-1].ma}。<br>操作建议：适度关注，等待底分型 + 板块指标双重确认后入场。</span>`;
+  }else if(dayLevel>=4){
+    advice=`<span style="color:#FFD700;">⏸ 中性状态（日线第${dayLevel}级）：${name} 处于${LEVEL_INFO[dayLevel-1].ma}。<br>操作建议：当前不是最佳时机，观察板块强弱指标 + 等待连续升级信号。</span>`;
+  }else{
+    advice=`<span style="color:#26a69a;">⚠️ 弱势状态（日线第${dayLevel}级）：${name} 受均线压制（${LEVEL_INFO[dayLevel-1].ma}）。<br>操作建议：不宜进入，等待突破MA21并形成底分型再评估。</span>`;
+  }
+  tip.innerHTML=`
+    <div style="color:#FFD700;font-weight:bold;margin-bottom:10px;">📖 缠论第106课 · 双轨制分析</div>
+    <div style="margin-bottom:8px;font-size:12px;">当前日线收盘价：<span style="color:#fff;font-weight:bold;">${lClose}</span>
+      &nbsp;|&nbsp; 日线级别：<span style="color:${LEVEL_INFO[dayLevel-1].color};font-weight:bold;">第${dayLevel}级</span>
+      ${weekLevel!==null&&weekLevel!==undefined?`&nbsp;|&nbsp; 周线级别：<span style="color:${LEVEL_INFO[weekLevel-1].color};font-weight:bold;">第${weekLevel}级</span>`:''}
+    </div>
+    ${syncText}
+    ${result?`<div style="margin-bottom:10px;display:flex;flex-wrap:wrap;gap:6px;">
+      ${MA_PERIODS.map((p,i)=>`<span style="background:#1a1f35;border:1px solid ${MA_COLORS[i]};border-radius:4px;padding:2px 8px;font-size:11px;color:${MA_COLORS[i]};">MA${p}: ${result.lastMAs[p]?result.lastMAs[p].toFixed(2):'—'}</span>`).join('')}
+    </div>`:''}
+    <div>${advice}</div>
+    <div style="margin-top:12px;padding-top:10px;border-top:1px solid #2a2f4a;color:#555;font-size:11px;line-height:1.8;">
+      <strong style="color:#666;">双轨制说明</strong>（缠论第106课应用）<br>
+      ① <span style="color:#888;">日线分级</span> → 判断个股当前强弱位置，用于选股筛选<br>
+      ② <span style="color:#888;">周线走势</span> → 判断中期趋势方向（K线图展示），用于验证入场方向<br>
+      ③ <span style="color:#888;">双轨共振</span> = 日线+周线方向一致 → 信号最强，优先介入
+    </div>`;
+}
+
+function closeModal(e){
+  if(!e||e.target===document.getElementById('modalOverlay')){
+    document.getElementById('modalOverlay').classList.remove('show');
+  }
+}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
+
+// ─────────────── 启动 ───────────────
+renderTheory();
+renderSectors();
+renderBarChart();
+renderTimeline();
+renderRec();
+</script>
+</body>
+</html>

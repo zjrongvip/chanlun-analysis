@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2032%2032%27%3E%3Crect%20width%3D%2732%27%20height%3D%2732%27%20rx%3D%277%27%20fill%3D%27%23ffffff%27%2F%3E%3Crect%20x%3D%278%27%20y%3D%2712%27%20width%3D%2716%27%20height%3D%2711%27%20fill%3D%27rgba(59%2C91%2C165%2C.10)%27%20stroke%3D%27%233b5ba5%27%20stroke-width%3D%271.5%27%20stroke-dasharray%3D%273%202%27%2F%3E%3Cpath%20d%3D%27M11%2021%20L16%207%20L21%2015%27%20fill%3D%27none%27%20stroke%3D%27%231c7ed6%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%2F%3E%3Ccircle%20cx%3D%2721%27%20cy%3D%2715%27%20r%3D%272.4%27%20fill%3D%27%23d64545%27%2F%3E%3C%2Fsvg%3E">
+<title>缠论量化分析系统 · 产品需求文档 PRD v3.0</title>
+<style>
+  :root{
+    --bg:#f5f6f8; --card:#ffffff; --line:#e3e6ea; --line2:#eef0f3;
+    --tx:#1f2329; --tx2:#5b6470; --tx3:#8b949e;
+    --up:#d64545; --down:#2f9e44; --blue:#1c7ed6; --violet:#7b2d8e;
+    --orange:#e8863c; --zs:#3b5ba5; --gold:#c89b1a;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--bg); color:var(--tx);
+    font:14px/1.5 -apple-system,"Segoe UI","Microsoft YaHei",system-ui,sans-serif;
+    padding:14px 16px 60px;
+  }
+  .nav{display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:7px 10px;margin-bottom:10px}
+  .nav a{font-size:12.5px;color:var(--tx2);text-decoration:none;border:1px solid var(--line2);background:#fafbfc;padding:4px 11px;border-radius:20px}
+  .nav a:hover{border-color:#c9d4e0;color:var(--tx)}
+  .nav a.on{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:600}
+  .nav .sp{margin-left:auto;color:var(--tx3);font-size:11.5px}
+
+  .wrap{display:grid;grid-template-columns:216px minmax(0,1fr);gap:18px;align-items:start;max-width:1240px}
+  @media (max-width:1080px){.wrap{grid-template-columns:minmax(0,1fr)}}
+  .toc{position:sticky;top:14px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+  .toc h4{margin:0 0 8px;font-size:12.5px;color:var(--tx3);font-weight:600;letter-spacing:.4px}
+  .toc a{display:block;font-size:12.5px;color:var(--tx2);text-decoration:none;padding:3.5px 0;border-bottom:1px dashed var(--line2)}
+  .toc a:last-child{border-bottom:none}
+  .toc a:hover{color:var(--blue)}
+  @media (max-width:1080px){.toc{position:static}}
+
+  .doc{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:22px 26px 30px;min-width:0}
+  h1{font-size:23px;margin:0 0 6px;font-weight:700;letter-spacing:.2px}
+  .meta{font-size:12.5px;color:var(--tx3);margin-bottom:16px}
+  .meta b{color:var(--tx2);font-weight:600}
+  .pill{display:inline-block;font-size:11.5px;padding:2px 9px;border-radius:20px;border:1px solid var(--line);color:var(--tx2);background:#fafbfc;margin-right:6px}
+  .pill.ok{color:#1f7a35;border-color:#c7e6ce;background:#f4fbf5}
+  .pill.warn{color:#a2621a;border-color:#f0dcbc;background:#fffaf0}
+  .pill.blue{color:#1a6cb5;border-color:#c3dcf3;background:#f3f9ff}
+
+  h2{font-size:17px;margin:30px 0 10px;padding-bottom:7px;border-bottom:2px solid var(--line);font-weight:700}
+  h2:first-of-type{margin-top:22px}
+  h3{font-size:14.5px;margin:18px 0 7px;font-weight:650;color:var(--tx)}
+  h4{font-size:13.5px;margin:14px 0 6px;font-weight:650;color:var(--tx2)}
+  p{margin:7px 0;font-size:13.5px;line-height:1.75;color:var(--tx)}
+  ul,ol{margin:7px 0;padding-left:22px}
+  li{font-size:13.5px;line-height:1.75;margin:3px 0}
+  code{background:#f3f4f6;border:1px solid var(--line2);border-radius:4px;padding:1px 5px;font:12.5px/1.5 Consolas,"Courier New",monospace;color:#2f3b4a}
+  pre{background:#f8f9fb;border:1px solid var(--line);border-radius:8px;padding:11px 13px;overflow-x:auto;margin:9px 0}
+  pre code{background:none;border:none;padding:0;font-size:12.5px;line-height:1.65}
+
+  table{width:100%;border-collapse:collapse;margin:10px 0;font-size:13px}
+  th,td{border:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top;line-height:1.6}
+  th{background:#f7f9fb;font-weight:650;color:var(--tx2);white-space:nowrap}
+  td b{font-weight:650}
+  .tnum{font-variant-numeric:tabular-nums;white-space:nowrap}
+
+  .box{border:1px solid var(--line);border-radius:9px;padding:11px 14px;margin:11px 0;background:#fcfdfe}
+  .box.warn{border-color:#f0dcbc;background:#fffaf0}
+  .box.ok{border-color:#c7e6ce;background:#f6fcf7}
+  .box.info{border-color:#c3dcf3;background:#f5faff}
+  .box .bt{font-size:12.5px;font-weight:650;margin-bottom:5px}
+  .box.warn .bt{color:#a2621a}
+  .box.ok .bt{color:#1f7a35}
+  .box.info .bt{color:#1a6cb5}
+  .box p,.box li{font-size:13px}
+
+  .fr{border:1px solid var(--line);border-radius:9px;padding:0;margin:14px 0;overflow:hidden}
+  .fr .frh{background:#f7f9fb;padding:9px 13px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+  .fr .frn{font-size:12px;font-weight:700;color:#fff;background:var(--blue);border-radius:5px;padding:1.5px 8px}
+  .fr .frt{font-size:14px;font-weight:650}
+  .fr .frs{font-size:12px;color:var(--tx3);margin-left:auto}
+  .fr .frb{padding:11px 13px}
+  .fr .frb h4{margin-top:11px}
+  .fr .frb h4:first-child{margin-top:0}
+
+  .flow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:9px 0}
+  .flow span{font-size:12.5px;padding:3px 10px;border-radius:6px;border:1px solid var(--line);background:#fafbfc;color:var(--tx2)}
+  .flow span.on{background:#eef6ff;border-color:#c3dcf3;color:#1a6cb5;font-weight:600}
+  .flow i{color:var(--tx3);font-style:normal;font-size:12px}
+
+  .foot{color:var(--tx3);font-size:12px;line-height:1.8;margin-top:26px;padding-top:12px;border-top:1px solid var(--line)}
+  @media (max-width:720px){
+    body{padding:10px 10px 40px}
+    .doc{padding:14px 12px 20px}
+    h1{font-size:19px}
+    h2{font-size:15.5px}
+    /* 表头 nowrap + 长代码行会撑破窄屏 → 固定布局 + 允许折行 */
+    table{table-layout:fixed;font-size:11.5px}
+    th,td{padding:5px 6px;white-space:normal;word-break:break-word}
+    pre{max-width:100%}
+    pre code{white-space:pre-wrap;word-break:break-all}
+    code{word-break:break-all}
+    .flow span{font-size:11.5px;padding:2px 8px}
+    .nav .sp{display:none}
+  }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a href="../">走势分析台</a>
+  <a href="../yimai/">一买选股</a>
+  <a href="../multi/">多级别中枢</a>
+  <a href="../scan/">批量扫一买</a>
+  <a href="../sector/">板块轮动</a>
+  <a href="../legacy/">旧版对照</a>
+  <a class="on" href="../prd/">PRD</a>
+  <span class="sp">项目文档 PRD v3.0 · 系统全景 / 功能规格 / 算法口径 / 发布规范</span>
+</nav>
+
+<div class="wrap">
+
+  <aside class="toc">
+    <h4>目录</h4>
+    <a href="#s1">1 项目概述</a>
+    <a href="#s2">2 系统全景</a>
+    <a href="#s3">3 功能规格（FR）</a>
+    <a href="#s4">4 算法规格</a>
+    <a href="#s5">5 数据源规格</a>
+    <a href="#s6">6 技术架构</a>
+    <a href="#s7">7 非功能需求</a>
+    <a href="#s8">8 验收标准</a>
+    <a href="#s9">9 版本与路线图</a>
+    <a href="#s10">10 风险与依赖</a>
+    <a href="#s11">11 附录</a>
+  </aside>
+
+  <main class="doc">
+
+    <h1>缠论量化分析系统 · 产品需求文档</h1>
+    <div class="meta">
+      <b>版本</b> PRD v3.0 &nbsp;·&nbsp; <b>日期</b> 2026-09-20 &nbsp;·&nbsp; <b>状态</b> 已上线
+      &nbsp;·&nbsp; <b>在线</b> <a href="https://zjrongvip.github.io/chanlun-analysis/" style="color:#1c7ed6">zjrongvip.github.io/chanlun-analysis</a>
+      <div style="margin-top:7px">
+        <span class="pill ok">纯前端 · 零依赖</span>
+        <span class="pill ok">六页线上运行</span>
+        <span class="pill blue">内核已对拍验证</span>
+        <span class="pill">移动端适配</span>
+        <span class="pill warn">行情源为非官方接口</span>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <h2 id="s1">1　项目概述</h2>
+
+    <h3>1.1　背景</h3>
+    <p>本项目的起点是一条 Python 分析脚本链（第 12 / 14 / 15 号脚本），能按缠论口径算出一类买点，但存在三个硬伤：</p>
+    <ul>
+      <li><b>哪里都跑不了</b>——依赖 Python 环境与 <code>talib</code>、<code>matplotlib</code>，只能在本机命令行运行，无法在手机上随手看；</li>
+      <li><b>结果不可交互</b>——输出的是静态图片，不能缩放、不能切周期、不能追问"这个中枢在哪"；</li>
+      <li><b>口径会漂移</b>——同一套算法被复制到多个页面后各自演化，出现"同一只票两处中枢不一样"。</li>
+    </ul>
+    <p>同时，此前已有一个挂在 GitHub Pages 上的旧版分析页，算法是启发式的（用"最近 20 日涨跌"猜中枢方向、找不到就退化成分位数箱体），且主数据源在新浪 <code>json_v2.php</code>——该接口没有 CORS 头，一上公网就取不到数，线上页面实际是废的。</p>
+
+    <h3>1.2　产品定位</h3>
+    <div class="box info">
+      <div class="bt">一句话定位</div>
+      <p>把已对拍验证过的缠论算法内核，做成<b>打开即用、口径统一、可分享</b>的纯前端分析站点——不装环境、不连服务器、一个链接就能看。</p>
+    </div>
+
+    <h3>1.3　目标用户与使用场景</h3>
+    <table>
+      <tr><th>用户</th><th>场景</th><th>诉求</th></tr>
+      <tr>
+        <td><b>本人（主用户）</b><br><span style="color:#8b949e">兼职量化交易者</span></td>
+        <td>盘中/盘后看某只票的结构；收盘后扫一遍自选股有没有一买</td>
+        <td>快速、口径可信、能在手机上打开</td>
+      </tr>
+      <tr>
+        <td><b>同事 / 朋友</b></td>
+        <td>收到一个链接，想看某只票</td>
+        <td>不需要注册、不需要装东西，改代码就能查</td>
+      </tr>
+      <tr>
+        <td><b>自己（学习态）</b></td>
+        <td>对照缠论原文（108 课）验证算法实现是否符合定义</td>
+        <td>算法口径可追溯、可与旧版对照</td>
+      </tr>
+    </table>
+
+    <h3>1.4　设计原则</h3>
+    <table>
+      <tr><th>原则</th><th>含义</th><th>落地方式</th></tr>
+      <tr><td><b>口径唯一</b></td><td>同一套算法只在一处维护，其余页靠构建注入</td><td>内核 <code>chan-core</code> 只在走势分析台维护，其余页由 <code>build.py</code> 注入，发布前校验哈希一致</td></tr>
+      <tr><td><b>顺序不可跳</b></td><td>分型→笔→中枢→走势→背驰→买卖点，不可倒推</td><td>内核固定计算链；页面只消费结果，不做二次推断</td></tr>
+      <tr><td><b>数据源可活</b></td><td>公网页面只能用浏览器能直连的接口</td><td>只用带 <code>ACAO</code> 的腾讯接口或 JSONP，见 §5</td></tr>
+      <tr><td><b>零依赖部署</b></td><td>不引入打包器、框架、CDN</td><td>单文件 HTML，含内联 CSS/JS/favicon，GitHub Pages 直接托管</td></tr>
+      <tr><td><b>判断可追溯</b></td><td>每个结论都要能说出依据</td><td>页面展示闸门通过情况、中枢清单、笔序、MACD 力度对比</td></tr>
+    </table>
+
+    <!-- ============================================================ -->
+    <h2 id="s2">2　系统全景</h2>
+
+    <h3>2.1　组成部分</h3>
+    <table>
+      <tr><th>#</th><th>子系统</th><th>形态</th><th>位置</th><th>状态</th></tr>
+      <tr><td>1</td><td><b>线上分析站点</b></td><td>纯静态网页（6 页）</td><td><code>chanlun-analysis/</code></td><td><span class="pill ok">已上线</span></td></tr>
+      <tr><td>2</td><td><b>一买工具（本地版）</b></td><td>单文件 HTML</td><td><code>chanlun-yimai/一买选股.html</code></td><td><span class="pill ok">可用</span></td></tr>
+      <tr><td>3</td><td><b>缠论推演系统</b></td><td>Flask + 前端</td><td><code>scripts/chanlun_server.py</code> + <code>chanlun-evolution/</code></td><td><span class="pill ok">本地可用</span></td></tr>
+      <tr><td>4</td><td><b>构建体系</b></td><td>Python 脚本</td><td><code>_build_site/</code></td><td><span class="pill ok">在用</span></td></tr>
+      <tr><td>5</td><td><b>验证体系</b></td><td>Python 脚本</td><td><code>_verify_yimai/</code>、<code>_verify_period/</code></td><td><span class="pill ok">在用</span></td></tr>
+      <tr><td>6</td><td><b>缠论知识库</b></td><td>Markdown 语料</td><td><code>projects/缠论精读/</code></td><td><span class="pill ok">已建成</span></td></tr>
+      <tr><td>7</td><td><b>算法技能包</b></td><td>WorkBuddy Skill（4 个）</td><td><code>~/.workbuddy/skills/chanlun-*</code></td><td><span class="pill ok">已固化</span></td></tr>
+    </table>
+
+    <h3>2.2　分层架构</h3>
+    <div class="box">
+      <p><b>L1 算力层 · <code>chan-core</code></b>（唯一真源，只在一处维护）</p>
+      <p style="color:#5b6470;padding-left:14px">K线包含处理 → 分型 → 笔（含过滤）→ 线段 → 三笔重叠中枢 → 走势段 → 一买九闸门</p>
+      <p><b>L2 扩展层 · <code>chan-ext</code></b></p>
+      <p style="color:#5b6470;padding-left:14px">二买 / 三买判定 · MACD 背驰量化 · 位置导航（相对最后中枢）· 中枢清单</p>
+      <p><b>L3 数据层 · 数据路由</b></p>
+      <p style="color:#5b6470;padding-left:14px">腾讯 <code>fqkline</code>（日/周/月，带 CORS）· 新浪 JSONP（分时）· 周期参数与窗口管理 · 源记忆</p>
+      <p><b>L4 呈现层 · 页面</b></p>
+      <p style="color:#5b6470;padding-left:14px">六页 + 本 PRD 页，统一浅色卡片风格、统一导航、统一 favicon</p>
+      <p><b>L5 交付层 · 构建与发布</b></p>
+      <p style="color:#5b6470;padding-left:14px">模板注入构建 → 语法校验 → 内核哈希校验 → Edge 渲染自检 → GCM 推送 → 线上复核</p>
+    </div>
+
+    <h3>2.3　计算链（页面共用的分析流程）</h3>
+    <div class="flow">
+      <span>输入代码</span><i>→</i><span class="on">取 K 线</span><i>→</i><span>包含处理</span><i>→</i><span>分型</span><i>→</i>
+      <span>笔</span><i>→</i><span>中枢</span><i>→</i><span>走势段</span><i>→</i><span>背驰</span><i>→</i><span>买卖点</span><i>→</i><span class="on">结论卡片 + 图</span>
+    </div>
+
+    <!-- ============================================================ -->
+    <h2 id="s3">3　功能规格（FR）</h2>
+
+    <!-- FR-1 -->
+    <div class="fr">
+      <div class="frh"><span class="frn">FR-1</span><span class="frt">走势分析台</span><span class="frs">站点首页 · 核心工具</span></div>
+      <div class="frb">
+        <h4>定位</h4>
+        <p>单只股票的全周期结构分析主界面，是整套算法能力的"完整形态"。</p>
+        <h4>功能点</h4>
+        <table>
+          <tr><th>功能</th><th>规格</th></tr>
+          <tr><td>周期切换</td><td><b>七周期</b>：5 / 15 / 30 / 60 分、日、周、月</td></tr>
+          <tr><td>一买判定</td><td>15 号脚本九道闸门，输出命中/未命中 + 未命中原因</td></tr>
+          <tr><td>二买判定</td><td>一买（或前低）之后回抽不破前低，且已确认</td></tr>
+          <tr><td>三买判定</td><td>向上突破中枢 ZG 后回抽不跌回中枢</td></tr>
+          <tr><td>背驰量化</td><td>同向相邻两笔 MACD 柱力度比，输出本段/前段比值与确认日</td></tr>
+          <tr><td>走势全景卡</td><td>当前位置（中枢上方/内部/下方）、最后中枢 ZD~ZG、最新收盘</td></tr>
+          <tr><td>中枢清单</td><td>按时间倒序列出全部中枢区间与起止日期</td></tr>
+          <tr><td>图层面板</td><td>分型 / 笔 / 中枢 / 买卖点 / MACD 可独立开关</td></tr>
+          <tr><td>交互</td><td>滚轮缩放、拖拽平移、双击复位、悬停看单根 K 线（含该位所属中枢）</td></tr>
+          <tr><td>深链</td><td><code>?code=002400&amp;period=d</code>，可分享、可被外部页面跳转</td></tr>
+        </table>
+        <h4>验收标准</h4>
+        <ul>
+          <li>日线 002400 的笔数/中枢数与一买页完全一致（同源内核）</li>
+          <li>七周期切换后图表与结论同步刷新，无残留上一次的数据</li>
+          <li>URL 深链打开即定位到指定代码与周期</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- FR-2 -->
+    <div class="fr">
+      <div class="frh"><span class="frn">FR-2</span><span class="frt">一买选股</span><span class="frs">单票即时判定</span></div>
+      <div class="frb">
+        <h4>定位</h4>
+        <p>只做一件事：判断"这只票在当前周期上，一买成立了没有"。是新版内核的原始基准页。</p>
+        <h4>功能点</h4>
+        <table>
+          <tr><th>功能</th><th>规格</th></tr>
+          <tr><td>判定口径</td><td>与 15 号脚本逐样本一致（5120 样本对拍零差异）</td></tr>
+          <tr><td>周期</td><td>5 / 15 / 30 / 60 分、日、周、月（七周期）</td></tr>
+          <tr><td>结论卡片</td><td>命中时给出一买点、确认日、距今、相对一买涨跌幅；未命中给出<b>卡在哪道闸门</b></td></tr>
+          <tr><td>小级别提示</td><td>分时周期命中时提示"需大级别配合"</td></tr>
+          <tr><td>数据源标注</td><td>页面显示本次数据实际来自哪个源（腾讯 / 新浪）</td></tr>
+        </table>
+        <div class="box warn">
+          <div class="bt">口径纪律</div>
+          <p>本页的内核 <code>chan-core</code> 与其他页<b>逐字节相同</b>，修改内核必须同步全部页面，不得单独改动本页算法。</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- FR-3 -->
+    <div class="fr">
+      <div class="frh"><span class="frn">FR-3</span><span class="frt">多级别中枢分析</span><span class="frs">日 / 周 / 月同屏</span></div>
+      <div class="frb">
+        <h4>定位</h4>
+        <p>解决"级别共振"问题：同一只票的三个级别同时摆在一屏上，看结构是否一致。</p>
+        <h4>功能点</h4>
+        <table>
+          <tr><th>功能</th><th>规格</th></tr>
+          <tr><td>三级同屏</td><td>日 / 周 / 月各一张图，笔与中枢全部由 <code>chan-core</code> 重画</td></tr>
+          <tr><td>共振提示</td><td>顶部横幅：几个级别同时出现一买结构</td></tr>
+          <tr><td>级别结论</td><td>每级显示：一买有无、位置（中枢上方/内部/下方）、笔数、中枢数、分型数</td></tr>
+          <tr><td>中枢标注</td><td>图上只给<b>最近 3 个</b>中枢标数值，避免密集中枢糊成一片；完整清单在下方列表</td></tr>
+          <tr><td>回看日</td><td>支持指定历史日期，按"那一天"的数据重算（<code>?code=&amp;asof=</code>）</td></tr>
+          <tr><td>悬停</td><td>每张图独立 tooltip</td></tr>
+        </table>
+        <h4>验收标准</h4>
+        <ul>
+          <li>同一只票的日线级别数字（笔 / 中枢 / 分型）与走势分析台完全一致</li>
+          <li>窄屏（375px）下三张图纵向排列且无横向滚动</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- FR-4 -->
+    <div class="fr">
+      <div class="frh"><span class="frn">FR-4</span><span class="frt">批量扫一买</span><span class="frs">自选股扫描</span></div>
+      <div class="frb">
+        <h4>定位</h4>
+        <p>把"一只一只查"变成"一次扫一批"，用于收盘后筛自选股。</p>
+        <h4>功能点</h4>
+        <table>
+          <tr><th>功能</th><th>规格</th></tr>
+          <tr><td>输入</td><td>多代码粘贴，空格 / 逗号 / 换行 / 中文逗号均可作分隔</td></tr>
+          <tr><td>并发</td><td>4 路并发请求，避免触发上游限流</td></tr>
+          <tr><td>结果表</td><td>代码 · 名称 · 最新价 · 数据截止 · 一买 · 一买价 · 确认日 · 距今 · 中枢 ZD~ZG · 相对一买 · 笔/中枢</td></tr>
+          <tr><td>命中优先</td><td>命中行粉色高亮并自动排到最前（按距今升序）</td></tr>
+          <tr><td>排序与筛选</td><td>表头可点排序；可勾"只看命中"</td></tr>
+          <tr><td>导出</td><td>导出 CSV</td></tr>
+          <tr><td>跳转</td><td>点任意一行 → 新窗口打开走势分析台看该票</td></tr>
+          <tr><td>深链</td><td><code>?codes=600519,000001&amp;period=d&amp;auto=1</code>（<code>auto=1</code> 自动开扫）</td></tr>
+          <tr><td>记忆</td><td>上次输入的代码存本地，下次自动带出</td></tr>
+        </table>
+        <h4>验收标准</h4>
+        <ul>
+          <li>判定口径与一买页完全一致（同内核）</li>
+          <li>12 只标的扫描可在 60 秒内完成并渲染结果</li>
+          <li>单只失败不影响其余标的，失败行给出原因</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- FR-5 -->
+    <div class="fr">
+      <div class="frh"><span class="frn">FR-5</span><span class="frt">板块轮动选股</span><span class="frs">缠论第 106 课</span></div>
+      <div class="frb">
+        <h4>定位</h4>
+        <p>从"个股"上升到"板块"：先判断哪些板块强，再在强板块里找票。实现依据是缠论第 106 课的 8 条均线 → 9 级分类 → 板块强弱 → 轮动。</p>
+        <h4>功能点</h4>
+        <table>
+          <tr><th>功能</th><th>规格</th></tr>
+          <tr><td>板块分级</td><td>按 8 条均线排列给出 9 级分类，双轨制（日线分级 + 周线形态）</td></tr>
+          <tr><td>板块卡片</td><td>网格展示各板块的级别、趋势、成分股</td></tr>
+          <tr><td>热点条</td><td>顶部横向滚动的热点板块标签</td></tr>
+          <tr><td>详情弹窗</td><td>点卡片弹出该板块明细与成分股表现</td></tr>
+          <tr><td>数据源</td><td>已由东财切换为腾讯 <code>fqkline</code>（东财对本机 IP 限流）</td></tr>
+        </table>
+        <div class="box warn">
+          <div class="bt">已知限制</div>
+          <p>本页不依赖 <code>chan-core</code>（它是均线系统，不是缠论结构判断），属独立实现；升级缠论内核时<b>不会</b>影响本页。</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- FR-6 -->
+    <div class="fr">
+      <div class="frh"><span class="frn">FR-6</span><span class="frt">旧版对照</span><span class="frs">归档页</span></div>
+      <div class="frb">
+        <h4>定位</h4>
+        <p>保留 v3 之前的旧算法页面，用于<b>新旧口径对照</b>——同一只票用旧算法和新算法各画一次，差异一眼可见。</p>
+        <h4>功能点</h4>
+        <table>
+          <tr><th>功能</th><th>规格</th></tr>
+          <tr><td>算法</td><td>旧启发式：按"最近 20 日涨跌"决定上下上/下上下，找不到就退化为 75%/25% 分位数箱体</td></tr>
+          <tr><td>数据源</td><td>已修复为腾讯 <code>fqkline</code>（原新浪源无 CORS、东财已限流，线上原本打不开）</td></tr>
+          <tr><td>已知修复</td><td>· 数据源救活 · 股票名被裸代码覆盖的 bug · 深色主题换肤为浅色</td></tr>
+        </table>
+        <div class="box info">
+          <div class="bt">为什么保留旧算法</div>
+          <p>归档页的价值不在"能用"，而在"能比"。例如茅台：旧算法把中枢算在 11.48~11.75，明显是启发式产物；新内核按三笔重叠算出的区间完全不同。<b>归档 ≠ 放着烂，所以数据源也一并修活了。</b></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- FR-7 -->
+    <div class="fr">
+      <div class="frh"><span class="frn">FR-7</span><span class="frt">项目文档（本页）</span><span class="frs">PRD v3.0</span></div>
+      <div class="frb">
+        <h4>定位</h4>
+        <p>把散落在多个系统里的缠论能力收成一份可交付文档：系统全景、功能规格、算法口径、数据源约束、发布规范、验收标准。</p>
+        <h4>功能点</h4>
+        <ul>
+          <li>左侧目录锚点跳转</li>
+          <li>随站点一同发布，任何人打开链接即可读</li>
+          <li>版本随内核升级同步维护（当前 v3.0）</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <h2 id="s4">4　算法规格</h2>
+
+    <div class="box warn">
+      <div class="bt">顺序铁律（不可跳步、不可倒推）</div>
+      <div class="flow">
+        <span class="on">1 分型</span><i>→</i><span class="on">2 笔</span><i>→</i><span class="on">3 线段</span><i>→</i>
+        <span class="on">4 中枢</span><i>→</i><span class="on">5 走势类型</span><i>→</i><span class="on">6 背驰</span><i>→</i><span class="on">7 买卖点</span>
+      </div>
+      <p style="margin-top:6px">历史上曾因跳步导致 5 分钟级别分析全线出错，此后固化为强制顺序。</p>
+    </div>
+
+    <h3>4.1　各环节规则</h3>
+    <table>
+      <tr><th>环节</th><th>实现依据</th><th>要点</th></tr>
+      <tr><td>K 线包含处理</td><td>缠论原文</td><td>按方向取高低点极值合并，消除包含关系</td></tr>
+      <tr><td>分型</td><td>缠论原文</td><td>顶/底分型三根 K 线判定，再作分型序列筛选</td></tr>
+      <tr><td>笔</td><td>第 69 课 + 12/14/15 号脚本</td><td>画笔规则 + 笔过滤（不满足过滤的笔不成笔）</td></tr>
+      <tr><td>线段</td><td>第 67 / 71 课</td><td>特征序列法</td></tr>
+      <tr><td><b>中枢</b></td><td><b>第 18 课</b></td><td><b>连续三笔重叠区间</b>，取 ZD ~ ZG。<b>禁止</b>用统计分位数或涨跌幅方向猜中枢</td></tr>
+      <tr><td>走势段</td><td>第 17 课起</td><td>按中枢关系划分上涨/下跌/盘整</td></tr>
+      <tr><td>一买</td><td>第 15 号脚本九闸门</td><td>下跌 + 盘整 + 下跌走完 → 一类买点</td></tr>
+      <tr><td>背驰</td><td>MACD 力度比较</td><td>同向相邻两笔的 MACD 柱面积/力度衰减，且创新极端价</td></tr>
+    </table>
+
+    <h3>4.2　买卖点定义（系统口径）</h3>
+    <table>
+      <tr><th>标记</th><th>定义</th><th>颜色</th><th>形状</th></tr>
+      <tr><td><b>一买</b></td><td>下跌 + 盘整 + 下跌走完，一卖后最低的向下笔低点</td><td><code>#1c7ed6</code> 蓝</td><td>▲</td></tr>
+      <tr><td><b>二买</b></td><td>一买（或前低）之后回抽不破前低，且已确认</td><td><code>#2f9e44</code> 绿</td><td>▲</td></tr>
+      <tr><td><b>三买</b></td><td>向上突破中枢 ZG 后，回抽不跌回中枢</td><td><code>#0b7285</code> 青</td><td>▲</td></tr>
+      <tr><td><b>一卖</b></td><td>一买结构的镜像形态</td><td><code>#d64545</code> 红</td><td>▼</td></tr>
+      <tr><td><b>二卖</b></td><td>一卖后回抽不破前高</td><td><code>#e8590c</code> 橙</td><td>▼</td></tr>
+    </table>
+    <p style="color:#8b949e;font-size:12.5px">配色遵循中国习惯：<b>红涨绿跌</b>。</p>
+
+    <h3>4.3　验证证据</h3>
+    <table>
+      <tr><th>验证项</th><th>方法</th><th>结论</th></tr>
+      <tr><td>一买算法与 Python 原脚本一致性</td><td>5120 组样本逐样本对拍（JS 内核 vs 原 <code>.py</code>）</td><td><b>零差异</b></td></tr>
+      <tr><td>周线 / 月线聚合正确性</td><td>由日线聚合，与腾讯原生周/月对比</td><td>排除窗口首端半期后<b>零偏差</b></td></tr>
+      <tr><td>分时聚合</td><td>逐桶对比</td><td>2 处 ≤ 0.02（窗口首端截断桶 + 上游数据小差）</td></tr>
+      <tr><td>内核未漂移</td><td>抽取各页 <code>&lt;script id="chan-core"&gt;</code> 做 sha1</td><td>5 页哈希全同 <code>a5b1dc3a6f82</code></td></tr>
+      <tr><td>扩展块未漂移</td><td>同上，对 <code>chan-ext</code></td><td>3 页哈希全同 <code>f900d3ca982a</code></td></tr>
+    </table>
+    <div class="box info">
+      <div class="bt">验证脚本位置</div>
+      <p><code>_verify_yimai/</code>（语法校验、DOM 渲染抓取、溢出探测）· <code>_verify_period/</code>（多周期聚合校验）</p>
+    </div>
+
+    <!-- ============================================================ -->
+    <h2 id="s5">5　数据源规格</h2>
+
+    <h3>5.1　接口清单</h3>
+    <table>
+      <tr><th>用途</th><th>接口</th><th>跨域</th><th>复权</th><th>状态</th></tr>
+      <tr>
+        <td>日 / 周 / 月 K 线</td>
+        <td><code>web.ifzq.gtimg.cn/appstock/app/fqkline/get</code></td>
+        <td>✅ <code>ACAO: *</code></td><td>前复权（<code>qfq</code>）</td><td><span class="pill ok">主源</span></td>
+      </tr>
+      <tr>
+        <td>5/15/30/60 分</td>
+        <td><code>money.finance.sina.com.cn/.../jsonp.php</code></td>
+        <td>✅ JSONP 免跨域</td><td>疑似不复权</td><td><span class="pill ok">主源</span></td>
+      </tr>
+      <tr>
+        <td>行情名称</td>
+        <td><code>qt.gtimg.cn/q=</code></td>
+        <td>✅ <code>ACAO: *</code></td><td>—</td><td><span class="pill ok">在用</span></td>
+      </tr>
+      <tr>
+        <td>兜底 K 线</td>
+        <td><code>push2his.eastmoney.com</code></td>
+        <td>—</td><td>前复权</td><td><span class="pill warn">已被 IP 限流</span></td>
+      </tr>
+    </table>
+
+    <h3>5.2　数据源铁律</h3>
+    <div class="box warn">
+      <div class="bt">公网纯前端页面只能这样取数</div>
+      <ul>
+        <li>✅ 响应头带 <code>Access-Control-Allow-Origin</code> 的接口（腾讯系）</li>
+        <li>✅ JSONP 回调方式（新浪分时）</li>
+        <li>❌ 无 CORS 头的普通 JSON 接口 —— <b>新浪 <code>json_v2.php</code> 就是这一类，公网必挂</b></li>
+        <li>❌ 已被限流的东财 <code>push2his</code>（本机 IP 实测全灭）</li>
+        <li>❌ 依赖第三方 CORS 代理（allorigins 等）—— 不稳定且会泄露请求</li>
+      </ul>
+      <p style="margin-bottom:0">本地 <code>file://</code> 打开时不校验 Origin，<b>看不出问题</b>；必须用线上 URL 实渲染才能验证取数是否真的通。</p>
+    </div>
+
+    <h3>5.3　周期与窗口参数</h3>
+    <table>
+      <tr><th>周期</th><th>参数</th><th>窗口</th><th>备注</th></tr>
+      <tr><td>5 / 15 / 30 / 60 分</td><td><code>m5</code> / <code>m15</code> / <code>m30</code> / <code>m60</code></td><td>480 根</td><td>跨多日时 X 轴显示日期，单日显示时间</td></tr>
+      <tr><td>日线</td><td><code>d</code></td><td>800 自然日</td><td>—</td></tr>
+      <tr><td>周线</td><td><code>w</code></td><td>240 根</td><td>由日线聚合</td></tr>
+      <tr><td>月线</td><td><code>mo</code></td><td>180 根</td><td>由日线聚合</td></tr>
+    </table>
+    <p><b>统一规则</b>：未走完的当前周期 K 线一律丢弃（避免把"半根周线"当成完整周线参与笔与中枢计算）。</p>
+
+    <h3>5.4　降级与容错</h3>
+    <ul>
+      <li>腾讯源失败 → 回落东财兜底（虽已限流，但在其他网络环境下仍可能可用）</li>
+      <li>批量扫描：单只失败不中断整批，失败行标注原因</li>
+      <li>页面显示本次实际使用的源，便于判断数据可信度</li>
+    </ul>
+
+    <!-- ============================================================ -->
+    <h2 id="s6">6　技术架构</h2>
+
+    <h3>6.1　技术栈</h3>
+    <table>
+      <tr><th>层</th><th>选型</th><th>理由</th></tr>
+      <tr><td>页面</td><td>原生 HTML + CSS + ES5 语法 JS</td><td>零构建、零依赖、兼容性最好，GitHub Pages 直接托管</td></tr>
+      <tr><td>绘图</td><td>Canvas 2D 手绘</td><td>K 线 + 笔 + 中枢 + 分型需要精确控制，图表库反而受限</td></tr>
+      <tr><td>构建</td><td>Python 3.11 脚本</td><td>内核注入、导航统一、favicon 注入</td></tr>
+      <tr><td>验证</td><td>Python + Edge headless</td><td>语法校验 + 真实浏览器渲染抓取 DOM</td></tr>
+      <tr><td>托管</td><td>GitHub Pages</td><td>免费、HTTPS、自定义路径，适合静态多页</td></tr>
+    </table>
+
+    <h3>6.2　构建体系（防漂移的核心）</h3>
+    <div class="box">
+      <p><b>内核唯一维护点</b>：<code>chanlun-analysis/index.html</code>（走势分析台）中的 <code>&lt;script id="chan-core"&gt;</code> 与 <code>&lt;script id="chan-ext"&gt;</code>。</p>
+      <p style="margin-bottom:0"><b>其余页面靠脚本注入</b>，禁止手工复制算法代码。</p>
+    </div>
+    <pre><code>C:\Users\Lenovo\WorkBuddy\Claw\
+├── chanlun-yimai\一买选股.html       # 一买工具源文件（本地单文件版）
+├── chanlun-analysis\
+│   ├── index.html                    # ★ 内核唯一维护点（走势分析台）
+│   ├── yimai\index.html              # 一买选股（含本页绘图，无 chan-ext）
+│   ├── multi\index.html              # ⚙ 构建产物 —— 勿手改
+│   ├── scan\index.html               # ⚙ 构建产物 —— 勿手改
+│   ├── sector\index.html             # 板块轮动（独立页）
+│   ├── legacy\index.html             # 旧版对照（独立页）
+│   └── prd\index.html                # 本 PRD 页
+└── _build_site\
+    ├── build.py                      # 抽内核 → 注入模板 → 生成 multi/scan
+    ├── update_nav.py                 # 七页导航一键统一
+    ├── patch_favicon.py              # 注入内联 SVG favicon（幂等）
+    ├── multi.template.html           # 多级别页模板
+    └── scan.template.html            # 批量扫描页模板</code></pre>
+
+    <h3>6.3　标准改动流程</h3>
+    <pre><code># 1. 改模板（不是改生成的 multi/scan/index.html）
+# 2. 重新构建 + 统一导航 + 补 favicon
+python _build_site/build.py
+python _build_site/update_nav.py
+python _build_site/patch_favicon.py
+
+# 3. 语法校验（七页全过）
+python _verify_yimai/syntax_check.py &lt;file&gt;
+
+# 4. 内核哈希校验（chan-core 全同 / chan-ext 全同）</code></pre>
+
+    <h3>6.4　发布流程（GCM 免 token 通道）</h3>
+    <pre><code>cd /c/Users/Lenovo/WorkBuddy/Claw/chanlun-analysis
+git add &lt;改动文件&gt;
+git -c user.name=zjrongvip -c user.email=zjrongvip@users.noreply.github.com commit -m "..."
+"C:/Program Files/Git/cmd/git.exe" -c http.proxy= -c https.proxy= push origin main:main</code></pre>
+    <div class="box warn">
+      <div class="bt">三条硬性要求</div>
+      <ul>
+        <li><b>必须脱沙箱</b>执行推送，否则沙箱代理拦截（<code>CONNECT tunnel failed 502</code>）</li>
+        <li><b>必须清代理</b>（<code>-c http.proxy= -c https.proxy=</code>）</li>
+        <li><b>不要把 token 内联进 URL</b> —— 那会绕过 Git Credential Manager 退化成裸 token，反而报 403</li>
+      </ul>
+    </div>
+
+    <h3>6.5　已知环境约束</h3>
+    <table>
+      <tr><th>约束</th><th>应对</th></tr>
+      <tr><td>Bash 环境 PATH 缺 MSYS 目录（工具 command not found）</td><td>已双层修复：用户环境变量 + 启动脚本兜底 source（<code>~/.workbuddy/shell-path-fix.sh</code>）</td></tr>
+      <tr><td>PowerShell 输出不回传</td><td>命令写文件，再用读取工具读回</td></tr>
+      <tr><td>Edge headless 在 Windows 有窗口最小宽度</td><td><b>截图会比设定宽度宽导致右侧被裁</b>——判断是否溢出必须用 iframe 探测真实 <code>bodyScrollWidth</code>，不能只看截图</td></tr>
+      <tr><td>容器 <code>Add-Type</code> / COM 被安全策略拦</td><td>改用文件与纯文本命令</td></tr>
+    </table>
+
+    <!-- ============================================================ -->
+    <h2 id="s7">7　非功能需求</h2>
+    <table>
+      <tr><th>类别</th><th>要求</th></tr>
+      <tr><td><b>性能</b></td><td>单票日线分析（800 自然日）首屏 &lt; 3 秒；批量扫描 12 只 &lt; 60 秒（4 路并发）</td></tr>
+      <tr><td><b>兼容性</b></td><td>Chrome / Edge / Safari 主流版本；响应式断点 1080px（侧栏收叠）与 720px（移动端）</td></tr>
+      <tr><td><b>可用性</b></td><td>取数失败给明确文案与原因；批量扫描单点失败不阻断整批；URL 深链可分享</td></tr>
+      <tr><td><b>可维护性</b></td><td>内核单点维护 + 构建注入 + 哈希校验；模板改动后必须重跑构建</td></tr>
+      <tr><td><b>可验证性</b></td><td>发布前必须通过 §8 全项自检；线上必须用干净浏览器 profile 实渲染复核（避免缓存干扰）</td></tr>
+      <tr><td><b>合规</b></td><td>页面明示"非投资建议"；行情源为非官方接口、无 SLA，需提示可能按 IP 限流</td></tr>
+      <tr><td><b>安全</b></td><td>不采集用户数据；不在前端存放任何凭据；不依赖第三方代理</td></tr>
+    </table>
+
+    <!-- ============================================================ -->
+    <h2 id="s8">8　验收标准（发布前必跑）</h2>
+    <table>
+      <tr><th>#</th><th>检查项</th><th>通过标准</th></tr>
+      <tr><td>1</td><td>JS 语法校验</td><td>七页全部 <code>ALL OK</code></td></tr>
+      <tr><td>2</td><td>内核哈希一致性</td><td><code>chan-core</code> 全页同哈希；<code>chan-ext</code> 有该块的页同哈希</td></tr>
+      <tr><td>3</td><td>导航完整性</td><td>七页各含 7 个导航项，当前页高亮正确</td></tr>
+      <tr><td>4</td><td>本地渲染</td><td><code>file://</code> 打开无 JS 报错，K 线与结论正常渲染</td></tr>
+      <tr><td>5</td><td>移动端</td><td>375px 下 <code>bodyScrollWidth == bodyClientWidth</code>（零横向溢出）</td></tr>
+      <tr><td>6</td><td>线上实渲染</td><td>线上 URL 用<b>干净 profile</b> 打开能取到数（出现"数据截止 …"）</td></tr>
+      <tr><td>7</td><td>图表可读性</td><td>X 轴刻度标签无叠印；密集中枢不糊图</td></tr>
+      <tr><td>8</td><td>资源可用性</td><td>无 404 静态资源（favicon 已内联，不依赖外部文件）</td></tr>
+    </table>
+
+    <!-- ============================================================ -->
+    <h2 id="s9">9　版本与路线图</h2>
+
+    <h3>9.1　已完成</h3>
+    <table>
+      <tr><th>版本</th><th>内容</th><th>关键提交</th></tr>
+      <tr><td>v1</td><td>板块轮动选股系统（106 课双轨制分级）</td><td><code>dbe9bac</code></td></tr>
+      <tr><td>v2</td><td>一买选股工具（多周期版，含 5120 样本对拍）</td><td><code>2cbf8d5</code></td></tr>
+      <tr><td><b>v3</b></td><td><b>站点全面升级</b>：走势分析台（二买/三买/背驰量化 + 七周期）· 板块页换源救活 · 旧版归档 · 六页统一导航</td><td><code>864e4a6</code></td></tr>
+      <tr><td>v3.1</td><td>全站统一浅色卡片风格 + 日期轴标签重叠修复</td><td><code>fd0a255</code></td></tr>
+      <tr><td>v3.2</td><td>旧版归档页数据源救活 + 股票名覆盖 bug 修复</td><td><code>9e845f1</code></td></tr>
+      <tr><td>v3.3</td><td>多级别中枢分析页 + 批量扫一买页 + 构建体系（防漂移）</td><td><code>32941c6</code></td></tr>
+      <tr><td><b>v3.4</b></td><td><b>全站体检</b>：内联 favicon · 六页移动端适配 · 刻度按实测宽度避让 · README · 本 PRD</td><td><code>822d89b</code></td></tr>
+    </table>
+
+    <h3>9.2　路线图（未完成）</h3>
+    <table>
+      <tr><th>优先级</th><th>项</th><th>说明</th></tr>
+      <tr><td>P1</td><td>多级别联立同屏（进阶）</td><td>当前是"三张图并排"，可升级为级别联套判定（大级别中枢内的小级别买卖点）</td></tr>
+      <tr><td>P1</td><td>批量扫描支持多周期</td><td>现在扫日线，可支持一次扫多周期并合并命中</td></tr>
+      <tr><td>P2</td><td>自选股云端记忆</td><td>当前存 localStorage，换设备丢失；可接轻量云端存储</td></tr>
+      <tr><td>P2</td><td>扫描结果定时快照</td><td>每日收盘后自动扫一遍并留存历史，形成信号回测数据</td></tr>
+      <tr><td>P3</td><td>一买信号成功率统计</td><td>对历史命中信号做 N 日收益统计，评估闸门参数是否需调优</td></tr>
+      <tr><td>P3</td><td>推演系统与站点打通</td><td><code>chanlun_server.py</code> 的线段/笔过滤算法与站点内核合并为同一套</td></tr>
+    </table>
+
+    <!-- ============================================================ -->
+    <h2 id="s10">10　风险与依赖</h2>
+    <table>
+      <tr><th>风险</th><th>影响</th><th>应对</th></tr>
+      <tr><td><b>行情接口变更或限流</b></td><td>页面取不到数，功能失效</td><td>保留兜底源；接口层集中在一处，便于快速替换源</td></tr>
+      <tr><td><b>分时数据疑似不复权</b></td><td>除权日附近的结构判断可能偏</td><td>页面标注数据源；重要判断以日线为主</td></tr>
+      <tr><td><b>算法口径被误改</b></td><td>不同页面结论不一致</td><td>内核单点维护 + 哈希校验 + 对拍脚本回归</td></tr>
+      <tr><td><b>GitHub Pages 缓存</b></td><td>复核时看到旧版本，误判失败</td><td>复核必须用干净 profile；或对比线上与本地文件字节</td></tr>
+      <tr><td><b>构建产物被手改</b></td><td>下次构建被覆盖，改动丢失</td><td>文件顶部与 README 标注"构建产物勿手改"</td></tr>
+      <tr><td><b>过度依赖单一维护者</b></td><td>无人接手</td><td>本 PRD + README + 4 个技能包构成完整交接材料</td></tr>
+    </table>
+
+    <h3>外部依赖</h3>
+    <ul>
+      <li><b>腾讯行情接口</b>（主数据源）—— 非官方，无 SLA</li>
+      <li><b>新浪行情接口</b>（分时数据）—— 非官方，JSONP 形式</li>
+      <li><b>GitHub Pages</b> —— 静态托管</li>
+      <li><b>本机 Git + Git Credential Manager</b> —— 发布通道</li>
+    </ul>
+
+    <!-- ============================================================ -->
+    <h2 id="s11">11　附录</h2>
+
+    <h3>11.1　常用命令</h3>
+    <pre><code># 构建（改模板后必跑）
+python _build_site/build.py
+python _build_site/update_nav.py
+python _build_site/patch_favicon.py
+
+# 语法校验
+python _verify_yimai/syntax_check.py &lt;html文件&gt;
+
+# 内核哈希比对
+python -c "..."   # 见 §6.3 说明
+
+# 本地起服务预览（可选）
+python -m http.server 8080 --directory chanlun-analysis
+
+# 线上复核（干净 profile，避免缓存）
+msedge --headless=new --user-data-dir=&lt;临时目录&gt; --dump-dom &lt;URL&gt;</code></pre>
+
+    <h3>11.2　术语表</h3>
+    <table>
+      <tr><th>术语</th><th>含义</th></tr>
+      <tr><td><b>分型</b></td><td>三根 K 线构成的顶/底转折形态，是笔的基本构件</td></tr>
+      <tr><td><b>笔</b></td><td>连接相邻顶底分型的线段，需满足笔规则与笔过滤</td></tr>
+      <tr><td><b>线段</b></td><td>至少三笔构成，用特征序列法判定结束</td></tr>
+      <tr><td><b>中枢</b></td><td>连续三笔重叠的价格区间，记作 ZD（下沿）~ ZG（上沿）</td></tr>
+      <tr><td><b>一买</b></td><td>一类买点：下跌 + 盘整 + 下跌走完的位置</td></tr>
+      <tr><td><b>二买</b></td><td>二类买点：一买后回抽不破前低的位置</td></tr>
+      <tr><td><b>三买</b></td><td>三类买点：突破中枢 ZG 后回抽不跌回中枢的位置</td></tr>
+      <tr><td><b>背驰</b></td><td>同向两段走势力度衰减（系统用 MACD 柱力度量化）</td></tr>
+      <tr><td><b>chan-core</b></td><td>本项目算法内核脚本块，唯一维护点为走势分析台</td></tr>
+      <tr><td><b>chan-ext</b></td><td>内核扩展块：二买/三买/背驰量化/位置导航</td></tr>
+      <tr><td><b>ZD / ZG</b></td><td>中枢下沿 / 中枢上沿</td></tr>
+    </table>
+
+    <h3>11.3　相关文档</h3>
+    <ul>
+      <li>仓库说明：<code>chanlun-analysis/README.md</code></li>
+      <li>算法技能：<code>~/.workbuddy/skills/chanlun-yimai/</code>（一买内核与对拍方法）</li>
+      <li>站点技能：<code>~/.workbuddy/skills/chanlun-site/</code>（构建/发布/复核全流程）</li>
+      <li>知识库：<code>projects/缠论精读/</code>（108 课原文 + 1522 问答 + 27 篇解盘）</li>
+    </ul>
+
+    <h3>11.4　变更记录</h3>
+    <table>
+      <tr><th>日期</th><th>版本</th><th>变更</th></tr>
+      <tr><td>2026-09-20</td><td>v3.0</td><td>首版：确立六页（后扩为七页）系统全景、算法规格、数据源铁律、发布规范与验收标准</td></tr>
+    </table>
+
+    <div class="foot">
+      <b>免责声明</b>：本站为技术分析辅助工具，所有结论基于公开行情数据的程序化计算，<b>不构成任何投资建议</b>。<br>
+      任一级别的一个买点 ≠ 交易指令；小级别信号须结合实时价与更大级别结构确认。行情接口为非官方接口、无 SLA，可能按 IP 限流。<br>
+      缠论量化分析系统 · PRD v3.0 · 2026-09-20
+    </div>
+
+  </main>
+</div>
+
+</body>
+</html>

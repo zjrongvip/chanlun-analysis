@@ -89,7 +89,7 @@ canvas { width: 100%; height: 100%; }
   <a href="../">→ 走势分析台 v3（推荐）</a>
   <a href="../yimai/">一买选股</a>
   <a href="../sector/">板块轮动</a>
-  <span class="sp">本页为旧版归档，数据源已失效，仅供对照</span>
+  <span class="sp">旧版算法归档 · 数据源已切换至腾讯行情，可正常查看，仅供新旧口径对照</span>
 </nav>
   <!-- 输入区域 -->
   <div class="input-section">
@@ -898,14 +898,15 @@ async function fetchStockName(symbol) {
   const name = localMap[symbol];
   if (name) { document.getElementById('stockName').textContent = name; return; }
 
-  // 2. 腾讯行情API（对浏览器友好）
-  const market = symbol.startsWith('6') ? 'sh' : 'sz';
+  // 2. 腾讯行情API（fqkline 带 CORS，公网可用）
   try {
-    const res = await fetch(`https://qt.gtimg.cn/q=${market}${symbol}`);
-    const text = await res.text();
-    const parts = text.split('~');
-    if (parts[1]) {
-      document.getElementById('stockName').textContent = parts[1];
+    const sym2 = txSymbol(symbol);
+    const res = await fetch(`https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=${sym2},day,,,2,qfq&_=${Date.now()}`);
+    const j = await res.json();
+    const node = j && j.data && j.data[sym2];
+    const qt = node && node.qt && node.qt[sym2];
+    if (qt && qt[1]) {
+      document.getElementById('stockName').textContent = qt[1];
       return;
     }
   } catch(e) {}
@@ -935,28 +936,36 @@ function getSecid(symbol) {
   return '0.' + symbol;
 }
 
-// 获取K线数据：新浪API为主，东方财富为备
+// 腾讯代码前缀：北交所 4/8/92 → bj，6/9 → sh，其余 → sz
+function txSymbol(code) {
+  if (/^(4|8|92)/.test(code)) return 'bj' + code;
+  if (/^(6|9)/.test(code)) return 'sh' + code;
+  return 'sz' + code;
+}
+
+// 获取K线数据：腾讯为主（带 CORS，公网可用），东方财富为备
 async function fetchKline(symbol, klt) {
-  // 1. 新浪财经API（对浏览器fetch友好）
-  const scaleMap = { 101: 240, 102: 1680, 103: 7200 };
-  const scale = scaleMap[klt] || 240;
-  const sinaSymbol = getSinaPrefix(symbol) + symbol;
+  // 1. 腾讯行情（前复权）
+  const pk = klt === 101 ? 'day' : klt === 102 ? 'week' : 'month';
+  const cnt = klt === 101 ? 700 : klt === 102 ? 320 : 200;
+  const sym = txSymbol(symbol);
   try {
-    const url = `https://money.finance.sina.com.cn/quotes_service/api/json_v2.php/CN_MarketData.getKLineData?symbol=${sinaSymbol}&scale=${scale}&ma=no&datalen=300`;
+    const url = `https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=${sym},${pk},,,${cnt},qfq&_=${Date.now()}`;
     const res = await fetch(url);
-    const text = await res.text();
-    const data = JSON.parse(text);
-    if (Array.isArray(data) && data.length > 0) {
-      return data.map(item => ({
-        date: item.day,
-        open: parseFloat(item.open),
-        close: parseFloat(item.close),
-        high: parseFloat(item.high),
-        low: parseFloat(item.low),
-        vol: parseInt(item.volume)
+    const j = await res.json();
+    const node = j && j.data && j.data[sym];
+    const arr = node && (node['qfq' + pk] || node[pk]);
+    if (arr && arr.length > 0) {
+      return arr.map(a => ({
+        date: a[0],
+        open: parseFloat(a[1]),
+        close: parseFloat(a[2]),
+        high: parseFloat(a[3]),
+        low: parseFloat(a[4]),
+        vol: parseInt(a[5])
       }));
     }
-  } catch(e) { /* 新浪失败，尝试东方财富 */ }
+  } catch(e) { /* 腾讯失败，尝试东方财富 */ }
 
   // 2. 东方财富API（备用）
   const secid = getSecid(symbol);
@@ -1280,9 +1289,9 @@ async function init() {
     allResults[period] = { raw, processed, fractals, zs, analysis: a };
   });
 
-  // 显示股票名称（从日线数据获取）
-  const stockName = allResults.daily.raw[allResults.daily.raw.length-1].date || '';
-  document.getElementById('stockName').textContent = currentSymbol;
+  // 显示股票名称（已在 fetchStockName 中取到则不覆盖）
+  var nameEl = document.getElementById('stockName');
+  if (!nameEl.textContent) nameEl.textContent = currentSymbol;
 
   document.getElementById('loading').classList.add('hidden');
   document.getElementById('content').style.display = 'block';

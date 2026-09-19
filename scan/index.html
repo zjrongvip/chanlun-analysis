@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>缠论批量扫一买 · 自选股一买扫描</title>
+<style>
+  :root{
+    --bg:#f5f6f8; --card:#ffffff; --line:#e3e6ea; --line2:#eef0f3;
+    --tx:#1f2329; --tx2:#5b6470; --tx3:#8b949e;
+    --up:#d64545; --down:#2f9e44; --blue:#1c7ed6; --violet:#7b2d8e;
+    --orange:#e8863c; --zs:#3b5ba5; --gold:#c89b1a;
+    --hitbg:#fff5f5; --hitbd:#f0c4c4;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--bg); color:var(--tx);
+    font:14px/1.5 -apple-system,"Segoe UI","Microsoft YaHei",system-ui,sans-serif;
+    padding:14px 16px 40px;
+  }
+  .nav{display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:7px 10px;margin-bottom:10px}
+  .nav a{font-size:12.5px;color:var(--tx2);text-decoration:none;border:1px solid var(--line2);background:#fafbfc;padding:4px 11px;border-radius:20px}
+  .nav a:hover{border-color:#c9d4e0;color:var(--tx)}
+  .nav a.on{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:600}
+  .nav .sp{margin-left:auto;color:var(--tx3);font-size:11.5px}
+  .head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+  .head h1{font-size:18px;margin:0;font-weight:650;letter-spacing:.2px}
+  .head .sub{color:var(--tx3);font-size:12.5px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px}
+  .ctrl{padding:11px 13px;margin-bottom:12px}
+  .row1{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:9px}
+  textarea{
+    width:100%;min-height:76px;padding:9px 11px;border:1px solid var(--line);border-radius:8px;
+    font:13.5px/1.6 inherit;color:var(--tx);background:#fff;outline:none;resize:vertical;letter-spacing:.4px;
+  }
+  textarea:focus{border-color:#9dc3ea;box-shadow:0 0 0 3px rgba(28,126,214,.10)}
+  .btn{
+    height:34px;padding:0 14px;border:1px solid var(--line);border-radius:7px;
+    background:#fff;cursor:pointer;font:13.5px/32px inherit;color:var(--tx);
+  }
+  .btn:hover{background:#f7f9fb}
+  .btn.primary{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:600}
+  .btn.primary:hover{background:#1a70c0}
+  .btn:disabled{opacity:.5;cursor:default}
+  .periods{display:flex;border:1px solid var(--line);border-radius:7px;overflow:hidden;height:34px;flex:none}
+  .pbtn{border:none;border-right:1px solid var(--line);background:#fff;padding:0 13px;
+    font:13.5px/34px inherit;color:var(--tx2);cursor:pointer;user-select:none}
+  .pbtn:last-child{border-right:none}
+  .pbtn:hover{background:#f7f9fb}
+  .pbtn.active{background:var(--blue);color:#fff;font-weight:600}
+  label.ck{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;color:var(--tx2);cursor:pointer;user-select:none}
+  .hint{font-size:12px;color:var(--tx3);line-height:1.7}
+  .hint b{color:var(--tx2);font-weight:600}
+
+  /* ---- 概览 ---- */
+  #stat{padding:11px 14px;margin-bottom:12px;display:none;align-items:center;gap:16px;flex-wrap:wrap;font-size:13px}
+  #stat .n{font-size:17px;font-weight:700;font-variant-numeric:tabular-nums}
+  #stat .lbl{color:var(--tx3);font-size:11.5px;display:block}
+  #bar{height:4px;background:var(--line2);border-radius:3px;overflow:hidden;width:100%;margin-top:2px}
+  #bar i{display:block;height:100%;background:var(--blue);width:0;transition:width .18s}
+
+  /* ---- 表格 ---- */
+  #tableWrap{overflow-x:auto}
+  table{border-collapse:collapse;width:100%;font-size:13px}
+  thead th{
+    position:sticky;top:0;background:#fafbfc;color:var(--tx2);font-weight:600;font-size:12px;
+    text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap;z-index:2;
+  }
+  thead th.sortable{cursor:pointer;user-select:none}
+  thead th.sortable:hover{color:var(--blue)}
+  tbody td{padding:7px 10px;border-bottom:1px solid var(--line2);font-variant-numeric:tabular-nums;white-space:nowrap}
+  tbody tr:hover{background:#fafcfe}
+  tbody tr.hit{background:var(--hitbg)}
+  tbody tr.hit:hover{background:#fff0f0}
+  tbody tr.bad{color:var(--tx3)}
+  .code{font-weight:600;letter-spacing:.3px}
+  .name{color:var(--tx2)}
+  .yes{color:var(--up);font-weight:700}
+  .no{color:var(--tx3)}
+  .num{text-align:right}
+  .empty{padding:22px;text-align:center;color:var(--tx3);font-size:13px}
+  .spin{display:inline-block;width:11px;height:11px;border:2px solid #cfd8e3;border-top-color:var(--blue);border-radius:50%;animation:sp .7s linear infinite;vertical-align:-1px;margin-right:7px}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .foot{color:var(--tx3);font-size:12px;line-height:1.75;margin-top:16px}
+  .tag{font-size:11.5px;padding:2px 8px;border-radius:20px;border:1px solid var(--line);color:var(--tx2);background:#fafbfc}
+  .tag.warn{color:#a2621a;border-color:#f0dcbc;background:#fffaf0}
+  .mini{color:var(--tx3);font-size:11.5px}
+  @media (max-width:760px){ .hideSm{display:none} }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a href="../">走势分析台</a>
+  <a href="../yimai/">一买选股</a>
+  <a href="../multi/">多级别中枢</a>
+  <a class="on" href="../scan/">批量扫一买</a>
+  <a href="../sector/">板块轮动</a>
+  <a href="../legacy/">旧版对照</a>
+  <span class="sp">一次扫多只 · 判定口径与一买页完全一致</span>
+</nav>
+
+<div class="head">
+  <h1>缠论批量扫一买</h1>
+  <span class="sub">自选股一次扫描 · 下跌 + 盘整 + 下跌走完 → 一类买点 · 口径对齐 12/14/15 号脚本</span>
+</div>
+
+<div class="ctrl card">
+  <div class="row1">
+    <textarea id="codes" placeholder="每行一个代码，也可用空格 / 逗号分隔，例如：&#10;600519 000001 002400&#10;300750"></textarea>
+  </div>
+  <div class="row1" style="margin-bottom:0">
+    <div class="periods" id="periods">
+      <button class="pbtn active" data-p="d">日线</button>
+      <button class="pbtn" data-p="w">周线</button>
+      <button class="pbtn" data-p="mo">月线</button>
+    </div>
+    <button class="btn primary" id="go">开始扫描</button>
+    <button class="btn" id="stop" disabled>停止</button>
+    <button class="btn" id="csv" disabled>导出 CSV</button>
+    <button class="btn" id="demo">填入示例</button>
+    <button class="btn" id="clear">清空</button>
+    <label class="ck" style="margin-left:6px"><input type="checkbox" id="onlyHit"> 只看命中</label>
+    <span class="mini" id="cntHint" style="margin-left:auto"></span>
+  </div>
+</div>
+
+<div class="card" id="stat"></div>
+
+<div class="card" id="tableCard">
+  <div id="tableWrap">
+    <div class="empty" id="empty">把代码粘进上面的框，点「开始扫描」。<br>
+      <span style="font-size:12px">扫描会逐只请求行情（并发 4），代码越多耗时越长；接口为非官方接口，可能按 IP 限流。</span>
+    </div>
+    <table id="tbl" style="display:none">
+      <thead>
+        <tr>
+          <th style="width:38px">#</th>
+          <th>代码</th>
+          <th>名称</th>
+          <th class="sortable" data-k="close">最新价</th>
+          <th class="hideSm">数据截止</th>
+          <th class="sortable" data-k="hit">一买</th>
+          <th class="sortable num" data-k="l1">一买价</th>
+          <th class="hideSm">确认日</th>
+          <th class="sortable num" data-k="ago">距今</th>
+          <th class="hideSm">中枢 ZD ~ ZG</th>
+          <th class="sortable num" data-k="chg">相对一买</th>
+          <th class="hideSm">笔 / 中枢</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="foot">
+  红涨绿跌 · <b>一买</b>＝课17「下跌 + 盘整 + 下跌走完」，走 15 号九道闸门（已与 12/14/15 号脚本逐样本对拍）。<br>
+  「距今」＝一买最低点距最后一根K线的根数；「相对一买」＝最新价相对一买价的涨跌幅。<br>
+  命中 ≠ 交易指令。接口为非官方接口、无 SLA，可能按 IP 限流，扫描量大时请分批。
+</div>
+
+<!-- ============================ 内核（由 build.py 从一买页面原样注入） ============================ -->
+<script id="chan-core">
+/* ---------- 12 号：K线包含处理 ---------- */
+function mergeKlines(high, low) {
+  const n = high.length;
+  if (!n) return [];
+  const merged = [{ high: +high[0], low: +low[0], i0: 0, i1: 0 }];
+  let direction = 0;
+  for (let i = 1; i < n; i++) {
+    const h = +high[i], l = +low[i];
+    const last = merged[merged.length - 1];
+    const contained = (h <= last.high && l >= last.low) || (last.high <= h && last.low >= l);
+    if (contained) {
+      if (direction >= 0) {
+        last.high = Math.max(last.high, h);
+        last.low = Math.max(last.low, l);
+      } else {
+        last.high = Math.min(last.high, h);
+        last.low = Math.min(last.low, l);
+      }
+      last.i1 = i;
+      continue;
+    }
+    if (h > last.high) direction = 1;
+    else if (l < last.low) direction = -1;
+    merged.push({ high: h, low: l, i0: i, i1: i });
+  }
+  return merged;
+}
+
+/* ---------- 12 号：分型 ---------- */
+function findFenxing(merged) {
+  const fx = [];
+  for (let i = 1; i < merged.length - 1; i++) {
+    const a = merged[i - 1], b = merged[i], c = merged[i + 1];
+    if (b.high > a.high && b.high > c.high && b.low > a.low && b.low > c.low) {
+      fx.push({ kind: 1, idx: i, high: b.high, low: b.low, raw0: b.i0, raw1: b.i1 });
+    } else if (b.high < a.high && b.high < c.high && b.low < a.low && b.low < c.low) {
+      fx.push({ kind: -1, idx: i, high: b.high, low: b.low, raw0: b.i0, raw1: b.i1 });
+    }
+  }
+  return fx;
+}
+
+/* ---------- 14 号：结合律特例，顶底不共用K（间隔<3 丢弃），同向留更极端 ---------- */
+function pickFenxing(fx) {
+  if (!fx || !fx.length) return [];
+  const picked = [fx[0]];
+  for (let k = 1; k < fx.length; k++) {
+    const cur = fx[k], prev = picked[picked.length - 1];
+    if (cur.idx - prev.idx < 3) {
+      if (cur.kind === prev.kind) {
+        if (cur.kind === 1 && cur.high >= prev.high) picked[picked.length - 1] = cur;
+        else if (cur.kind === -1 && cur.low <= prev.low) picked[picked.length - 1] = cur;
+      }
+      continue;
+    }
+    if (cur.kind === prev.kind) {
+      if (cur.kind === 1 && cur.high >= prev.high) picked[picked.length - 1] = cur;
+      else if (cur.kind === -1 && cur.low <= prev.low) picked[picked.length - 1] = cur;
+      continue;
+    }
+    picked.push(cur);
+  }
+  return picked;
+}
+
+/* ---------- 14 号：分型标在合并区间里真正创极值的那根原始K（取首个极值，同 np.argmax/argmin） ---------- */
+function extremeX(high, low, fx) {
+  const i0 = fx.raw0, i1 = fx.raw1;
+  let best = i0;
+  if (fx.kind === 1) {
+    let bv = +high[i0];
+    for (let i = i0 + 1; i <= i1; i++) if (+high[i] > bv) { bv = +high[i]; best = i; }
+  } else {
+    let bv = +low[i0];
+    for (let i = i0 + 1; i <= i1; i++) if (+low[i] < bv) { bv = +low[i]; best = i; }
+  }
+  return best;
+}
+
+/* ---------- 14 号：相邻顶底连成笔，底→顶向上，顶→底向下 ---------- */
+function fenxingToBis(fx, high, low) {
+  const bis = [];
+  for (let k = 0; k + 1 < fx.length; k++) {
+    const a = fx[k], b = fx[k + 1];
+    if (a.kind === b.kind) continue;
+    bis.push({
+      dir: a.kind === -1 ? 1 : -1,
+      high: Math.max(a.high, b.high),
+      low: Math.min(a.low, b.low),
+      raw0: extremeX(high, low, a),
+      raw1: extremeX(high, low, b),
+    });
+  }
+  return bis;
+}
+
+/* ---------- 14 号：课18 连续三笔重叠即中枢，ZG>ZD 才成立，取完三笔即跳走，不延伸 ---------- */
+function buildZhongshu3Bi(bis) {
+  const zs = [];
+  let i = 0;
+  while (i <= bis.length - 3) {
+    const zg = Math.min(bis[i].high, bis[i + 1].high, bis[i + 2].high);
+    const zd = Math.max(bis[i].low, bis[i + 1].low, bis[i + 2].low);
+    if (zg > zd) {
+      zs.push({ s0: i, s1: i + 2, zg, zd, raw0: bis[i].raw0, raw1: bis[i + 2].raw1 });
+      i += 3;
+    } else {
+      i += 1;
+    }
+  }
+  return zs;
+}
+
+/* ---------- 14 号：课17 一段走势只出一套一卖/二卖/一买 ---------- */
+function findZoushiPoints(bis, zs, x0, x1) {
+  let sell1 = null, sell1_i = null;
+  for (let i = 0; i < bis.length; i++) {
+    const b = bis[i];
+    if (b.dir !== 1 || !(x0 <= b.raw1 && b.raw1 <= x1)) continue;
+    if (sell1 === null || b.high > sell1.high) { sell1 = b; sell1_i = i; }
+  }
+  if (sell1 === null) return [];
+  let prevZ = null;
+  for (let i = 0; i < zs.length; i++) if (zs[i].s1 < sell1_i) prevZ = zs[i];
+  const zd1 = prevZ ? prevZ.zd : sell1.low;
+  const zg1 = prevZ ? prevZ.zg : sell1.high;
+  const pts = [{ kind: '一卖', x: sell1.raw1, y: sell1.high, zd: zd1, zg: zg1 }];
+  if (sell1_i + 2 < bis.length) {
+    const down = bis[sell1_i + 1], up = bis[sell1_i + 2];
+    if (down.dir === -1 && up.dir === 1 && up.high <= sell1.high) {
+      pts.push({ kind: '二卖', x: up.raw1, y: up.high, zd: zd1, zg: zg1 });
+    }
+  }
+  let lastZ = null;
+  for (let i = 0; i < zs.length; i++) if (zs[i].raw0 <= x1 && zs[i].raw1 >= x0) lastZ = zs[i];
+  if (lastZ === null) return pts;
+  let firstDown = null;
+  for (let j = lastZ.s0 - 1; j >= 0; j--) if (bis[j].dir === -1) { firstDown = bis[j]; break; }
+  let leave = null;
+  for (let k = lastZ.s1; k < bis.length; k++) {
+    const b = bis[k];
+    if (b.raw1 < x0 || b.raw1 > x1) continue;
+    if (b.dir !== -1 || b.low >= lastZ.zd) continue;
+    if (firstDown !== null && b.low >= firstDown.low) continue;
+    if (leave === null || b.low < leave.low) leave = b;
+  }
+  if (leave !== null) pts.push({ kind: '一买', x: leave.raw1, y: leave.low, zd: lastZ.zd, zg: lastZ.zg });
+  return pts;
+}
+
+/* ---------- 15 号：建结构（分型/笔/中枢 + 每笔确认根） ---------- */
+function buildChan(bars) {
+  const n = bars.length;
+  const high = new Array(n), low = new Array(n), close = new Array(n), times = new Array(n);
+  for (let i = 0; i < n; i++) {
+    high[i] = +bars[i].high; low[i] = +bars[i].low;
+    close[i] = +bars[i].close; times[i] = bars[i].date;
+  }
+  const merged = mergeKlines(high, low);
+  const fx = pickFenxing(findFenxing(merged));
+  const bis = fenxingToBis(fx, high, low);
+  const pairs = [];
+  for (let k = 0; k + 1 < fx.length; k++) if (fx[k].kind !== fx[k + 1].kind) pairs.push([fx[k], fx[k + 1]]);
+  if (pairs.length !== bis.length) throw new Error('笔与分型对不齐');
+  for (let k = 0; k < bis.length; k++) {
+    const fb = pairs[k][1];
+    const cidx = fb.idx + 1;
+    bis[k].confirm_raw = cidx < merged.length ? merged[cidx].i1 : null;
+  }
+  const zs = buildZhongshu3Bi(bis);
+  return { high, low, close, times, merged, fx, bis, zs };
+}
+
+/* ---------- 15 号：i 之前最近的向下笔 ---------- */
+function prevDown(bis, i) {
+  for (let j = i - 1; j >= 0; j--) if (bis[j].dir === -1) return bis[j];
+  return null;
+}
+
+/* ---------- 15 号：从最后中枢往前收同一段下跌 ---------- */
+function trendChainStart(zs) {
+  const k = zs.length - 1;
+  let s0 = zs[k].s0;
+  let minZd = zs[k].zd;
+  for (let i = k - 1; i >= 0; i--) {
+    if (zs[i].zg < minZd) break;
+    s0 = zs[i].s0;
+    minZd = Math.min(minZd, zs[i].zd);
+  }
+  return s0;
+}
+
+/* ---------- 15 号：一买判定（9 道闸门） ---------- */
+function fmt(v) { return (+v).toFixed(3); }
+
+function evaluate(bars, opts) {
+  opts = opts || {};
+  const requireToday = !!opts.requireConfirmToday;
+  let st;
+  try { st = buildChan(bars); }
+  catch (e) { return { hit: null, reason: '结构构建失败：' + e.message, st: null }; }
+
+  const bis = st.bis, zs = st.zs, times = st.times, close = st.close;
+  const lastDay = times[times.length - 1];
+
+  if (!zs.length) return { hit: null, reason: '没有中枢，不构成「下跌 + 盘整 + 下跌」', st };
+
+  const last_i = bis.length - 1;
+  const last = bis[last_i];
+  if (last.dir !== -1) return { hit: null, reason: '最后一笔向上，一买未在当下确认', st };
+  if (last.confirm_raw === null || last.confirm_raw === undefined) {
+    return { hit: null, reason: '最后一笔尚未确认（结束分型之后没有确认K）', st };
+  }
+  if (requireToday && times[last.confirm_raw] !== lastDay) {
+    return { hit: null, reason: '一买确认日=' + times[last.confirm_raw] + '，不是最后收盘日=' + lastDay, st };
+  }
+  const last_z = zs[zs.length - 1];
+  if (last_i < last_z.s1) return { hit: null, reason: '最后一笔仍在中枢内，尚未向下离开', st };
+  if (last.low >= last_z.zd) {
+    return { hit: null, reason: '最后一笔低点 ' + fmt(last.low) + ' 未跌破中枢 ZD ' + fmt(last_z.zd), st };
+  }
+  const first_down = prevDown(bis, last_z.s0);
+  if (!first_down) return { hit: null, reason: '中枢之前没有下跌笔', st };
+  if (last.low >= first_down.low) {
+    return { hit: null, reason: '一买低点 ' + fmt(last.low) + ' 未低于中枢前那一下跌 ' + fmt(first_down.low), st };
+  }
+  const chain_s0 = trendChainStart(zs);
+  let sell1_i = null;
+  for (let i = chain_s0; i < last_i; i++) {
+    if (bis[i].dir !== 1) continue;
+    if (sell1_i === null || bis[i].high >= bis[sell1_i].high) sell1_i = i;
+  }
+  if (sell1_i === null) return { hit: null, reason: '这一段下跌找不到一卖（起点）', st };
+  let floor = Infinity;
+  for (let i = sell1_i + 1; i <= last_i; i++) if (bis[i].dir === -1 && bis[i].low < floor) floor = bis[i].low;
+  if (last.low > floor + 1e-9) {
+    return { hit: null, reason: '一买低点 ' + fmt(last.low) + ' 不是一卖之后的最低（已有 ' + fmt(floor) + '）', st };
+  }
+
+  const hit = {
+    code: opts.code || '', name: opts.name || '',
+    time: times[last.confirm_raw],        // 确认日（底分型第三根合并K）
+    l1_day: times[last.raw1],             // 一买最低点所在交易日
+    close: close[close.length - 1],
+    l1: last.low,
+    first_low: first_down.low,
+    first_day: times[first_down.raw1],
+    sell1: bis[sell1_i].high,
+    sell1_day: times[bis[sell1_i].raw1],
+    zd: last_z.zd, zg: last_z.zg,
+    zs0: times[last_z.raw0], zs1: times[last_z.raw1],
+    n_bi: bis.length, n_zs: zs.length,
+    x0: bis[sell1_i].raw0,                // 段起点（一卖那笔的起始原始K）
+    x1: last.raw1,
+    lastDay: lastDay,
+  };
+  return { hit, reason: null, st };
+}
+
+/* ---------- MACD（仅绘图参考，不参与信号） ---------- */
+function ema(arr, n) {
+  const k = 2 / (n + 1), out = new Array(arr.length);
+  let prev = arr[0];
+  out[0] = prev;
+  for (let i = 1; i < arr.length; i++) { prev = arr[i] * k + prev * (1 - k); out[i] = prev; }
+  return out;
+}
+function macdSeries(close, fast, slow, sig) {
+  fast = fast || 12; slow = slow || 26; sig = sig || 9;
+  const e1 = ema(close, fast), e2 = ema(close, slow);
+  const dif = close.map((_, i) => e1[i] - e2[i]);
+  const dea = ema(dif, sig);
+  const hist = dif.map((v, i) => 2 * (v - dea[i]));
+  return { dif, dea, hist };
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    mergeKlines, findFenxing, pickFenxing, extremeX, fenxingToBis,
+    buildZhongshu3Bi, findZoushiPoints, buildChan, prevDown,
+    trendChainStart, evaluate, ema, macdSeries,
+  };
+}
+</script>
+<script id="chan-ext">
+/* ---------- 笔区间内 MACD 柱同号面积（力度） ---------- */
+function segPower(b, hist) {
+  var s = 0;
+  if (!hist) return 0;
+  for (var i = b.raw0; i <= b.raw1 && i < hist.length; i++) {
+    var v = hist[i] || 0;
+    if (b.dir === -1) { if (v < 0) s += -v; } else { if (v > 0) s += v; }
+  }
+  return s;
+}
+
+/* ---------- 走势全景：位置导航 / 二买 / 三买 / 背驰量化 ---------- */
+function analyzeExtended(bars, st, macd, opt) {
+  opt = opt || {};
+  var res = { pos: 'none', posCn: '—', lastZ: null, zsList: [], buy2: null, buy3: null, div: null, marks: [], hint: '' };
+  if (!st || !bars || !bars.length) return res;
+
+  var bis = st.bis, zs = st.zs, times = st.times, close = st.close;
+  var lastClose = close[close.length - 1], n = bars.length;
+
+  /* --- 中枢清单（最近 6 个） --- */
+  for (var i = Math.max(0, zs.length - 6); i < zs.length; i++) {
+    res.zsList.push({ idx: i, zd: zs[i].zd, zg: zs[i].zg, t0: times[zs[i].raw0], t1: times[zs[i].raw1] });
+  }
+  var lz = zs.length ? zs[zs.length - 1] : null;
+  if (lz) res.lastZ = { zd: lz.zd, zg: lz.zg, t0: times[lz.raw0], t1: times[lz.raw1], s0: lz.s0, s1: lz.s1 };
+
+  /* --- 位置导航：最新收盘 vs 最后中枢 --- */
+  if (lz) {
+    res.pos = lastClose > lz.zg ? 'above' : (lastClose < lz.zd ? 'below' : 'inside');
+    res.posCn = res.pos === 'above' ? '中枢上方（上涨趋势区）'
+      : res.pos === 'below' ? '中枢下方（下跌趋势区）' : '中枢内部（震荡盘整区）';
+  } else {
+    res.posCn = '无中枢（单边走势）';
+  }
+
+  /* --- 二买：一买（或前低）之后，回抽不破前低的那一下跌已确认 --- */
+  var refLow = opt.l1, refIdx = (opt.l1Idx != null && opt.l1Idx >= 0) ? opt.l1Idx : null;
+  if (refLow == null || refIdx == null) {
+    var mi = -1, mv = Infinity;
+    for (var j = Math.max(0, n - 160); j < n; j++) if (bars[j].low < mv) { mv = bars[j].low; mi = j; }
+    refLow = mv; refIdx = mi;
+  }
+  for (var k = 0; k + 1 < bis.length; k++) {
+    var up = bis[k], dn = bis[k + 1];
+    if (up.dir !== 1 || dn.dir !== -1) continue;
+    if (up.raw0 < refIdx) continue;                       // 必须在一买/前低之后
+    if (dn.low <= refLow) continue;                       // 跌破前低 → 不是二买
+    if (dn.confirm_raw == null) continue;                 // 未确认
+    res.buy2 = { x: dn.raw1, y: dn.low, date: times[dn.raw1], low: dn.low, ref: refLow, ago: n - 1 - dn.raw1 };
+    break;
+  }
+  if (res.buy2) res.marks.push({ kind: '二买', x: res.buy2.x, y: res.buy2.y });
+
+  /* --- 三买：离开中枢后向上突破 ZG，回抽不入中枢 --- */
+  if (lz) {
+    var broke = null;
+    for (var a = Math.max(0, lz.s1); a < bis.length; a++) {
+      if (bis[a].dir === 1 && bis[a].high > lz.zg) { broke = bis[a]; break; }
+    }
+    if (broke) {
+      res.hint = '已向上突破中枢 ZG ' + lz.zg.toFixed(2) + '，等待回抽确认三买';
+      for (var b2 = 0; b2 < bis.length; b2++) {
+        if (bis[b2].raw0 < broke.raw1) continue;
+        if (bis[b2].dir !== -1) continue;
+        if (bis[b2].low < lz.zg) { res.hint = '回抽已跌回中枢内，三买失效（回到震荡）'; break; }
+        if (bis[b2].confirm_raw == null) { res.hint = '回抽中，尚未确认（等确认K）'; break; }
+        res.buy3 = { x: bis[b2].raw1, y: bis[b2].low, date: times[bis[b2].raw1], zg: lz.zg, ago: n - 1 - bis[b2].raw1 };
+        break;
+      }
+      if (res.buy3) res.marks.push({ kind: '三买', x: res.buy3.x, y: res.buy3.y });
+    }
+  }
+
+  /* --- 背驰量化：与本段前一个同向笔比 MACD 力度 --- */
+  if (bis.length >= 2 && macd && macd.hist) {
+    var last = bis[bis.length - 1];
+    var prev = null;
+    for (var q = bis.length - 2; q >= 0; q--) if (bis[q].dir === last.dir) { prev = bis[q]; break; }
+    if (prev) {
+      var pa = segPower(last, macd.hist), pb = segPower(prev, macd.hist);
+      var lower = last.low < prev.low, higher = last.high > prev.high;
+      if (last.dir === -1 && lower && pa < pb) {
+        res.div = { type: '底背驰', now: pa, prev: pb, ratio: pb > 0 ? pa / pb : 1, day: times[last.raw1] };
+      } else if (last.dir === 1 && higher && pa < pb) {
+        res.div = { type: '顶背驰', now: pa, prev: pb, ratio: pb > 0 ? pa / pb : 1, day: times[last.raw1] };
+      }
+      res.power = { now: pa, prev: pb, dir: last.dir };
+    }
+  }
+  return res;
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { segPower: segPower, analyzeExtended: analyzeExtended };
+}
+</script>
+
+<!-- ============================ 界面 ============================ -->
+<script>
+(function () {
+  'use strict';
+
+  var TX = 'https://web.ifzq.gtimg.cn/appstock/app/fqkline/get';
+  var PERIODS = {
+    d:  { label: '日线', pk: 'day',   cnt: 700, win: 800, daily: true },
+    w:  { label: '周线', pk: 'week',  cnt: 320, win: 240, daily: false },
+    mo: { label: '月线', pk: 'month', cnt: 200, win: 180, daily: false }
+  };
+  var CONCURRENCY = 4;
+  var STORE_KEY = 'chanlun_scan_codes';
+
+  var period = 'd';
+  var rows = [];
+  var running = false;
+  var aborted = false;
+  var sortKey = null, sortAsc = true, onlyHit = false;
+
+  function $(id) { return document.getElementById(id); }
+  function n2(v) { return (+v).toFixed(2); }
+
+  function txSymbol(code) {
+    if (/^(4|8|92)/.test(code)) return 'bj' + code;
+    if (/^(6|9)/.test(code)) return 'sh' + code;
+    return 'sz' + code;
+  }
+
+  function parseList(text) {
+    var parts = (text || '').split(/[\s,，、;；|/]+/);
+    var seen = {}, out = [];
+    for (var i = 0; i < parts.length; i++) {
+      var s = parts[i].replace(/[^0-9]/g, '');
+      if (s.length > 6) s = s.slice(-6);
+      if (s.length !== 6) continue;
+      if (seen[s]) continue;
+      seen[s] = 1; out.push(s);
+    }
+    return out;
+  }
+
+  function fetchKline(code, pk, cnt) {
+    var sym = txSymbol(code);
+    var url = TX + '?param=' + sym + ',' + pk + ',,,' + cnt + ',qfq&_=' + Date.now();
+    return fetch(url, { cache: 'no-store' }).then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    }).then(function (j) {
+      var node = j && j.data && j.data[sym];
+      if (!node) throw new Error('接口返回空数据');
+      var arr = node['qfq' + pk] || node[pk];
+      if (!arr || !arr.length) throw new Error('无该周期数据');
+      var name = (node.qt && node.qt[sym] && node.qt[sym][1]) || '';
+      return {
+        name: name,
+        bars: arr.map(function (a) {
+          return { date: a[0], open: +a[1], close: +a[2], high: +a[3], low: +a[4], vol: +a[5] };
+        })
+      };
+    });
+  }
+
+  function applyWindow(bars, p) {
+    if (!bars.length) return bars;
+    if (p.daily) {
+      var refStr = bars[bars.length - 1].date.slice(0, 10);
+      var ref = new Date(refStr + 'T00:00:00');
+      var beg = new Date(ref.getTime() - 800 * 86400000);
+      var b2 = bars.filter(function (b) {
+        return new Date(b.date.slice(0, 10) + 'T00:00:00') >= beg;
+      });
+      return b2.length >= 60 ? b2 : bars;
+    }
+    return bars.slice(Math.max(0, bars.length - p.win));
+  }
+
+  function idxOfDate(bars, d) {
+    for (var i = bars.length - 1; i >= 0; i--) if (bars[i].date.slice(0, 10) === d) return i;
+    return -1;
+  }
+
+  /* ---------- 单只扫描 ---------- */
+  function scanOne(code) {
+    var p = PERIODS[period];
+    return fetchKline(code, p.pk, p.cnt).then(function (d) {
+      var bars = applyWindow(d.bars, p);
+      var res = evaluate(bars, { code: code, name: d.name });
+      var row = {
+        code: code, name: d.name || '', ok: true,
+        close: bars[bars.length - 1].close,
+        day: bars[bars.length - 1].date.slice(0, 10),
+        hit: 0, l1: null, confirm: '', ago: null, zd: null, zg: null,
+        chg: null, nBi: 0, nZs: 0, reason: ''
+      };
+      var st = res.st;
+      if (st) { row.nBi = st.bis.length; row.nZs = st.zs.length; }
+      if (res.hit) {
+        row.hit = 1;
+        row.l1 = res.hit.l1;
+        row.confirm = res.hit.time;
+        row.zd = res.hit.zd; row.zg = res.hit.zg;
+        var li = idxOfDate(bars, res.hit.l1_day);
+        row.ago = li >= 0 ? (bars.length - 1 - li) : null;
+        row.chg = (row.close - res.hit.l1) / res.hit.l1 * 100;
+      } else {
+        row.reason = res.reason || '';
+      }
+      return row;
+    }).catch(function (e) {
+      return { code: code, name: '', ok: false, err: (e && e.message) || String(e), hit: 0 };
+    });
+  }
+
+  /* ---------- 渲染 ---------- */
+  function fmtRow(r, i) {
+    if (!r) {
+      return '<tr class="pending"><td>' + i + '</td><td colspan="11" class="mini">'
+        + '<span class="spin"></span>处理中…</td></tr>';
+    }
+    if (!r.ok) {
+      return '<tr class="bad"><td>' + i + '</td><td class="code">' + r.code + '</td>'
+        + '<td colspan="10" class="mini">取数失败：' + r.err + '</td></tr>';
+    }
+    var chgTxt = '—', chgCls = '';
+    if (r.chg != null) {
+      chgTxt = (r.chg >= 0 ? '+' : '') + r.chg.toFixed(2) + '%';
+      chgCls = r.chg >= 0 ? 'style="color:#d64545"' : 'style="color:#2f9e44"';
+    }
+    return '<tr class="' + (r.hit ? 'hit' : '') + '" data-code="' + r.code + '">'
+      + '<td>' + i + '</td>'
+      + '<td class="code">' + r.code + '</td>'
+      + '<td class="name">' + (r.name || '—') + '</td>'
+      + '<td class="num">' + n2(r.close) + '</td>'
+      + '<td class="hideSm mini">' + r.day + '</td>'
+      + '<td>' + (r.hit ? '<span class="yes">✓ 命中</span>' : '<span class="no" title="' + (r.reason || '') + '">—</span>') + '</td>'
+      + '<td class="num">' + (r.l1 != null ? n2(r.l1) : '—') + '</td>'
+      + '<td class="hideSm mini">' + (r.confirm || '—') + '</td>'
+      + '<td class="num">' + (r.ago != null ? r.ago + ' 根' : '—') + '</td>'
+      + '<td class="hideSm mini">' + (r.zd != null ? n2(r.zd) + ' ~ ' + n2(r.zg) : '—') + '</td>'
+      + '<td class="num"' + (chgCls ? ' ' + chgCls : '') + '>' + chgTxt + '</td>'
+      + '<td class="hideSm mini">' + r.nBi + ' / ' + r.nZs + '</td>'
+      + '</tr>';
+  }
+
+  function visibleRows() {
+    var list = rows.map(function (r, i) { return { r: r, i: i + 1 }; });
+    if (onlyHit) list = list.filter(function (x) { return x.r && x.r.hit; });
+    if (sortKey) {
+      list.sort(function (a, b) {
+        var va = val(a.r, sortKey), vb = val(b.r, sortKey);
+        if (va == null && vb == null) return 0;
+        if (va == null) return 1;
+        if (vb == null) return -1;
+        if (va < vb) return sortAsc ? -1 : 1;
+        if (va > vb) return sortAsc ? 1 : -1;
+        return 0;
+      });
+    }
+    return list;
+  }
+
+  function val(r, k) {
+    if (!r) return null;
+    if (k === 'hit') return r.hit || 0;
+    return r[k] == null ? null : r[k];
+  }
+
+  function renderTable() {
+    var list = visibleRows();
+    var tb = $('tbody');
+    if (!list.length) {
+      tb.innerHTML = '<tr><td colspan="12" class="empty">' + (onlyHit ? '当前没有命中的票。' : '暂无数据。') + '</td></tr>';
+    } else {
+      tb.innerHTML = list.map(function (x) { return fmtRow(x.r, x.i); }).join('');
+    }
+    var hitN = rows.filter(function (r) { return r && r.hit; }).length;
+    var okN = rows.filter(function (r) { return r && r.ok; }).length;
+    var badN = rows.filter(function (r) { return r && !r.ok; }).length;
+    $('stat').innerHTML =
+      '<div><span class="lbl">代码总数</span><span class="n">' + rows.length + '</span></div>'
+      + '<div><span class="lbl">已完成</span><span class="n">' + okN + '</span></div>'
+      + '<div><span class="lbl">命 中</span><span class="n" style="color:' + (hitN ? '#d64545' : '#8b949e') + '">' + hitN + '</span></div>'
+      + (badN ? '<div><span class="lbl">失败</span><span class="n" style="color:#e8863c">' + badN + '</span></div>' : '')
+      + '<div style="flex:1;min-width:160px"><span class="lbl">' + PERIODS[period].label + ' · 进度</span>'
+      + '<div id="bar"><i style="width:' + (rows.length ? Math.round(okN / rows.length * 100) : 0) + '%"></i></div></div>';
+  }
+
+  /* ---------- 并发池 ---------- */
+  function runPool(codes) {
+    rows = codes.map(function () { return null; });
+    renderTable();
+    var next = 0, done = 0;
+    aborted = false;
+
+    function pump() {
+      if (aborted) return Promise.resolve();
+      if (next >= codes.length) return Promise.resolve();
+      var idx = next++;
+      return scanOne(codes[idx]).then(function (r) {
+        rows[idx] = r;
+        done++;
+        renderTable();
+        return pump();
+      });
+    }
+
+    var workers = [];
+    for (var w = 0; w < Math.min(CONCURRENCY, codes.length); w++) workers.push(pump());
+
+    return Promise.all(workers).then(function () {
+      /* 默认排序：命中的在前，其次按距今升序 */
+      if (!sortKey) {
+        var hits = rows.filter(function (r) { return r && r.hit; });
+        var miss = rows.filter(function (r) { return !r || !r.hit; });
+        hits.sort(function (a, b) { return (a.ago == null ? 1e9 : a.ago) - (b.ago == null ? 1e9 : b.ago); });
+        rows = hits.concat(miss);
+      }
+      renderTable();
+      return rows;
+    });
+  }
+
+  /* ---------- 导出 CSV ---------- */
+  function exportCsv() {
+    var head = ['代码', '名称', '最新价', '数据截止', '一买', '一买价', '确认日', '距今根数', '中枢ZD', '中枢ZG', '相对一买%', '笔数', '中枢数', '备注'];
+    var lines = [head.join(',')];
+    visibleRows().forEach(function (x) {
+      var r = x.r;
+      if (!r) return;
+      if (!r.ok) { lines.push([r.code, '', '', '', '取数失败', '', '', '', '', '', '', '', '', r.err].join(',')); return; }
+      lines.push([
+        r.code, r.name, r.close, r.day, r.hit ? '命中' : '未命中',
+        r.l1 == null ? '' : r.l1, r.confirm, r.ago == null ? '' : r.ago,
+        r.zd == null ? '' : r.zd, r.zg == null ? '' : r.zg,
+        r.chg == null ? '' : r.chg.toFixed(2), r.nBi, r.nZs, r.reason
+      ].join(','));
+    });
+    var blob = new Blob(['\ufeff' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+    var a = document.createElement('a');
+    var d = new Date();
+    a.href = URL.createObjectURL(blob);
+    a.download = '缠论一买扫描_' + d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2) + '.csv';
+    document.body.appendChild(a); a.click();
+    setTimeout(function () { document.body.removeChild(a); URL.revokeObjectURL(a.href); }, 500);
+  }
+
+  /* ---------- 事件 ---------- */
+  function setRunning(b) {
+    running = b;
+    $('go').disabled = b;
+    $('stop').disabled = !b;
+    $('go').innerHTML = b ? '<span class="spin"></span>扫描中…' : '开始扫描';
+  }
+
+  function start() {
+    if (running) return;
+    var codes = parseList($('codes').value);
+    if (!codes.length) { alert('请先填入至少一个 6 位股票代码'); return; }
+    try { localStorage.setItem(STORE_KEY, codes.join('\n')); } catch (e) { }
+    $('empty').style.display = 'none';
+    $('tbl').style.display = '';
+    $('stat').style.display = 'flex';
+    $('csv').disabled = true;
+    sortKey = null;
+    setRunning(true);
+    var t0 = Date.now();
+    runPool(codes).then(function () {
+      setRunning(false);
+      $('csv').disabled = false;
+      var hitN = rows.filter(function (r) { return r && r.hit; }).length;
+      var sec = ((Date.now() - t0) / 1000).toFixed(1);
+      var tip = document.createElement('span');
+      tip.className = 'mini';
+      tip.style.marginLeft = 'auto';
+      tip.innerHTML = '用时 ' + sec + 's · ' + codes.length + ' 只 · 命中 ' + hitN + ' 只'
+        + (aborted ? '（已手动停止）' : '');
+      var old = $('stat').querySelector('.mini'); if (old) old.remove();
+      $('stat').appendChild(tip);
+    });
+  }
+
+  $('go').addEventListener('click', start);
+  $('stop').addEventListener('click', function () { aborted = true; setRunning(false); $('csv').disabled = false; });
+  $('csv').addEventListener('click', exportCsv);
+  $('clear').addEventListener('click', function () {
+    $('codes').value = ''; rows = [];
+    $('tbl').style.display = 'none';
+    $('stat').style.display = 'none';
+    $('empty').style.display = '';
+    $('csv').disabled = true;
+    try { localStorage.removeItem(STORE_KEY); } catch (e) { }
+    updateCnt();
+  });
+  $('demo').addEventListener('click', function () {
+    $('codes').value = '600519 000001 002400 300750 601318 600036 000858 002594 688981 601899';
+    updateCnt();
+  });
+  $('onlyHit').addEventListener('change', function () { onlyHit = this.checked; renderTable(); });
+
+  var pbtns = document.querySelectorAll('.pbtn');
+  for (var i = 0; i < pbtns.length; i++) {
+    pbtns[i].addEventListener('click', function () {
+      for (var j = 0; j < pbtns.length; j++) pbtns[j].classList.remove('active');
+      this.classList.add('active');
+      period = this.getAttribute('data-p');
+      if (rows.length && !running) start();
+    });
+  }
+
+  var ths = document.querySelectorAll('thead th.sortable');
+  for (var t = 0; t < ths.length; t++) {
+    ths[t].addEventListener('click', function () {
+      var k = this.getAttribute('data-k');
+      if (sortKey === k) sortAsc = !sortAsc; else { sortKey = k; sortAsc = true; }
+      renderTable();
+    });
+  }
+
+  function updateCnt() {
+    var c = parseList($('codes').value);
+    $('cntHint').textContent = c.length ? ('识别到 ' + c.length + ' 个代码') : '';
+  }
+  $('codes').addEventListener('input', updateCnt);
+
+  /* 点结果行 → 跳到走势分析台看该票 */
+  $('tbody').addEventListener('click', function (ev) {
+    var tr = ev.target.closest('tr[data-code]');
+    if (!tr) return;
+    window.open('../?code=' + tr.getAttribute('data-code'), '_blank');
+  });
+
+  /* 记住上次的代码 */
+  (function () {
+    var auto = false;
+    try {
+      var u = new URL(window.location.href);
+      var c = u.searchParams.get('codes');
+      var p = u.searchParams.get('period');
+      if (p && PERIODS[p]) {
+        period = p;
+        for (var j = 0; j < pbtns.length; j++) {
+          pbtns[j].classList.toggle('active', pbtns[j].getAttribute('data-p') === p);
+        }
+      }
+      if (c) {
+        $('codes').value = c.split(/[,，\s]+/).join('\n');
+      } else {
+        var s = localStorage.getItem(STORE_KEY);
+        if (s) $('codes').value = s;
+      }
+      auto = u.searchParams.get('auto') === '1';
+    } catch (e) { }
+    updateCnt();
+    if (auto) setTimeout(start, 60);
+  })();
+})();
+</script>
+</body>
+</html>

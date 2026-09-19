@@ -119,9 +119,22 @@ body{font-family:'Microsoft YaHei',sans-serif;background:#0f1117;color:#e0e0e0;m
 
 @keyframes fadeInUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
 .sector-card{animation:fadeInUp .4s ease both;}
+.nav{display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:8px 14px;background:#161b22;border-bottom:1px solid #30363d}
+.nav a{font-size:12.5px;color:#8b949e;text-decoration:none;border:1px solid #30363d;background:#0d1117;padding:4px 11px;border-radius:20px}
+.nav a:hover{color:#e6edf3;border-color:#58a6ff}
+.nav a.on{background:#1f6feb;border-color:#1f6feb;color:#fff}
+.nav .sp{margin-left:auto;color:#6e7681;font-size:11.5px}
 </style>
 </head>
 <body>
+
+<nav class="nav">
+  <a href="../">走势分析台</a>
+  <a href="../yimai/">一买选股</a>
+  <a class="on" href="./">板块轮动</a>
+  <a href="../legacy/">旧版归档</a>
+  <span class="sp">数据源已切至腾讯行情（公网可用）</span>
+</nav>
 
 <!-- Header -->
 <div class="header">
@@ -131,7 +144,7 @@ body{font-family:'Microsoft YaHei',sans-serif;background:#0f1117;color:#e0e0e0;m
   </div>
   <div class="update-badge">
     📅 最新更新：2026-03-23<br>
-    📊 数据源：东方财富 · 金十数据<br>
+    📊 数据源：腾讯行情（前复权）<br>
     🔄 周度更新 · 每周一/五 16:00
   </div>
 </div>
@@ -696,32 +709,45 @@ function drawKline(canvas, kdata){
   return {level:calcLevel(lastClose,lastMAs), lastClose, lastMAs};
 }
 
-// ─────────────── 东方财富 K线 API（带 CORS 代理） ───────────────
+// ─────────────── K线 API：腾讯为主（带 CORS，公网可用），东财为备 ───────────────
+function txSymbol(code){
+  if(/^(4|8|92)/.test(code)) return 'bj'+code;   // 北交所
+  if(/^(6|9)/.test(code)) return 'sh'+code;
+  return 'sz'+code;
+}
+
+async function fetchKlineTencent(code, klt){
+  const sym = txSymbol(code);
+  const pk = klt===101?'day':klt===102?'week':'month';
+  const cnt = klt===101?700:klt===102?320:200;
+  const url = `https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=${sym},${pk},,,${cnt},qfq&_=${Date.now()}`;
+  const resp = await fetch(url);
+  const j = await resp.json();
+  const node = j && j.data && j.data[sym];
+  if(!node) throw new Error('腾讯接口返回空数据');
+  const arr = node['qfq'+pk] || node[pk];
+  if(!arr || !arr.length) throw new Error('腾讯接口无该周期数据');
+  return arr.map(a=>[a[0], parseFloat(a[1]), parseFloat(a[2]), parseFloat(a[3]), parseFloat(a[4]), parseFloat(a[5])]);
+}
+
 async function fetchKline(code, klt){
+  try{
+    const d = await fetchKlineTencent(code, klt);
+    if(d.length>0) return d;
+  }catch(e){ console.warn('腾讯源失败，回落东财：', e.message); }
+
   const market = (code.startsWith('6')||code.startsWith('9'))?1:0;
   const apiUrl = `https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=${market}.${code}&fields1=f1,f2,f3,f4,f5,f6&fields2=f51,f52,f53,f54,f55,f56&klt=${klt}&fqt=1&beg=20230101&end=20991231&_=${Date.now()}`;
-  
-  const tryFetch = async (url) => {
-    const resp = await fetch(url);
+  try{
+    const resp = await fetch(apiUrl);
     const json = await resp.json();
-    const raw = json?.contents ? JSON.parse(json.contents) : json;
-    const klines = raw?.data?.klines||[];
-    return klines.map(s=>{
-      const p=s.split(',');
+    const klines = json && json.data && json.data.klines || [];
+    const data = klines.map(s=>{
+      const p = s.split(',');
       return [p[0],parseFloat(p[1]),parseFloat(p[2]),parseFloat(p[3]),parseFloat(p[4]),parseFloat(p[5])];
     });
-  };
-
-  try{
-    const data = await tryFetch(apiUrl);
     if(data.length>0) return data;
-  }catch(e){ /* 走代理 */ }
-
-  try{
-    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(apiUrl)}`;
-    const data = await tryFetch(proxyUrl);
-    if(data.length>0) return data;
-  }catch(e){ console.error('代理请求失败:',e); }
+  }catch(e){ console.error('东财源失败：', e.message); }
 
   return [];
 }

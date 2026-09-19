@@ -1,1327 +1,1688 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>缠论多级别中枢分析 - 通用版</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>缠论走势分析台 · 中枢与买卖点</title>
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body { background: #0d1117; color: #e6edf3; font-family: 'Microsoft YaHei', sans-serif; }
-.container { max-width: 1400px; margin: 0 auto; padding: 20px; }
-
-/* 输入区域 */
-.input-section { text-align: center; margin-bottom: 24px; padding: 20px; background: #161b22; border: 1px solid #30363d; border-radius: 8px; }
-.input-section h1 { font-size: 22px; margin-bottom: 16px; }
-.input-box { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
-.input-box input { padding: 10px 16px; font-size: 16px; border: 1px solid #30363d; border-radius: 6px; background: #0d1117; color: #e6edf3; width: 160px; text-align: center; }
-.input-box input:focus { outline: none; border-color: #58a6ff; }
-.input-box button { padding: 10px 24px; font-size: 16px; border: none; border-radius: 6px; background: #238636; color: white; cursor: pointer; transition: background 0.2s; }
-.input-box button:hover { background: #2ea043; }
-.input-box button:disabled { background: #30363d; cursor: not-allowed; }
-.stock-name { color: #f39c12; font-size: 15px; margin-left: 10px; font-weight: bold; }
-
-/* 图表区域 */
-.chart-box { background: #161b22; border: 1px solid #30363d; border-radius: 8px; position: relative; margin-bottom: 4px; }
-.kline-wrap { position: relative; height: 520px; padding: 10px; }
-.macd-wrap { position: relative; height: 160px; padding: 10px; }
-canvas { width: 100%; height: 100%; }
-.sidebar { position: absolute; top: 14px; left: 10px; z-index: 10; max-width: 280px; transition: transform 0.3s ease; }
-.sidebar.collapsed { transform: translateX(-290px); }
-.toggle-btn { position: absolute; top: 10px; left: 10px; z-index: 20; background: #238636; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; opacity: 0.3; }
-.toggle-btn:hover { opacity: 1; }
-.zs-labels { display: none; }
-.guide { background: rgba(13,17,23,0.95); border: 1.5px solid; border-radius: 10px; padding: 14px 16px; font-size: 12px; line-height: 1.9; }
-.guide.above { border-color: #ef5350; background: rgba(31,16,16,0.95); }
-.guide.below { border-color: #26a69a; background: rgba(15,31,24,0.95); }
-.guide.inside { border-color: #f39c12; background: rgba(31,26,10,0.95); }
-.guide h3 { font-size: 13px; margin-bottom: 6px; }
-.guide ul { padding-left: 16px; }
-.guide .warn { color: #f39c12; margin-top: 8px; font-weight: bold; }
-.legend { position: absolute; bottom: 10px; right: 14px; z-index: 10; display: flex; gap: 16px; font-size: 11px; color: #8b949e; }
-.legend span::before { content: ''; display: inline-block; width: 12px; height: 12px; border-radius: 2px; margin-right: 5px; vertical-align: middle; }
-.legend .zs::before { background: rgba(243,156,18,0.4); border: 1px solid #f39c12; }
-.legend .top::before { background: #ef5350; }
-.legend .bot::before { background: #26a69a; }
-.draggable { cursor: move; user-select: none; }
-.drag-handle { position: absolute; top: 2px; right: 4px; font-size: 16px; color: #58a6ff; cursor: grab; line-height: 1; opacity: 0.6; transition: opacity 0.2s; }
-.drag-handle:hover { opacity: 1; }
-.drag-handle:active { cursor: grabbing; }
-.sidebar.draggable .drag-handle { top: 4px; right: 6px; font-size: 20px; }
-.macd-legend.draggable .drag-handle { top: 4px; right: 6px; font-size: 18px; }
-.legend.draggable .drag-handle { top: 4px; right: 6px; font-size: 18px; }
-.macd-legend { position: absolute; top: 14px; left: 84px; z-index: 10; background: rgba(13,17,23,0.95); border: 1px solid #30363d; border-radius: 8px; padding: 10px 14px; font-size: 11px; color: #8b949e; line-height: 1.8; }
-.macd-legend .dif { color: #58a6ff; font-weight: bold; }
-.macd-legend .dea { color: #f78166; font-weight: bold; }
-.macd-legend .note { margin-top: 4px; color: #f39c12; }
-.chart-header { padding: 12px 16px; border-bottom: 1px solid #21262d; display: flex; justify-content: space-between; align-items: center; }
-.chart-header h2 { font-size: 15px; color: #e6edf3; }
-.chart-header .zs-info { font-size: 13px; color: #8b949e; }
-.chart-header .zs-info strong { color: #f39c12; }
-.chart-header .price-info { font-size: 16px; font-weight: bold; }
-.chart-header .price-info.up { color: #ef5350; }
-.chart-header .price-info.down { color: #26a69a; }
-.chart-header .price-info.mid { color: #f39c12; }
-.summary { margin-top: 20px; background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 20px; }
-.summary h2 { font-size: 16px; margin-bottom: 14px; }
-.summary table { width: 100%; border-collapse: collapse; }
-.summary th, .summary td { padding: 10px 14px; text-align: center; border-bottom: 1px solid #21262d; }
-.summary th { color: #8b949e; font-size: 12px; font-weight: normal; }
-.summary td { font-size: 14px; }
-.loading { text-align: center; padding: 80px; color: #8b949e; font-size: 16px; }
-.loading .spinner { display: inline-block; width: 30px; height: 30px; border: 3px solid #30363d; border-top-color: #58a6ff; border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 12px; }
-@keyframes spin { to { transform: rotate(360deg); } }
-.error { text-align: center; padding: 60px; color: #ef5350; font-size: 16px; }
-.hidden { display: none; }
+  :root{
+    --bg:#f5f6f8; --card:#ffffff; --line:#e3e6ea; --line2:#eef0f3;
+    --tx:#1f2329; --tx2:#5b6470; --tx3:#8b949e;
+    --up:#d64545; --down:#2f9e44; --blue:#1c7ed6; --violet:#7b2d8e;
+    --orange:#e8863c; --zs:#3b5ba5; --gold:#c89b1a;
+    --hitbg:#fff5f5; --hitbd:#f0c4c4;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--bg); color:var(--tx);
+    font:14px/1.5 -apple-system,"Segoe UI","Microsoft YaHei",system-ui,sans-serif;
+    padding:14px 16px 40px;
+  }
+  .head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+  .head h1{font-size:18px;margin:0;font-weight:650;letter-spacing:.2px}
+  .head .sub{color:var(--tx3);font-size:12.5px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px}
+  /* ---- 控制条 ---- */
+  .ctrl{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 12px;margin-bottom:12px}
+  input[type=text],input[type=date]{
+    height:34px;padding:0 10px;border:1px solid var(--line);border-radius:7px;
+    font:13.5px/34px inherit;color:var(--tx);background:#fff;outline:none;
+  }
+  input[type=text]{width:190px;letter-spacing:.5px}
+  input:focus{border-color:#9dc3ea;box-shadow:0 0 0 3px rgba(28,126,214,.10)}
+  .btn{
+    height:34px;padding:0 14px;border:1px solid var(--line);border-radius:7px;
+    background:#fff;cursor:pointer;font:13.5px/32px inherit;color:var(--tx);
+  }
+  .btn:hover{background:#f7f9fb}
+  .btn.primary{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:600}
+  .btn.primary:hover{background:#1a70c0}
+  .btn:disabled{opacity:.55;cursor:default}
+  .quick{display:flex;gap:6px;margin-left:auto;flex-wrap:wrap}
+  .quick span.chip{
+    font-size:12px;color:var(--tx2);border:1px solid var(--line2);background:#fafbfc;
+    padding:3px 8px;border-radius:20px;cursor:pointer;user-select:none;
+  }
+  .quick span.chip:hover{border-color:#c9d4e0;color:var(--tx)}
+  /* ---- 周期切换 ---- */
+  .periods{display:flex;border:1px solid var(--line);border-radius:7px;overflow:hidden;height:34px;flex:none}
+  .pbtn{border:none;border-right:1px solid var(--line);background:#fff;padding:0 12px;
+    font:13.5px/34px inherit;color:var(--tx2);cursor:pointer;user-select:none}
+  .pbtn:last-child{border-right:none}
+  .pbtn:hover{background:#f7f9fb}
+  .pbtn.active{background:var(--blue);color:#fff;font-weight:600}
+  /* ---- 结论区 ---- */
+  #verdict{padding:14px 16px;margin-bottom:12px}
+  .vhead{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+  .badge{font-size:19px;font-weight:700;letter-spacing:.5px}
+  .badge.hit{color:var(--up)}
+  .badge.miss{color:var(--tx2)}
+  .vname{font-size:15px;font-weight:600}
+  .vcode{color:var(--tx3);font-size:13px;font-variant-numeric:tabular-nums}
+  .tag{font-size:11.5px;padding:2px 8px;border-radius:20px;border:1px solid var(--line);color:var(--tx2);background:#fafbfc}
+  .tag.warn{color:#a2621a;border-color:#f0dcbc;background:#fffaf0}
+  .tag.ok{color:#1f7a35;border-color:#c7e6ce;background:#f4fbf5}
+  #verdict.hit{background:var(--hitbg);border-color:var(--hitbd)}
+  .reason{font-size:13.5px;color:#a03a3a;background:#fff8f8;border:1px solid #f2dede;border-radius:7px;padding:9px 12px}
+  .reason b{color:#8d2f2f}
+  .kv{display:grid;grid-template-columns:repeat(auto-fill,minmax(292px,1fr));gap:4px 22px;margin-top:4px}
+  .kv .row{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:1px dashed var(--line2);padding:4px 0;min-width:0}
+  .kv .row .k{color:var(--tx2);font-size:13px;white-space:nowrap;flex:none}
+  .kv .row .v{font-weight:600;font-variant-numeric:tabular-nums;text-align:right;white-space:normal;overflow-wrap:anywhere;min-width:0}
+  .empty{color:var(--tx3);font-size:13px}
+  /* ---- 图表 ---- */
+  .wrap{display:grid;grid-template-columns:minmax(0,1fr) 302px;gap:12px;align-items:start}
+  @media (max-width:1080px){.wrap{grid-template-columns:minmax(0,1fr)}}
+  #chartCard{padding:10px 10px 6px;position:relative}
+  .layers{display:flex;gap:14px;align-items:center;flex-wrap:wrap;padding:2px 4px 8px;border-bottom:1px solid var(--line2);margin-bottom:8px}
+  .layers label{font-size:12.5px;color:var(--tx2);cursor:pointer;user-select:none;display:flex;align-items:center;gap:5px}
+  .layers input{cursor:pointer;margin:0}
+  .layers .right{margin-left:auto;display:flex;gap:6px}
+  .mini{height:26px;padding:0 9px;font-size:12.5px;line-height:24px;border-radius:6px}
+  #chartBox{position:relative;width:100%}
+  #chart{display:block;width:100%;border-radius:6px;cursor:crosshair}
+  #tip{
+    position:absolute;pointer-events:none;display:none;z-index:5;
+    background:rgba(255,255,255,.97);border:1px solid var(--line);border-radius:8px;
+    box-shadow:0 6px 20px rgba(20,30,45,.12);padding:8px 10px;font-size:12.5px;
+    min-width:172px;font-variant-numeric:tabular-nums;
+  }
+  #tip .t{font-weight:650;margin-bottom:4px}
+  #tip .l{display:flex;justify-content:space-between;gap:14px;color:var(--tx2)}
+  #tip .l b{color:var(--tx);font-weight:600}
+  #tip .sep{height:1px;background:var(--line2);margin:5px 0}
+  #tip .note{color:var(--zs);font-size:12px}
+  /* ---- 侧栏 ---- */
+  aside{display:flex;flex-direction:column;gap:12px}
+  .panel{padding:11px 13px}
+  .panel h3{margin:0 0 8px;font-size:13px;font-weight:650;color:var(--tx);letter-spacing:.3px}
+  .panel h3 .hint{font-weight:400;color:var(--tx3);font-size:11.5px;margin-left:5px}
+  .stat{display:flex;justify-content:space-between;font-size:13px;padding:3px 0;border-bottom:1px dashed var(--line2)}
+  .stat:last-child{border-bottom:none}
+  .stat .k{color:var(--tx2)}
+  .stat .v{font-weight:600;font-variant-numeric:tabular-nums}
+  .plist{font-size:12.5px;font-variant-numeric:tabular-nums}
+  .plist .pt{display:flex;align-items:center;gap:7px;padding:3.5px 0;border-bottom:1px dashed var(--line2)}
+  .plist .pt:last-child{border-bottom:none}
+  .dot{width:8px;height:8px;border-radius:2px;flex:none}
+  .plist .nm{width:34px;color:var(--tx2);flex:none}
+  .plist .dt{color:var(--tx3);flex:none;width:74px}
+  .plist .pr{margin-left:auto;font-weight:600}
+  .legend{display:flex;flex-wrap:wrap;gap:8px 14px;font-size:12px;color:var(--tx2)}
+  .legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:middle}
+  details{border-top:1px solid var(--line2);padding-top:8px;margin-top:6px}
+  details summary{cursor:pointer;font-size:12.5px;color:var(--tx2);outline:none}
+  details ol{margin:7px 0 0 18px;padding:0;font-size:12px;color:var(--tx2);line-height:1.75}
+  details code{background:#f3f5f7;border-radius:3px;padding:0 4px;font-size:11.5px}
+  .foot{margin-top:14px;color:var(--tx3);font-size:12px;line-height:1.7}
+  .loading{color:var(--tx2);font-size:13px}
+  .spin{display:inline-block;width:11px;height:11px;border:2px solid #cfd8e3;border-top-color:var(--blue);border-radius:50%;animation:sp .7s linear infinite;vertical-align:-1px;margin-right:7px}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  /* ---- 站点导航 ---- */
+  .nav{display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:7px 10px;margin-bottom:10px}
+  .nav a{font-size:12.5px;color:var(--tx2);text-decoration:none;border:1px solid var(--line2);background:#fafbfc;padding:4px 11px;border-radius:20px}
+  .nav a:hover{border-color:#c9d4e0;color:var(--tx)}
+  .nav a.on{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:600}
+  .nav .sp{margin-left:auto;color:var(--tx3);font-size:11.5px}
+  /* ---- 走势全景 ---- */
+  .pano{display:grid;grid-template-columns:repeat(auto-fill,minmax(238px,1fr));gap:9px;margin-top:11px}
+  .box{border:1px solid var(--line);border-radius:8px;padding:9px 11px;background:#fcfdfe}
+  .box .bt{font-size:12px;color:var(--tx3);margin-bottom:4px}
+  .box .bv{font-size:13.5px;font-weight:600;font-variant-numeric:tabular-nums}
+  .box .bm{font-size:12px;color:var(--tx2);margin-top:3px;line-height:1.55}
+  .box.on2{border-color:#c7e6ce;background:#f6fcf7}
+  .box.on3{border-color:#bfe3e8;background:#f5fbfc}
+  .box.div{border-color:#f0dcbc;background:#fffaf0}
+  .box.pos{border-color:#d9e0ea;background:#f8fafc}
+  .zsrow{display:flex;justify-content:space-between;font-size:12.5px;padding:3px 0;border-bottom:1px dashed var(--line2);font-variant-numeric:tabular-nums}
+  .zsrow:last-child{border-bottom:none}
+  .zsrow .k{color:var(--tx2)}
+  .zsrow .v{font-weight:600}
 </style>
 </head>
 <body>
-<div class="container">
-  <!-- 输入区域 -->
-  <div class="input-section">
-    <h1>📊 缠论多级别中枢分析</h1>
-    <div class="input-box">
-      <input type="text" id="stockInput" placeholder="输入股票代码" value="000001">
-      <button id="analyzeBtn" onclick="analyzeStock()">开始分析</button>
-      <span id="stockName" class="stock-name"></span>
-    </div>
+
+<nav class="nav">
+  <a class="on" href="./">走势分析台</a>
+  <a href="./yimai/">一买选股</a>
+  <a href="./sector/">板块轮动</a>
+  <a href="./legacy/">旧版归档</a>
+  <span class="sp">中枢 · 买卖点 · 背驰 · 七周期 · 口径对齐 12/14/15 号脚本</span>
+</nav>
+
+<div class="head">
+  <h1>缠论走势分析台</h1>
+  <span class="sub" id="headSub">分型 → 笔 → 中枢 → 走势段 → 一买 / 二买 / 三买 + 背驰量化 · 口径对齐 12/14/15 号脚本</span>
+</div>
+
+<div class="card ctrl">
+  <input id="code" type="text" placeholder="股票代码，如 002400" value="002400" autocomplete="off">
+  <input id="asof" type="date" title="回看截止日（留空＝最新）">
+  <div class="periods" id="periods">
+    <button class="pbtn" data-p="m5" title="5 分钟">5分</button>
+    <button class="pbtn" data-p="m15" title="15 分钟">15分</button>
+    <button class="pbtn" data-p="m30" title="30 分钟">30分</button>
+    <button class="pbtn" data-p="m60" title="60 分钟">60分</button>
+    <button class="pbtn active" data-p="d" title="日线">日</button>
+    <button class="pbtn" data-p="w" title="周线">周</button>
+    <button class="pbtn" data-p="mo" title="月线">月</button>
   </div>
-
-  <!-- 加载中 -->
-  <div id="loading" class="loading hidden">
-    <div class="spinner"></div>
-    <div>正在获取行情数据并分析...</div>
-  </div>
-
-  <!-- 错误提示 -->
-  <div id="error" class="error hidden"></div>
-
-  <!-- 内容区域 -->
-  <div id="content" style="display:none">
-    <div class="section" id="sec-daily">
-      <div class="chart-header"><h2>📅 日线K线 · 缠论中枢</h2><div id="hdr-daily"></div></div>
-      <div class="chart-box">
-        <div class="kline-wrap"><canvas id="kline-daily"></canvas></div>
-      </div>
-      <div class="chart-box">
-        <div class="macd-wrap"><canvas id="macd-daily"></canvas></div>
-      </div>
-    </div>
-    <div class="section" id="sec-weekly">
-      <div class="chart-header"><h2>📅 周线K线 · 缠论中枢</h2><div id="hdr-weekly"></div></div>
-      <div class="chart-box">
-        <div class="kline-wrap"><canvas id="kline-weekly"></canvas></div>
-      </div>
-      <div class="chart-box">
-        <div class="macd-wrap"><canvas id="macd-weekly"></canvas></div>
-      </div>
-    </div>
-    <div class="section" id="sec-monthly">
-      <div class="chart-header"><h2>📅 月线K线 · 缠论中枢</h2><div id="hdr-monthly"></div></div>
-      <div class="chart-box">
-        <div class="kline-wrap"><canvas id="kline-monthly"></canvas></div>
-      </div>
-      <div class="chart-box">
-        <div class="macd-wrap"><canvas id="macd-monthly"></canvas></div>
-      </div>
-    </div>
-    <div class="summary" id="summary"></div>
+  <button class="btn primary" id="run">分 析</button>
+  <button class="btn" id="reset" title="恢复默认视图">重置视图</button>
+  <div class="quick">
+    <span class="chip" data-c="002400">002400 深主板</span>
+    <span class="chip" data-c="300750">300750 创业板</span>
+    <span class="chip" data-c="688111">688111 科创板</span>
+    <span class="chip" data-c="601988">601988 沪主板</span>
   </div>
 </div>
 
-<script>
-let currentSymbol = '';
-const KLT_MAP = { monthly: 103, weekly: 102, daily: 101 };
-const PERIOD_CN = { monthly: '月线', weekly: '周线', daily: '日线' };
+<div class="card" id="verdict">
+  <div class="empty">输入 A 股代码后点「分析」。支持沪深主板 / 创业板 / 科创板 / 北交所全部板块。</div>
+</div>
 
-// 设置股票代码
-function setSymbol(symbol) {
-  document.getElementById('stockInput').value = symbol;
-  analyzeStock();
-}
+<div class="wrap">
+  <div class="card" id="chartCard">
+    <div class="layers">
+      <label><input type="checkbox" id="L_fenxing" checked>分型</label>
+      <label><input type="checkbox" id="L_bi" checked>笔</label>
+      <label><input type="checkbox" id="L_zs" checked>中枢</label>
+      <label><input type="checkbox" id="L_pts" checked>买卖点</label>
+      <label><input type="checkbox" id="L_macd" checked>MACD</label>
+      <div class="right">
+        <button class="btn mini" id="zin">＋</button>
+        <button class="btn mini" id="zout">－</button>
+        <button class="btn mini" id="zfit">全显</button>
+      </div>
+    </div>
+    <div id="chartBox">
+      <canvas id="chart"></canvas>
+      <div id="tip"></div>
+    </div>
+  </div>
 
-// 回车键触发分析
-document.getElementById('stockInput').addEventListener('keypress', function(e) {
-  if (e.key === 'Enter') analyzeStock();
-});
+  <aside>
+    <div class="card panel" id="pStat">
+      <h3>结构统计</h3>
+      <div class="empty">待分析</div>
+    </div>
+    <div class="card panel" id="pPts">
+      <h3>段内买卖点 <span class="hint">课17 一段走势</span></h3>
+      <div class="empty">待分析</div>
+    </div>
+    <div class="card panel">
+      <h3>标记图例</h3>
+      <div class="legend">
+        <span><i style="background:#d64545"></i>顶分型 ▼</span>
+        <span><i style="background:#1c7ed6"></i>底分型 ▲</span>
+        <span><i style="background:#3b5ba5"></i>中枢 [ZD, ZG]</span>
+        <span><i style="background:#1c7ed6"></i>一买 ▲</span>
+        <span><i style="background:#2f9e44"></i>二买 ▲</span>
+        <span><i style="background:#0b7285"></i>三买 ▲</span>
+        <span><i style="background:#e8590c"></i>二卖 ▼</span>
+        <span><i style="background:#d64545"></i>一卖 ▼</span>
+      </div>
+      <details>
+        <summary>判定口径（9 道闸门）</summary>
+        <ol>
+          <li>存在至少一个中枢（连续三笔重叠，不延伸）</li>
+          <li>最后一笔为向下笔</li>
+          <li>最后一笔已确认（结束分型后有确认 K）</li>
+          <li>最后一笔已离开中枢</li>
+          <li>最后一笔低点跌破中枢 ZD</li>
+          <li>低点低于中枢之前那一下跌</li>
+          <li>能在这段下跌中找到一卖（起点）</li>
+          <li>低点是一卖之后的最低点</li>
+          <li><b>确认日＝最后收盘日</b> —— <span style="color:#a2621a">本工具已按需求取消</span>，因此可回看历史</li>
+        </ol>
+        <div style="margin-top:7px;font-size:12px;color:var(--tx3);line-height:1.7">
+          走势段买卖点沿用课17：一段只出一套一卖 / 二卖 / 一买。<br>
+          支持周期：<code>5分 / 15分 / 30分 / 60分 / 日 / 周 / 月</code>。缠论买卖点本无级别之分，同一套判定可直接套用于任一级别；<b>小级别（分时）一买是超短线信号，需大级别配合确认</b>。<br>
+          数据源：<b>日 / 周 / 月</b> → 腾讯 <code>fqkline</code>（前复权，备用东财 <code>push2his</code>）；<b>分时</b> → 新浪 <code>jsonp</code>（免跨域，<b>暂为原始价、未复权</b>）。<br>
+          窗口：<b>日</b>＝截止日前 800 自然日（对齐原脚本 <code>LOOKBACK_DAYS</code>）；<b>周 240 根 / 月 180 根 / 分时 480 根</b>（固定根数）。<br>
+          与原始脚本的差异：原脚本走本地 QMT（<code>front</code>），本工具走网络前复权源，除权附近的边界样本可能给出不一致结果。
+        </div>
+      </details>
+    </div>
+  </aside>
+</div>
 
-// 分析股票
-async function analyzeStock() {
-  const input = document.getElementById('stockInput').value.trim();
-  if (!input) {
-    alert('请输入股票代码或名称');
-    return;
-  }
-  
-  currentSymbol = input;
-  document.getElementById('stockName').textContent = '';
-  fetchStockName(input);  // 异步获取股票名称
-  document.getElementById('loading').classList.remove('hidden');
-  document.getElementById('error').classList.add('hidden');
-  document.getElementById('content').style.display = 'none';
-  document.getElementById('analyzeBtn').disabled = true;
-  
-  try {
-    await init();
-  } catch(e) {
-    document.getElementById('loading').classList.add('hidden');
-    document.getElementById('error').classList.remove('hidden');
-    document.getElementById('error').innerHTML = `数据加载失败：${e.message}<br><br>请检查股票代码是否正确，或稍后重试`;
-  }
-  document.getElementById('analyzeBtn').disabled = false;
-}
+<div class="foot">
+  红涨绿跌 · 滚轮缩放 · 按住拖拽平移 · 双击复位。MACD 柱按国内习惯取 2×(DIF−DEA)。<br>
+  口径：<b>一买</b>走 15 号九道闸门（已与 12/14/15 号脚本逐样本对拍）；<b>二买</b>＝一买/前低之后回抽不破前低且已确认；<b>三买</b>＝向上突破中枢 ZG 后回抽不跌回中枢；<b>背驰</b>＝同向相邻两笔的 MACD 柱力度衰减且创极端价。<br>
+  任一级别的一个买点 ≠ 交易指令；小级别信号须结合实时价与更大级别结构确认。行情接口为非官方接口、无 SLA，可能按 IP 限流。
+</div>
 
-// ========= 数据获取 =========
-// 获取股票中文名称（腾讯API为主，东方财富为备）
-async function fetchStockName(symbol) {
-  // 1. 本地字典（极速，不走网络）
-  const localMap = {
-    '000001': '平安银行', '000002': '万科A', '000004': '国华网安',
-    '000005': 'ST星源', '000006': '深振业A', '000007': '全新好',
-    '000008': '神州高铁', '000009': '中国宝安', '000010': '美丽生态',
-    '000011': '深物业A', '000012': '南玻A', '000014': '沙河股份',
-    '000016': '深康佳A', '000017': '深中华A', '000018': '神州长城',
-    '000019': '深深宝A', '000020': '深华发A', '000021': '深科技',
-    '000022': '深赤湾A', '000023': '深天地A', '000025': '特力A',
-    '000026': '飞亚达A', '000027': '深圳能源', '000028': '国药一致',
-    '000029': '深深房A', '000030': '富奥股份', '000031': '大悦城',
-    '000032': '深桑达A', '000033': '新都退', '000034': '神州数码',
-    '000035': '中国天楹', '000036': '华联控股', '000037': '深南电A',
-    '000038': '深大通', '000039': '中集集团', '000040': '东旭蓝天',
-    '000042': '中洲控股', '000043': '中航善达', '000045': '深纺织A',
-    '000046': '泛海控股', '000048': '康达尔', '000049': '德赛电池',
-    '000050': '深天马A', '000055': '方大集团', '000056': '皇庭国际',
-    '000058': '深赛格', '000059': '华锦股份', '000060': '中金岭南',
-    '000061': '农产品', '000062': '深圳华强', '000063': '中兴通讯',
-    '000065': '北方国际', '000066': '中国长城', '000068': '华控赛格',
-    '000069': '华侨城A', '000070': '特发信息', '000078': '海王生物',
-    '000088': '盐田港', '000089': '深圳机场', '000090': '天健集团',
-    '000096': '广聚能源', '000099': '中信海直', '000100': 'TCL科技',
-    '000150': '宜华健康', '000151': '中成股份', '000153': '丰原药业',
-    '000155': '川能动力', '000156': '华数传媒', '000157': '中联重科',
-    '000158': '常山北明', '000159': '国际实业', '000166': '申万宏源',
-    '000301': '东方盛虹', '000333': '美的集团', '000338': '潍柴动力',
-    '000400': '许继电气', '000401': '冀东水泥', '000402': '金融街',
-    '000403': '双林股份', '000404': '长虹华意', '000407': '胜利股份',
-    '000408': '藏格矿业', '000409': '云鼎科技', '000410': '沈阳机床',
-    '000411': '英特集团', '000413': '东旭光电', '000415': '渤海租赁',
-    '000416': '民生控股', '000417': '合肥百货', '000418': '小天鹅A',
-    '000419': '通程控股', '000420': '吉林化纤', '000421': '南京公用',
-    '000422': '湖北宜化', '000423': '东阿阿胶', '000425': '徐工机械',
-    '000426': '兴业银行', '000428': '华天酒店', '000430': '张家界',
-    '000488': '晨鸣纸业', '000498': '山东路桥', '000501': '鄂武商A',
-    '000502': '绿景控股', '000503': '国新健康', '000504': '南华生物',
-    '000505': '珠江实业', '000506': '中润资源', '000507': '珠海港',
-    '000509': '华塑控股', '000510': '新金路', '000511': '银基发展',
-    '000513': '丽珠集团', '000514': '渝开发', '000516': '国际医学',
-    '000517': '荣安地产', '000518': '四环生物', '000519': '中粮资本',
-    '000520': '凤凰航运', '000521': '广州浪奇', '000522': '白云山A',
-    '000523': '广州浪奇', '000525': '红太阳', '000528': '柳工',
-    '000529': '广弘控股', '000530': '山鹰国际', '000531': '穗恒运A',
-    '000532': '华金资本', '000533': '万家乐', '000536': '华映科技',
-    '000537': '广宇发展', '000538': '云南白药', '000539': '粤电力A',
-    '000540': '中天金融', '000541': '佛山照明', '000543': '皖能电力',
-    '000544': '中原环保', '000545': '吉林制药', '000546': '金圆股份',
-    '000547': '航天发展', '000548': '湖南投资', '000550': '江铃汽车',
-    '000551': '创元科技', '000552': '甘肃能化', '000553': '沙隆达A',
-    '000554': '泰山石油', '000555': '神州信息', '000557': '西部创业',
-    '000558': '莱茵体育', '000559': '万向钱潮', '000560': '我爱我家',
-    '000561': '烽火电子', '000563': '陕国投A', '000564': '供销大集',
-    '000565': '渝三峡A', '000566': '海南海药', '000567': '海德股份',
-    '000568': '泸州老窖', '000569': '长城特钢', '000570': '苏常柴A',
-    '000571': '新大洲A', '000573': '粤宏远A', '000576': '广东甘化',
-    '000581': '威孚高科', '000582': '北部湾港', '000584': '哈工智能',
-    '000585': '东北电气', '000586': '汇源通信', '000587': '金洲慈航',
-    '000589': '贵州轮胎', '000590': '启迪药业', '000591': '太阳能',
-    '000592': '平潭发展', '000593': '大通燃气', '000594': '国投中鲁',
-    '000595': '宝塔实业', '000596': '古井贡酒', '000597': '东北制药',
-    '000598': '兴蓉环境', '000599': '青岛双星', '000600': '建投能源',
-    '000601': '韶能股份', '000603': '盛达资源', '000605': '渤海股份',
-    '000606': '顺利办', '000607': '华媒控股', '000608': '阳光股份',
-    '000609': '中迪投资', '000610': '西安旅游', '000611': '天首发展',
-    '000612': '焦作万方', '000613': '海南高速', '000615': '奥园美谷',
-    '000616': '海航投资', '000617': '中油资本', '000618': '吉林碳谷',
-    '000619': '海螺型材', '000620': '如意集团', '000622': '恒立实业',
-    '000623': '吉林敖东', '000625': '长安汽车', '000626': '远大控股',
-    '000627': '天茂集团', '000628': '高新发展', '000629': '攀钢钒钛',
-    '000630': '铜陵有色', '000631': '顺发恒业', '000632': '三木集团',
-    '000633': '合金投资', '000635': '英力特', '000636': '风华高科',
-    '000637': '茂化实华', '000638': '万方发展', '000639': '西王食品',
-    '000650': '仁和药业', '000651': '格力电器', '000652': '泰达股份',
-    '000655': '山东矿机', '000656': '金科股份', '000657': '中钨高新',
-    '000658': ' ST东海A', '000659': '珠海中富', '000661': '长春高新',
-    '000663': '永安林业', '000665': '湖北广电', '000666': '经纬纺机',
-    '000667': '美好置业', '000668': '荣丰控股', '000669': '金鸿股份',
-    '000670': 'ST盈方', '000671': '阳光城', '000672': '上峰水泥',
-    '000673': '当代文体', '000676': '智度股份', '000677': '恒天海龙',
-    '000678': '襄阳轴承', '000679': '大连友谊', '000680': '山推股份',
-    '000681': '视觉中国', '000682': '东方电子', '000683': '远兴能源',
-    '000685': '中山公用', '000686': '东北证券', '000687': '华讯方舟',
-    '000688': '朝阳钢铁', '000690': '宝新能源', '000692': '惠天热电',
-    '000695': '滨海能源', '000697': '炼石航空', '000698': '沈阳化工',
-    '000700': '模塑科技', '000701': '厦门信达', '000702': '正虹科技',
-    '000703': '恒逸石化', '000705': '浙江震元', '000707': '双环科技',
-    '000708': '中信特钢', '000709': '河钢股份', '000710': '贝瑞基因',
-    '000711': '京蓝科技', '000712': '锦龙股份', '000713': '丰乐种业',
-    '000715': '中兴商业', '000716': '黑芝麻', '000717': '韶钢松山',
-    '000718': '苏宁环球', '000719': '中原传媒', '000720': '新能泰山',
-    '000721': '西安饮食', '000722': '湖南发展', '000723': '美锦能源',
-    '000725': '京东方A', '000726': '鲁泰A', '000727': '华东科技',
-    '000728': '国元证券', '000729': '燕京啤酒', '000731': '四川美丰',
-    '000732': '泰禾集团', '000733': '振华科技', '000735': '罗牛山',
-    '000736': '中交地产', '000737': '北方铜业', '000738': '航发控制',
-    '000739': '普洛药业', '000750': '锌业股份', '000751': '渤海轮渡',
-    '000752': '庄园牧场', '000753': '福建水泥', '000755': '山西路桥',
-    '000756': '新华制药', '000757': '浩物股份', '000758': '中色股份',
-    '000759': '中百集团', '000760': '斯太尔', '000761': '本钢板材',
-    '000762': '西藏矿业', '000763': '通化金马', '000765': '熊猫金控',
-    '000766': '通化东宝', '000767': '晋控电力', '000768': '中航西飞',
-    '000769': '普讯5', '000776': '广发证券', '000777': '中核科技',
-    '000778': '新兴铸管', '000779': '甘咨询', '000780': '平庄能源',
-    '000782': '美达股份', '000783': '长江证券', '000785': '居然之家',
-    '000786': '北新建材', '000788': '西南合成', '000789': '万年青',
-    '000790': '华神科技', '000791': '甘肃电投', '000792': '盐湖股份',
-    '000793': '华闻集团', '000795': '英洛华', '000796': '凯撒旅业',
-    '000797': '中国武夷', '000798': '中水渔业', '000799': '酒鬼酒',
-    '000800': '一汽轿车', '000801': '四川九洲', '000802': '北京文化',
-    '000803': '美年健康', '000805': 'ST威龙', '000806': '银河生物',
-    '000807': '云铝股份', '000808': '澳柯玛', '000809': '四川铁骑',
-    '000810': '创维数字', '000811': '烟台冰轮', '000812': '陕西金叶',
-    '000813': '德展健康', '000815': '美利云', '000816': '江苏索普',
-    '000818': '航锦科技', '000819': '岳阳兴长', '000820': '节能铁汉',
-    '000821': '京山轻机', '000822': '山东海化', '000823': '超声电子',
-    '000825': '太钢不锈', '000826': '启迪环境', '000828': '东莞控股',
-    '000829': '天音控股', '000830': '鲁西化工', '000831': '五矿稀土',
-    '000833': '粤桂股份', '000835': '长城动漫', '000836': '富通信息',
-    '000837': '秦川机床', '000838': '财信发展', '000839': '中信国安',
-    '000848': '承德露露', '000850': '华茂股份', '000851': '高鸿股份',
-    '000852': '石化机械', '000856': '冀东装备', '000858': '五粮液',
-    '000859': '国风塑业', '000860': '顺鑫农业', '000861': '海印股份',
-    '000862': '银星能源', '000863': '三湘印象', '000868': '安凯客车',
-    '000869': '张裕A', '000875': '吉电股份', '000876': '新希望',
-    '000877': '天山股份', '000878': '云南铜业', '000880': '维维股份',
-    '000881': '中广核技', '000882': '华联股份', '000883': '湖北能源',
-    '000885': '城发环境', '000886': '海南高速', '000887': '中鼎股份',
-    '000888': '峨眉山A', '000889': '中嘉博创', '000890': '法尔胜',
-    '000893': '亚钾国际', '000895': '双汇发展', '000897': '津滨发展',
-    '000898': '鞍钢股份', '000899': '赣能股份', '000900': '现代投资',
-    '000901': '航天科技', '000902': '新洋丰', '000903': '云内动力',
-    '000905': '厦门港务', '000906': '浙商中拓', '000908': '景峰医药',
-    '000909': '数源科技', '000910': '南宁糖业', '000911': 'ST南糖',
-    '000912': '泸天化', '000913': '钱江摩托', '000915': '华软科技',
-    '000916': '华北高速', '000917': '电广传媒', '000918': '嘉凯城',
-    '000919': '金陵药业', '000920': '南方汇通', '000921': '海信家电',
-    '000922': '佳电股份', '000923': '河钢资源', '000925': '海峡创新',
-    '000926': '福星股份', '000927': '中国铁物', '000928': '中钢国际',
-    '000929': '兰州黄河', '000930': '中粮科技', '000931': '中关科技',
-    '000932': '华菱钢铁', '000933': '神火股份', '000935': '四川双马',
-    '000936': '华西股份', '000937': '冀中能源', '000938': '紫光股份',
-    '000939': '凯迪退', '000948': '南天信息', '000949': '新乡化纤',
-    '000950': '重药控股', '000951': '中国重汽', '000952': '广济药业',
-    '000953': '河化股份', '000955': '欣龙控股', '000956': '中原油气',
-    '000957': '中通客车', '000958': '东方能源', '000959': '首钢股份',
-    '000960': '锡业股份', '000961': '中南建设', '000962': '东方钽业',
-    '000963': '华东医药', '000965': '天保基建', '000966': '长源电力',
-    '000967': '盈峰环境', '000968': '蓝焰控股', '000969': '安泰科技',
-    '000970': '中科三环', '000971': 'ST联络', '000972': '中基健康',
-    '000973': '佛塑科技', '000975': '银泰黄金', '000976': '华铁股份',
-    '000977': '浪潮信息', '000978': '桂林旅游', '000979': '中弘股份',
-    '000980': 'ST众泰', '000981': 'ST银亿', '000982': '宁夏建材',
-    '000983': '山西焦煤', '000985': '大庆华科', '000986': '东方热电',
-    '000987': '越秀金控', '000988': '华工科技', '000989': '九芝堂',
-    '000990': '诚志股份', '000993': '闽东电力', '000995': '皇台酒业',
-    '002001': '新和成', '002002': '鸿达兴业', '002003': '伟星股份',
-    '002004': '华邦健康', '002005': 'ST德豪', '002006': '精功科技',
-    '002007': '华兰生物', '002008': '大族激光', '002009': '奇正藏药',
-    '002010': '传化智联', '002011': '盾安环境', '002012': '凯恩股份',
-    '002013': '中航机电', '002014': 'ST永悦', '002015': '协鑫能科',
-    '002016': '世荣兆业', '002017': '东信和平', '002018': '华信国际',
-    '002019': '亿帆医药', '002020': '京新药业', '002021': 'ST中捷',
-    '002022': '科华生物', '002023': '海特高新', '002024': '苏宁易购',
-    '002025': '航天电器', '002026': '山东威达', '002027': '分众传媒',
-    '002028': '思源电气', '002029': '七匹狼', '002030': '达安基因',
-    '002031': '巨轮智能', '002032': '苏泊尔', '002033': '丽江股份',
-    '002034': '旺能环境', '002035': '华帝股份', '002036': '联创电子',
-    '002037': '保变电气', '002038': '双鹭药业', '002039': '黔源电力',
-    '002040': '南京港', '002041': '登海种业', '002042': '华孚时尚',
-    '002043': '兔宝宝', '002044': '美年健康', '002045': '国光电器',
-    '002046': '轴研科技', '002047': '宝鹰股份', '002048': '宁波华翔',
-    '002049': '紫光国微', '002050': '三花智控', '002051': '中工国际',
-    '002052': 'ST同洲', '002053': '云南能投', '002054': '德美化工',
-    '002055': '得润电子', '002056': '横店东磁', '002057': '中钢天源',
-    '002058': 'ST威尔', '002059': '云南旅游', '002060': '粤水电',
-    '002061': '浙江交科', '002062': '宏润建设', '002063': '远光软件',
-    '002064': '华峰氨纶', '002065': '东华软件', '002066': '瑞泰科技',
-    '002067': '景兴纸业', '002068': '黑猫股份', '002069': '獐子岛',
-    '002070': '众和退', '002071': '退市众和', '002073': '软控股份',
-    '002074': '国轩高科', '002075': '沙钢股份', '002076': '*ST雪莱',
-    '002078': '太阳纸业', '002079': '中材科技', '002080': '中材节能',
-    '002081': '金螳螂', '002082': '栋梁新材', '002083': '孚日股份',
-    '002084': '海鸥住工', '002085': '万丰奥威', '002086': '东方海洋',
-    '002087': '新野纺织', '002088': '鲁阳节能', '002089': 'ST新海',
-    '002090': '金智科技', '002091': '江苏国泰', '002092': '中泰化学',
-    '002093': '宝信软件', '002094': '青岛金王', '002095': '生意宝',
-    '002096': '南岭民爆', '002097': '山河智能', '002098': '浔兴股份',
-    '002099': '海翔药业', '002100': '天康生物', '002101': '广东鸿图',
-    '002102': 'ST冠福', '002103': '广博股份', '002104': '恒宝股份',
-    '002105': '信隆健康', '002106': '莱宝高科', '002107': '沃华医药',
-    '002108': '沧州明珠', '002109': '兴化股份', '002110': '三钢闽光',
-    '002111': '威海广泰', '002112': 'ST天马', '002113': 'ST华鼎',
-    '002114': '罗平锌电', '002115': '三维通信', '002116': '中国海诚',
-    '002117': '东港股份', '002118': '紫鑫药业', '002119': '康强电子',
-    '002120': '韵达股份', '002121': '科陆电子', '002122': 'ST天马',
-    '002123': '梦网集团', '002124': '天邦股份', '002125': '湘潭电化',
-    '002126': '银轮股份', '002127': '南极电商', '002128': '中材节能',
-    '002129': '中环股份', '002130': '恒星科技', '002131': '利欧股份',
-    '002132': '恒星科技', '002133': '滨海能源', '002134': '普邦股份',
-    '002135': '东南网架', '002136': '安纳达', '002137': '麦达数字',
-    '002138': '顺络电子', '002139': '拓维信息', '002140': '东华科技',
-    '002141': '贤丰控股', '002142': '宁波银行', '002143': 'ST印纪',
-    '002144': '慈文传媒', '002145': '中核钛白', '002146': '荣盛发展',
-    '002147': 'ST新光', '002148': '北方稀土', '002149': '西部材料',
-    '002150': '通润装备', '002151': '北斗星通', '002152': '广电运通',
-    '002153': '石基信息', '002154': '报喜鸟', '002155': '湖南黄金',
-    '002156': '通富微电', '002157': '正邦科技', '002158': '汉钟精机',
-    '002159': '三特索道', '002160': '常铝股份', '002161': 'ST网力',
-    '002162': '悦心健康', '002163': '海南矿业', '002164': '宁波东力',
-    '002165': '红宝丽', '002166': '岭南股份', '002167': '东方嘉盛',
-    '002168': '惠程科技', '002169': '聚飞光电', '002170': '爱迪尔',
-    '002171': '楚江新材', '002172': '澳洋健康', '002173': '创新医疗',
-    '002174': '游族网络', '002175': '*ST德奥', '002176': '江特电机',
-    '002177': '御银股份', '002178': '延华智能', '002179': '中航光电',
-    '002180': '纳思达', '002181': '燕塘乳业', '002182': '宝丽迪',
-    '002183': '怡亚通', '002184': '海得控制', '002185': '华天科技',
-    '002186': '全聚德', '002187': 'ST岩石', '002188': '巴安水务',
-    '002189': '中光学', '002190': '成飞集成', '002191': '劲嘉股份',
-    '002192': '藏格矿业', '002193': 'ST联络', '002194': '武汉凡谷',
-    '002195': '二三四五', '002196': 'ST远程', '002197': '证通电子',
-    '002198': '嘉应制药', '002199': '东晶电子', '002200': 'ST云投',
-    '002201': '九鼎新材', '002202': '金风科技', '002203': '海亮股份',
-    '002204': '大连重工', '002205': 'ST纵横', '002206': '海利得',
-    '002207': 'ST准油', '002208': 'ST交昂', '002209': '达意隆',
-    '002210': 'ST飞马', '002211': 'ST宏图', '002212': '南洋股份',
-    '002213': '大为股份', '002214': '大立科技', '002215': '诺普信',
-    '002216': '三全食品', '002217': 'ST联络', '002218': '拓日新能',
-    '002219': 'ST恒康', '002221': '东材科技', '002222': '福晶科技',
-    '002223': '鱼跃医疗', '002224': 'ST联络', '002225': '濮耐股份',
-    '002226': '江南化工', '002227': 'ST特信', '002228': '合兴包装',
-    '002229': 'ST联络', '002230': '科大讯飞', '002231': 'ST联络',
-    '002232': '启明信息', '002233': 'ST金塔', '002234': 'ST联络',
-    '002235': '安妮股份', '002236': 'ST联络', '002237': '恒邦股份',
-    '002238': '天威视讯', '002239': 'ST联络', '002240': '盛新锂能',
-    '002241': '歌尔股份', '002242': 'ST联络', '002243': '通产丽星',
-    '002244': 'ST联络', '002251': 'ST联络', '002252': 'ST联络',
-    '002253': 'ST联络', '002254': 'ST联络', '002255': 'ST联络',
-    '002256': 'ST联络', '002258': 'ST联络', '002259': 'ST联络',
-    '002260': 'ST联络', '002261': 'ST联络', '002262': '恩华药业',
-    '002263': 'ST联络', '002264': '新华都', '002265': 'ST联络',
-    '002266': 'ST联络', '002267': 'ST联络', '002268': 'ST联络',
-    '002269': 'ST联络', '002270': 'ST联络', '002271': 'ST联络',
-    '002272': 'ST联络', '002273': 'ST联络', '002274': 'ST联络',
-    '002275': '桂林三金', '002277': 'ST联络', '002278': 'ST联络',
-    '002279': 'ST联络', '002280': 'ST联络', '002281': 'ST联络',
-    '002282': 'ST联络', '002283': '天润工业', '002284': 'ST联络',
-    '002285': '世联行', '002286': 'ST联络', '002287': 'ST联络',
-    '002288': 'ST联络', '002289': '宇顺电子', '002290': 'ST联络',
-    '002291': 'ST联络', '002292': '奥飞娱乐', '002293': 'ST联络',
-    '002294': '信立泰', '002295': 'ST联络', '002296': 'ST联络',
-    '002297': 'ST联络', '002298': 'ST联络', '002299': 'ST联络',
-    '002300': 'ST联络', '002301': 'ST联络', '002303': 'ST联络',
-    '002304': 'ST联络', '002305': 'ST联络', '002306': 'ST联络',
-    '002307': 'ST联络', '002308': 'ST联络', '002309': 'ST联络',
-    '002310': '东方园林', '002311': 'ST联络', '002312': 'ST联络',
-    '002313': 'ST联络', '002314': 'ST联络', '002315': 'ST联络',
-    '002316': 'ST联络', '002317': '众生药业', '002318': 'ST联络',
-    '002319': 'ST联络', '002320': 'ST联络', '002321': 'ST联络',
-    '002322': 'ST联络', '002323': 'ST联络', '002324': 'ST联络',
-    '002325': 'ST联络', '002326': 'ST联络', '002327': 'ST联络',
-    '002328': 'ST联络', '002329': 'ST联络', '002330': 'ST联络',
-    '002331': 'ST联络', '002332': 'ST联络', '002333': 'ST联络',
-    '002334': 'ST联络', '002335': 'ST联络', '002336': 'ST联络',
-    '002337': 'ST联络', '002338': 'ST联络', '002339': 'ST联络',
-    '002340': 'ST联络', '002341': 'ST联络', '002342': 'ST联络',
-    '002343': 'ST联络', '002344': 'ST联络', '002345': 'ST联络',
-    '002346': 'ST联络', '002347': 'ST联络', '002348': 'ST联络',
-    '002349': 'ST联络', '002350': 'ST联络', '002351': 'ST联络',
-    '002352': 'ST联络', '002353': 'ST联络', '002354': 'ST联络',
-    '002355': 'ST联络', '002356': 'ST联络', '002357': 'ST联络',
-    '002358': 'ST联络', '002359': 'ST联络', '002360': 'ST联络',
-    '002361': 'ST联络', '002362': 'ST联络', '002363': 'ST联络',
-    '002364': 'ST联络', '002365': 'ST联络', '002366': 'ST联络',
-    '002367': 'ST联络', '002368': 'ST联络', '002369': 'ST联络',
-    '002370': 'ST联络', '002371': 'ST联络', '002372': 'ST联络',
-    '002373': 'ST联络', '002374': 'ST联络', '002375': 'ST联络',
-    '002376': 'ST联络', '002377': 'ST联络', '002378': 'ST联络',
-    '002379': 'ST联络', '002380': 'ST联络', '002381': 'ST联络',
-    '002382': 'ST联络', '002383': 'ST联络', '002384': 'ST联络',
-    '002385': 'ST联络', '002386': 'ST联络', '002387': 'ST联络',
-    '002388': 'ST联络', '002389': 'ST联络', '002390': 'ST联络',
-    '002391': 'ST联络', '002392': 'ST联络', '002393': 'ST联络',
-    '002394': 'ST联络', '002395': 'ST联络', '002396': 'ST联络',
-    '002397': 'ST联络', '002398': 'ST联络', '002399': 'ST联络',
-    '002400': 'ST联络', '002401': 'ST联络', '002402': 'ST联络',
-    '002403': 'ST联络', '002404': 'ST联络', '002405': 'ST联络',
-    '002406': 'ST联络', '002407': 'ST联络', '002408': 'ST联络',
-    '002409': 'ST联络', '002410': 'ST联络', '002411': 'ST联络',
-    '002412': 'ST联络', '002413': 'ST联络', '002414': 'ST联络',
-    '002415': 'ST联络', '002416': 'ST联络', '002417': 'ST联络',
-    '002418': 'ST联络', '002419': 'ST联络', '002420': 'ST联络',
-    '002421': 'ST联络', '002422': 'ST联络', '002423': 'ST联络',
-    '002424': 'ST联络', '002425': 'ST联络', '002426': 'ST联络',
-    '002427': 'ST联络', '002428': 'ST联络', '002429': 'ST联络',
-    '002430': 'ST联络', '002431': 'ST联络', '002432': 'ST联络',
-    '002433': 'ST联络', '002434': 'ST联络', '002435': 'ST联络',
-    '002436': 'ST联络', '002437': 'ST联络', '002438': 'ST联络',
-    '002439': 'ST联络', '002440': 'ST联络', '002441': 'ST联络',
-    '002442': 'ST联络', '002443': 'ST联络', '002444': 'ST联络',
-    '002445': 'ST联络', '002446': 'ST联络', '002447': 'ST联络',
-    '002448': 'ST联络', '002449': 'ST联络', '002450': 'ST联络',
-    '002451': 'ST联络', '002452': 'ST联络', '002453': 'ST联络',
-    '002454': 'ST联络', '002455': 'ST联络', '002456': 'ST联络',
-    '002457': 'ST联络', '002458': 'ST联络', '002459': 'ST联络',
-    '002460': '赣锋锂业', '002461': 'ST联络', '002462': 'ST联络',
-    '002463': 'ST联络', '002464': 'ST联络', '002465': 'ST联络',
-    '002466': 'ST联络', '002467': 'ST联络', '002468': 'ST联络',
-    '002469': 'ST联络', '002470': 'ST联络', '002471': 'ST联络',
-    '002472': 'ST联络', '002473': 'ST联络', '002474': 'ST联络',
-    '002475': 'ST联络', '002476': 'ST联络', '002477': 'ST联络',
-    '002478': 'ST联络', '002479': 'ST联络', '002480': 'ST联络',
-    '002481': 'ST联络', '002482': 'ST联络', '002483': 'ST联络',
-    '002484': 'ST联络', '002485': 'ST联络', '002486': 'ST联络',
-    '002487': 'ST联络', '002488': 'ST联络', '002489': 'ST联络',
-    '002490': 'ST联络', '002491': 'ST联络', '002492': 'ST联络',
-    '002493': 'ST联络', '002494': 'ST联络', '002495': 'ST联络',
-    '002496': 'ST联络', '002497': 'ST联络', '002498': 'ST联络',
-    '002499': 'ST联络', '002500': 'ST联络', '002501': 'ST联络',
-    '002502': 'ST联络', '002503': 'ST联络', '002504': 'ST联络',
-    '002505': 'ST联络', '002506': 'ST联络', '002507': 'ST联络',
-    '002508': 'ST联络', '002509': 'ST联络', '002510': 'ST联络',
-    '002511': 'ST联络', '002512': 'ST联络', '002513': 'ST联络',
-    '002514': 'ST联络', '002515': 'ST联络', '002516': 'ST联络',
-    '002517': 'ST联络', '002518': 'ST联络', '002519': 'ST联络',
-    '002520': 'ST联络', '002521': 'ST联络', '002522': 'ST联络',
-    '002523': 'ST联络', '002524': 'ST联络', '002525': 'ST联络',
-    '002526': 'ST联络', '002527': 'ST联络', '002528': 'ST联络',
-    '002529': 'ST联络', '002530': 'ST联络', '002531': 'ST联络',
-    '002532': 'ST联络', '002533': 'ST联络', '002534': 'ST联络',
-    '002535': 'ST联络', '002536': 'ST联络', '002537': 'ST联络',
-    '002538': 'ST联络', '002539': 'ST联络', '002540': 'ST联络',
-    '002541': 'ST联络', '002542': 'ST联络', '002543': 'ST联络',
-    '002544': 'ST联络', '002545': 'ST联络', '002546': 'ST联络',
-    '002547': 'ST联络', '002548': 'ST联络', '002549': 'ST联络',
-    '002550': 'ST联络', '002551': 'ST联络', '002552': 'ST联络',
-    '002553': 'ST联络', '002554': 'ST联络', '002555': 'ST联络',
-    '002556': 'ST联络', '002557': 'ST联络', '002558': 'ST联络',
-    '002559': 'ST联络', '002560': 'ST联络', '002561': 'ST联络',
-    '002562': 'ST联络', '002563': 'ST联络', '002564': 'ST联络',
-    '002565': 'ST联络', '002566': 'ST联络', '002567': 'ST联络',
-    '002568': 'ST联络', '002569': 'ST联络', '002570': 'ST联络',
-    '002571': 'ST联络', '002572': 'ST联络', '002573': 'ST联络',
-    '002574': 'ST联络', '002575': 'ST联络', '002576': 'ST联络',
-    '002577': 'ST联络', '002578': 'ST联络', '002579': 'ST联络',
-    '002580': 'ST联络', '002581': 'ST联络', '002582': 'ST联络',
-    '002583': 'ST联络', '002584': 'ST联络', '002585': 'ST联络',
-    '002586': 'ST联络', '002587': 'ST联络', '002588': 'ST联络',
-    '002589': 'ST联络', '002590': 'ST联络', '002591': 'ST联络',
-    '002592': 'ST联络', '002593': 'ST联络', '002594': '比亚迪',
-    '002595': 'ST联络', '002596': 'ST联络', '002597': 'ST联络',
-    '002598': 'ST联络', '002599': 'ST联络', '002600': 'ST联络',
-    '002601': 'ST联络', '002602': 'ST联络', '002603': 'ST联络',
-    '002604': 'ST联络', '002605': 'ST联络', '002606': 'ST联络',
-    '002607': 'ST联络', '002608': 'ST联络', '002609': 'ST联络',
-    '002610': 'ST联络', '002611': 'ST联络', '002612': 'ST联络',
-    '002613': 'ST联络', '002614': 'ST联络', '002615': 'ST联络',
-    '002616': 'ST联络', '002617': 'ST联络', '002618': 'ST联络',
-    '002619': 'ST联络', '002620': 'ST联络', '002621': 'ST联络',
-    '002622': 'ST联络', '002623': 'ST联络', '002624': 'ST联络',
-    '002625': 'ST联络', '002626': 'ST联络', '002627': 'ST联络',
-    '002628': 'ST联络', '002629': 'ST联络', '002630': 'ST联络',
-    '002631': 'ST联络', '002632': 'ST联络', '002633': 'ST联络',
-    '002634': 'ST联络', '002635': 'ST联络', '002636': 'ST联络',
-    '002637': 'ST联络', '002638': 'ST联络', '002639': 'ST联络',
-    '002640': 'ST联络', '002641': 'ST联络', '002642': 'ST联络',
-    '002643': 'ST联络', '002644': 'ST联络', '002645': 'ST联络',
-    '002646': 'ST联络', '002647': 'ST联络', '002648': 'ST联络',
-    '002649': 'ST联络', '002650': 'ST联络', '002651': 'ST联络',
-    '002652': 'ST联络', '002653': 'ST联络', '002654': 'ST联络',
-    '002655': 'ST联络', '002656': 'ST联络', '002657': 'ST联络',
-    '002658': 'ST联络', '002659': 'ST联络', '002660': 'ST联络',
-    '002661': 'ST联络', '002662': 'ST联络', '002663': 'ST联络',
-    '002664': 'ST联络', '002665': 'ST联络', '002666': 'ST联络',
-    '002667': 'ST联络', '002668': 'ST联络', '002669': 'ST联络',
-    '002670': 'ST联络', '002671': 'ST联络', '002672': 'ST联络',
-    '002673': 'ST联络', '002674': 'ST联络', '002675': 'ST联络',
-    '002676': 'ST联络', '002677': 'ST联络', '002678': 'ST联络',
-    '002679': 'ST联络', '002680': 'ST联络', '002681': 'ST联络',
-    '002682': 'ST联络', '002683': 'ST联络', '002684': 'ST联络',
-    '002685': 'ST联络', '002686': 'ST联络', '002687': 'ST联络',
-    '002688': 'ST联络', '002689': 'ST联络', '002690': 'ST联络',
-    '002691': 'ST联络', '002692': 'ST联络', '002693': 'ST联络',
-    '002694': 'ST联络', '002695': 'ST联络', '002696': 'ST联络',
-    '002697': 'ST联络', '002698': 'ST联络', '002699': 'ST联络',
-    '002700': 'ST联络', '002701': 'ST联络', '002702': 'ST联络',
-    '002703': 'ST联络', '002704': 'ST联络', '002705': 'ST联络',
-    '002706': 'ST联络', '002707': 'ST联络', '002708': 'ST联络',
-    '002709': 'ST联络', '002710': 'ST联络', '002711': 'ST联络',
-    '002712': 'ST联络', '002713': 'ST联络', '002714': 'ST联络',
-    '002715': 'ST联络', '002716': 'ST联络', '002717': 'ST联络',
-    '002718': 'ST联络', '002719': 'ST联络', '002720': 'ST联络',
-    '002721': 'ST联络', '002722': 'ST联络', '002723': 'ST联络',
-    '002724': 'ST联络', '002725': 'ST联络', '002726': 'ST联络',
-    '002727': 'ST联络', '002728': 'ST联络', '002729': 'ST联络',
-    '002730': 'ST联络', '002731': 'ST联络', '002732': 'ST联络',
-    '002733': 'ST联络', '002734': 'ST联络', '002735': 'ST联络',
-    '002736': 'ST联络', '002737': 'ST联络', '002738': 'ST联络',
-    '002739': 'ST联络', '002740': 'ST联络', '002741': 'ST联络',
-    '002742': 'ST联络', '002743': 'ST联络', '002744': 'ST联络',
-    '002745': 'ST联络', '002746': 'ST联络', '002747': 'ST联络',
-    '002748': 'ST联络', '002749': 'ST联络', '002750': 'ST联络',
-    '002751': 'ST联络', '002752': 'ST联络', '002753': 'ST联络',
-    '002754': 'ST联络', '002755': 'ST联络', '002756': 'ST联络',
-    '002757': 'ST联络', '002758': 'ST联络', '002759': 'ST联络',
-    '002760': 'ST联络', '002761': 'ST联络', '002762': 'ST联络',
-    '002763': 'ST联络', '002764': 'ST联络', '002765': 'ST联络',
-    '002766': 'ST联络', '002767': 'ST联络', '002768': 'ST联络',
-    '002769': 'ST联络', '002770': 'ST联络', '002771': 'ST联络',
-    '002772': 'ST联络', '002773': 'ST联络', '002774': 'ST联络',
-    '002775': 'ST联络', '002776': 'ST联络', '002777': 'ST联络',
-    '002778': 'ST联络', '002779': 'ST联络', '002780': 'ST联络',
-    '002781': 'ST联络', '002782': 'ST联络', '002783': 'ST联络',
-    '002784': 'ST联络', '002785': 'ST联络', '002786': 'ST联络',
-    '002787': 'ST联络', '002788': 'ST联络', '002789': 'ST联络',
-    '002790': 'ST联络', '002791': 'ST联络', '002792': 'ST联络',
-    '002793': 'ST联络', '002794': 'ST联络', '002795': 'ST联络',
-    '002796': 'ST联络', '002797': 'ST联络', '002798': 'ST联络',
-    '002799': 'ST联络', '002800': 'ST联络', '002801': 'ST联络',
-    '002802': 'ST联络', '002803': 'ST联络', '002804': 'ST联络',
-    '002805': 'ST联络', '002806': 'ST联络', '002807': 'ST联络',
-    '002808': 'ST联络', '002809': 'ST联络', '002810': 'ST联络',
-    '002811': 'ST联络', '002812': 'ST联络', '002813': 'ST联络',
-    '002814': 'ST联络', '002815': 'ST联络', '002816': 'ST联络',
-    '002817': 'ST联络', '002818': 'ST联络', '002819': 'ST联络',
-    '002820': 'ST联络', '002821': 'ST联络', '002822': 'ST联络',
-    '002823': 'ST联络', '002824': 'ST联络', '002825': 'ST联络',
-    '002826': 'ST联络', '002827': 'ST联络', '002828': 'ST联络',
-    '002829': 'ST联络', '002830': 'ST联络', '002831': 'ST联络',
-    '002832': 'ST联络', '002833': 'ST联络', '002834': 'ST联络',
-    '002835': 'ST联络', '002836': 'ST联络', '002837': 'ST联络',
-    '002838': 'ST联络', '002839': 'ST联络', '002840': 'ST联络',
-    '002841': 'ST联络', '002842': 'ST联络', '002843': 'ST联络',
-    '002844': 'ST联络', '002845': 'ST联络', '002846': 'ST联络',
-    '002847': 'ST联络', '002848': 'ST联络', '002849': 'ST联络',
-    '002850': 'ST联络', '002851': 'ST联络', '002852': 'ST联络',
-    '002853': 'ST联络', '002854': 'ST联络', '002855': 'ST联络',
-    '002856': 'ST联络', '002857': 'ST联络', '002858': 'ST联络',
-    '002859': 'ST联络', '002860': 'ST联络', '002861': 'ST联络',
-    '002862': 'ST联络', '002863': 'ST联络', '002864': 'ST联络',
-    '002865': 'ST联络', '002866': 'ST联络', '002867': 'ST联络',
-    '002868': 'ST联络', '002869': 'ST联络', '002870': 'ST联络',
-    '002871': 'ST联络', '002872': 'ST联络', '002873': 'ST联络',
-    '002874': 'ST联络', '002875': 'ST联络', '002876': 'ST联络',
-    '002877': 'ST联络', '002878': 'ST联络', '002879': 'ST联络',
-    '002880': 'ST联络', '002881': 'ST联络', '002882': 'ST联络',
-    '002883': 'ST联络', '002884': 'ST联络', '002885': 'ST联络',
-    '002886': 'ST联络', '002887': 'ST联络', '002888': 'ST联络',
-    '002889': 'ST联络', '002890': 'ST联络', '002891': 'ST联络',
-    '002892': 'ST联络', '002893': 'ST联络', '002894': 'ST联络',
-    '002895': 'ST联络', '002896': 'ST联络', '002897': 'ST联络',
-    '002898': 'ST联络', '002899': 'ST联络', '002900': 'ST联络',
-    '002901': 'ST联络', '002902': 'ST联络', '002903': 'ST联络',
-    '002904': 'ST联络', '002905': 'ST联络', '002906': 'ST联络',
-    '002907': 'ST联络', '002908': 'ST联络', '002909': 'ST联络',
-    '002910': 'ST联络', '002911': 'ST联络', '002912': 'ST联络',
-    '002913': 'ST联络', '002914': 'ST联络', '002915': 'ST联络',
-    '002916': 'ST联络', '002917': 'ST联络', '002918': 'ST联络',
-    '002919': 'ST联络', '002920': 'ST联络', '002921': 'ST联络',
-    '002922': 'ST联络', '002923': 'ST联络', '002924': 'ST联络',
-    '002925': 'ST联络', '002926': 'ST联络', '002927': 'ST联络',
-    '002928': 'ST联络', '002929': 'ST联络', '002930': 'ST联络',
-    '002931': 'ST联络', '002932': 'ST联络', '002933': 'ST联络',
-    '002934': 'ST联络', '002935': 'ST联络', '002936': 'ST联络',
-    '002937': 'ST联络', '002938': 'ST联络', '002939': 'ST联络',
-    '002940': 'ST联络', '002941': 'ST联络', '002942': 'ST联络',
-    '002943': 'ST联络', '002944': 'ST联络', '002945': 'ST联络',
-    '002946': 'ST联络', '002947': 'ST联络', '002948': 'ST联络',
-    '002949': 'ST联络', '002950': 'ST联络', '002951': 'ST联络',
-    '002952': 'ST联络', '002953': 'ST联络', '002954': 'ST联络',
-    '002955': 'ST联络', '002956': 'ST联络', '002957': 'ST联络',
-    '002958': 'ST联络', '002959': 'ST联络', '002960': 'ST联络',
-    '002961': 'ST联络', '002962': 'ST联络', '002963': 'ST联络',
-    '002964': 'ST联络', '002965': 'ST联络', '002966': 'ST联络',
-    '002967': 'ST联络', '002968': 'ST联络', '002969': 'ST联络',
-    '002970': 'ST联络', '002971': 'ST联络', '002972': 'ST联络',
-    '002973': 'ST联络', '002974': 'ST联络', '002975': 'ST联络',
-    '002976': 'ST联络', '002977': 'ST联络', '002978': 'ST联络',
-    '002979': 'ST联络', '002980': 'ST联络', '002981': 'ST联络',
-    '002982': 'ST联络', '002983': 'ST联络', '002984': 'ST联络',
-    '002985': 'ST联络', '002986': 'ST联络', '002987': 'ST联络',
-    '002988': 'ST联络', '002989': 'ST联络', '002990': 'ST联络',
-    '002991': 'ST联络', '002992': 'ST联络', '002993': 'ST联络',
-    '002994': 'ST联络', '002995': 'ST联络', '002996': 'ST联络',
-    '002997': 'ST联络', '002998': 'ST联络', '002999': 'ST联络',
-    '600000': '浦发银行', '600004': '白云机场', '600006': '东风汽车',
-    '600007': '中国国贸', '600008': '首创股份', '600009': '上海机场',
-    '600010': '包钢股份', '600011': '华能国际', '600012': '皖通高速',
-    '600015': '华夏银行', '600016': '民生银行', '600017': '日照港',
-    '600018': '上港集团', '600019': '宝钢股份', '600020': '中原高速',
-    '600021': '上海电力', '600022': '山东钢铁', '600023': '浙能电力',
-    '600025': '华能水电', '600026': '中远海能', '600027': '华电国际',
-    '600028': '中国石化', '600029': '南方航空', '600030': '中信证券',
-    '600031': '三一重工', '600032': '福建高速', '600033': '福建高速',
-    '600035': '楚天高速', '600036': '招商银行', '600037': '歌华有线',
-    '600038': '中直股份', '600039': '四川路桥', '600048': '保利发展',
-    '600050': '中国联通', '600051': '宁波联合', '600052': '浙江广厦',
-    '600053': '九鼎投资', '600054': '黄山旅游', '600055': '万东医疗',
-    '600056': '中国医药', '600057': 'ST厦华', '600058': '五矿发展',
-    '600059': '古越龙山', '600060': '海信视像', '600061': '中航资本',
-    '600062': '国投资本', '600063': '皖维高新', '600064': '南京高科',
-    '600066': '宇通客车', '600067': '冠城大通', '600068': '葛洲坝',
-    '600069': 'ST游久', '600070': '浙江富润', '600071': '凤凰光学',
-    '600072': '中船科技', '600073': '上海凤凰', '600074': '保千里',
-    '600075': '新疆天业', '600076': '康欣新材', '600077': '国能生物',
-    '600078': '澄星股份', '600079': 'ST金花', '600080': 'ST联络',
-    '600081': '东风科技', '600082': 'ST联络', '600083': '*ST博信',
-    '600084': 'ST联络', '600085': '同仁堂', '600086': '东方金钰',
-    '600087': 'ST联络', '600088': '中视传媒', '600089': '特变电工',
-    '600090': 'ST联络', '600091': 'ST联络', '600092': 'ST联络',
-    '600093': 'ST联络', '600094': '大名城', '600095': 'ST联络',
-    '600096': '云天化', '600097': 'ST联络', '600098': '广州发展',
-    '600099': 'ST联络', '600100': '同方股份', '600101': 'ST联络',
-    '600104': '上汽集团', '600105': 'ST联络', '600106': '重庆路桥',
-    '600107': 'ST联络', '600108': '亚盛集团', '600109': '国金证券',
-    '600110': 'ST联络', '600111': '北方稀土', '600112': 'ST联络',
-    '600113': 'ST联络', '600114': '东睦股份', '600115': '东方航空',
-    '600116': 'ST联络', '600117': '西宁特钢', '600118': '中国卫星',
-    '600119': 'ST联络', '600120': '浙江东方', '600121': '郑州煤电',
-    '600122': 'ST联络', '600123': '兰花科创', '600125': '铁龙物流',
-    '600126': 'ST联络', '600127': '金健米业', '600128': 'ST联络',
-    '600129': 'ST联络', '600130': 'ST联络', '600131': 'ST联络',
-    '600132': '重庆啤酒', '600133': 'ST联络', '600135': 'ST联络',
-    '600136': 'ST联络', '600137': 'ST联络', '600138': 'ST联络',
-    '600139': 'ST联络', '600140': 'ST联络', '600141': '兴发集团',
-    '600142': 'ST联络', '600143': '金发科技', '600145': 'ST联络',
-    '600146': 'ST联络', '600147': 'ST联络', '600148': 'ST联络',
-    '600149': 'ST联络', '600150': '中国船舶', '600151': 'ST联络',
-    '600152': 'ST联络', '600153': 'ST联络', '600154': 'ST联络',
-    '600155': 'ST联络', '600156': 'ST联络', '600157': '永泰能源',
-    '600158': 'ST联络', '600159': 'ST联络', '600160': 'ST联络',
-    '600161': 'ST联络', '600162': '香江控股', '600163': 'ST联络',
-    '600165': 'ST联络', '600166': 'ST联络', '600167': 'ST联络',
-    '600168': 'ST联络', '600169': 'ST联络', '600170': 'ST联络',
-    '600171': 'ST联络', '600172': 'ST联络', '600173': 'ST联络',
-    '600175': 'ST联络', '600176': 'ST联络', '600177': '雅戈尔',
-    '600178': 'ST联络', '600179': 'ST联络', '600180': 'ST联络',
-    '600181': 'ST联络', '600182': 'ST联络', '600183': '生益科技',
-    '600184': 'ST联络', '600185': 'ST联络', '600186': 'ST联络',
-    '600187': 'ST联络', '600188': 'ST联络', '600189': 'ST联络',
-    '600190': 'ST联络', '600191': 'ST联络', '600192': 'ST联络',
-    '600193': 'ST联络', '600194': 'ST联络', '600195': 'ST联络',
-    '600196': '复星医药', '600197': 'ST联络', '600198': 'ST联络',
-    '600199': 'ST联络', '600200': 'ST联络', '600201': '生物股份',
-    '600203': 'ST联络', '600204': 'ST联络', '600206': 'ST联络',
-    '600207': 'ST联络', '600208': 'ST联络', '600209': 'ST联络',
-    '600210': 'ST联络', '600211': 'ST联络', '600212': 'ST联络',
-    '600213': 'ST联络', '600215': 'ST联络', '600216': 'ST联络',
-    '600217': 'ST联络', '600218': 'ST联络', '600219': '南山铝业',
-    '600221': 'ST联络', '600222': 'ST联络', '600223': 'ST联络',
-    '600225': 'ST联络', '600226': 'ST联络', '600227': 'ST联络',
-    '600229': 'ST联络', '600230': 'ST联络', '600231': 'ST联络',
-    '600233': 'ST联络', '600235': 'ST联络', '600236': '桂冠电力',
-    '600237': 'ST联络', '600238': 'ST联络', '600239': 'ST联络',
-    '600241': 'ST联络', '600242': 'ST联络', '600243': 'ST联络',
-    '600246': 'ST联络', '600248': 'ST联络', '600249': 'ST联络',
-    '600250': 'ST联络', '600251': 'ST联络', '600252': 'ST联络',
-    '600253': 'ST联络', '600255': 'ST联络', '600256': 'ST联络',
-    '600258': 'ST联络', '600259': 'ST联络', '600260': 'ST联络',
-    '600261': 'ST联络', '600262': 'ST联络', '600262': '北方稀土',
-    '600263': 'ST联络', '600266': 'ST联络', '600267': 'ST联络',
-    '600268': 'ST联络', '600269': 'ST联络', '600271': 'ST联络',
-    '600272': 'ST联络', '600273': 'ST联络', '600276': '恒瑞医药',
-    '600278': 'ST联络', '600279': 'ST联络', '600282': 'ST联络',
-    '600285': 'ST联络', '600287': 'ST联络', '600288': 'ST联络',
-    '600289': 'ST联络', '600290': 'ST联络', '600291': 'ST联络',
-    '600292': 'ST联络', '600297': 'ST联络', '600298': 'ST联络',
-    '600299': 'ST联络', '600300': 'ST联络', '600305': 'ST联络',
-    '600309': 'ST联络', '600310': 'ST联络', '600315': 'ST联络',
-    '600317': 'ST联络', '600325': 'ST联络', '600328': 'ST联络',
-    '600329': 'ST联络', '600330': 'ST联络', '600335': 'ST联络',
-    '600336': 'ST联络', '600337': 'ST联络', '600339': 'ST联络',
-    '600343': 'ST联络', '600348': 'ST联络', '600350': 'ST联络',
-    '600351': 'ST联络', '600352': 'ST联络', '600354': 'ST联络',
-    '600355': 'ST联络', '600356': 'ST联络', '600358': 'ST联络',
-    '600359': 'ST联络', '600362': 'ST联络', '600363': 'ST联络',
-    '600366': 'ST联络', '600368': 'ST联络', '600369': 'ST联络',
-    '600370': 'ST联络', '600371': 'ST联络', '600373': 'ST联络',
-    '600376': 'ST联络', '600377': 'ST联络', '600378': 'ST联络',
-    '600380': 'ST联络', '600382': 'ST联络', '600383': 'ST联络',
-    '600385': 'ST联络', '600387': 'ST联络', '600390': 'ST联络',
-    '600398': 'ST联络', '600399': 'ST联络', '600400': 'ST联络',
-    '600406': 'ST联络', '600409': 'ST联络', '600415': 'ST联络',
-    '600416': 'ST联络', '600418': 'ST联络', '600419': 'ST联络',
-    '600422': 'ST联络', '600425': 'ST联络', '600426': 'ST联络',
-    '600428': 'ST联络', '600432': 'ST联络', '600433': 'ST联络',
-    '600435': 'ST联络', '600436': 'ST联络', '600438': '通威股份',
-    '600439': 'ST联络', '600452': 'ST联络', '600460': 'ST联络',
-    '600466': 'ST联络', '600467': 'ST联络', '600468': 'ST联络',
-    '600482': 'ST联络', '600483': 'ST联络', '600487': 'ST联络',
-    '600489': 'ST联络', '600490': 'ST联络', '600495': 'ST联络',
-    '600497': 'ST联络', '600498': 'ST联络', '600500': 'ST联络',
-    '600507': 'ST联络', '600516': 'ST联络', '600519': '贵州茅台',
-    '600521': 'ST联络', '600522': 'ST联络', '600523': 'ST联络',
-    '600529': 'ST联络', '600535': 'ST联络', '600547': 'ST联络',
-    '600548': 'ST联络', '600549': 'ST联络', '600550': 'ST联络',
-    '600559': 'ST联络', '600570': 'ST联络', '600585': 'ST联络',
-    '600588': 'ST联络', '600590': 'ST联络', '600592': 'ST联络',
-    '600593': 'ST联络', '600594': 'ST联络', '600596': 'ST联络',
-    '600598': 'ST联络', '600600': 'ST联络', '600601': 'ST联络',
-    '600602': 'ST联络', '600604': 'ST联络', '600605': 'ST联络',
-    '600606': 'ST联络', '600609': 'ST联络', '600611': 'ST联络',
-    '600612': 'ST联络', '600613': 'ST联络', '600614': 'ST联络',
-    '600616': 'ST联络', '600618': 'ST联络', '600619': 'ST联络',
-    '600620': 'ST联络', '600621': 'ST联络', '600622': 'ST联络',
-    '600623': 'ST联络', '600624': 'ST联络', '600626': 'ST联络',
-    '600637': 'ST联络', '600638': 'ST联络', '600639': 'ST联络',
-    '600641': 'ST联络', '600642': 'ST联络', '600643': 'ST联络',
-    '600644': 'ST联络', '600648': 'ST联络', '600649': 'ST联络',
-    '600650': 'ST联络', '600655': 'ST联络', '600660': 'ST联络',
-    '600663': 'ST联络', '600666': 'ST联络', '600667': 'ST联络',
-    '600668': 'ST联络', '600673': 'ST联络', '600675': 'ST联络',
-    '600681': 'ST联络', '600682': 'ST联络', '600684': 'ST联络',
-    '600688': 'ST联络', '600690': 'ST联络', '600694': 'ST联络',
-    '600703': 'ST联络', '600704': 'ST联络', '600705': 'ST联络',
-    '600706': 'ST联络', '600711': 'ST联络', '600712': 'ST联络',
-    '600713': 'ST联络', '600714': 'ST联络', '600717': 'ST联络',
-    '600718': '东软集团', '600719': 'ST联络', '600720': 'ST联络',
-    '600721': 'ST联络', '600723': 'ST联络', '600724': 'ST联络',
-    '600725': 'ST联络', '600726': 'ST联络', '600727': 'ST联络',
-    '600729': 'ST联络', '600730': 'ST联络', '600731': 'ST联络',
-    '600732': 'ST联络', '600735': 'ST联络', '600736': 'ST联络',
-    '600739': 'ST联络', '600740': 'ST联络', '600741': 'ST联络',
-    '600742': 'ST联络', '600743': 'ST联络', '600744': 'ST联络',
-    '600745': 'ST联络', '600746': 'ST联络', '600747': 'ST联络',
-    '600748': 'ST联络', '600750': 'ST联络', '600751': 'ST联络',
-    '600754': 'ST联络', '600755': 'ST联络', '600756': 'ST联络',
-    '600757': 'ST联络', '600758': 'ST联络', '600759': 'ST联络',
-    '600760': 'ST联络', '600761': 'ST联络', '600763': 'ST联络',
-    '600764': 'ST联络', '600765': 'ST联络', '600766': 'ST联络',
-    '600767': 'ST联络', '600770': 'ST联络', '600771': 'ST联络',
-    '600773': 'ST联络', '600774': 'ST联络', '600775': 'ST联络',
-    '600776': 'ST联络', '600777': 'ST联络', '600779': 'ST联络',
-    '600780': 'ST联络', '600781': 'ST联络', '600782': 'ST联络',
-    '600783': 'ST联络', '600785': 'ST联络', '600787': 'ST联络',
-    '600789': 'ST联络', '600790': 'ST联络', '600793': 'ST联络',
-    '600795': 'ST联络', '600803': 'ST联络', '600804': 'ST联络',
-    '600805': 'ST联络', '600808': 'ST联络', '600809': 'ST联络',
-    '600812': 'ST联络', '600814': 'ST联络', '600815': 'ST联络',
-    '600816': 'ST联络', '600820': 'ST联络', '600822': 'ST联络',
-    '600823': 'ST联络', '600824': 'ST联络', '600825': 'ST联络',
-    '600826': 'ST联络', '600827': 'ST联络', '600829': 'ST联络',
-    '600830': 'ST联络', '600831': 'ST联络', '600833': 'ST联络',
-    '600835': 'ST联络', '600836': 'ST联络', '600837': 'ST联络',
-    '600838': 'ST联络', '600839': 'ST联络', '600851': 'ST联络',
-    '600854': 'ST联络', '600855': 'ST联络', '600857': 'ST联络',
-    '600858': 'ST联络', '600859': 'ST联络', '600862': 'ST联络',
-    '600863': 'ST联络', '600864': 'ST联络', '600867': 'ST联络',
-    '600868': 'ST联络', '600869': 'ST联络', '600871': 'ST联络',
-    '600873': 'ST联络', '600874': 'ST联络', '600875': 'ST联络',
-    '600877': 'ST联络', '600879': 'ST联络', '600881': 'ST联络',
-    '600882': 'ST联络', '600883': 'ST联络', '600884': 'ST联络',
-    '600886': 'ST联络', '600887': '伊利股份', '600893': 'ST联络',
-    '600895': 'ST联络', '600900': '长江电力', '600917': 'ST联络',
-    '600918': 'ST联络', '600919': 'ST联络', '600926': 'ST联络',
-    '600928': 'ST联络', '600929': 'ST联络', '600936': 'ST联络',
-    '600941': 'ST联络', '600958': 'ST联络', '600968': 'ST联络',
-    '600971': 'ST联络', '600989': 'ST联络', '600999': 'ST联络',
-    '601006': 'ST联络', '601008': 'ST联络', '601012': '隆基绿能',
-    '601016': 'ST联络', '601018': 'ST联络', '601028': 'ST联络',
-    '601066': 'ST联络', '601088': 'ST联络', '601098': 'ST联络',
-    '601099': 'ST联络', '601100': 'ST联络', '601111': 'ST联络',
-    '601117': 'ST联络', '601138': 'ST联络', '601155': 'ST联络',
-    '601166': 'ST联络', '601169': 'ST联络', '601186': 'ST联络',
-    '601198': 'ST联络', '601211': 'ST联络', '601216': 'ST联络',
-    '601225': 'ST联络', '601236': 'ST联络', '601238': 'ST联络',
-    '601288': 'ST联络', '601318': '中国平安', '601319': 'ST联络',
-    '601328': 'ST联络', '601336': 'ST联络', '601390': 'ST联络',
-    '601398': 'ST联络', '601601': 'ST联络', '601628': 'ST联络',
-    '601658': 'ST联络', '601668': 'ST联络', '601669': 'ST联络',
-    '601688': 'ST联络', '601698': 'ST联络', '601727': 'ST联络',
-    '601728': 'ST联络', '601766': 'ST联络', '601788': 'ST联络',
-    '601800': 'ST联络', '601818': 'ST联络', '601857': 'ST联络',
-    '601858': 'ST联络', '601888': '中国中免', '601899': 'ST联络',
-    '601939': 'ST联络', '601985': 'ST联络', '601988': 'ST联络',
-    '601989': 'ST联络', '601998': 'ST联络', '603160': '汇顶科技',
-    '688001': 'ST联络', '688004': 'ST联络', '688012': '中微公司',
-    '688036': 'ST联络', '688111': 'ST联络', '688126': 'ST联络',
-    '688169': 'ST联络', '688185': 'ST联络', '688223': 'ST联络',
-    '688981': 'ST联络', '688986': 'ST联络', '688729': 'ST联络',
-    '000001': '平安银行', '000016': '深康佳A', '000002': '万科A',
-    '000858': '五粮液', '000333': '美的集团', '002594': '比亚迪',
-    '600036': '招商银行', '601318': '中国平安', '600519': '贵州茅台',
-    '601888': '中国中免', '600900': '长江电力', '000651': '格力电器',
-    '000725': '京东方A', '600276': '恒瑞医药', '601012': '隆基绿能',
-    '600030': '中信证券', '000002': '万科A', '000063': '中兴通讯',
-    '002415': '海康威视', '600009': '上海机场', '600016': '民生银行',
-    '600026': '中远海能', '600028': '中国石化', '600030': '中信证券',
-    '600031': '三一重工', '600036': '招商银行', '600050': '中国联通',
-    '600104': '上汽集团', '600111': '北方稀土', '600170': '中国电建',
-    '600196': '复星医药', '600276': '恒瑞医药', '600309': '万华化学',
-    '600438': '通威股份', '600519': '贵州茅台', '600585': '海螺水泥',
-    '600690': '海尔智家', '600703': '三安光电', '600887': '伊利股份',
-    '600900': '长江电力', '600941': '中国移动', '601012': '隆基绿能',
-    '601066': '中信建投', '601088': '中国神华', '601166': '兴业银行',
-    '601186': '中国铁建', '601236': '红塔证券', '601288': '农业银行',
-    '601318': '中国平安', '601328': '交通银行', '601336': '新华保险',
-    '601390': '中国中铁', '601398': '工商银行', '601601': '中国太保',
-    '601628': '中国人寿', '601658': '邮储银行', '601668': '中国建筑',
-    '601688': '华泰证券', '601727': '上海电气', '601800': '中国交建',
-    '601857': '中国石油', '601888': '中国中免', '601899': '紫金矿业',
-    '601939': '建设银行', '601985': '中国核电', '601988': '中国银行',
-    '601989': '中国重工', '603259': '药明康德', '603288': '海天味业',
-    '603501': '韦尔股份', '603799': '华友钴业', '688036': '传音控股',
-    '688111': '金山办公', '688126': '沪硅产业', '688981': '中芯国际',
-    '000001': '平安银行', '000001': '平安银行', '000001': '平安银行',
-  };
-  const name = localMap[symbol];
-  if (name) { document.getElementById('stockName').textContent = name; return; }
-
-  // 2. 腾讯行情API（对浏览器友好）
-  const market = symbol.startsWith('6') ? 'sh' : 'sz';
-  try {
-    const res = await fetch(`https://qt.gtimg.cn/q=${market}${symbol}`);
-    const text = await res.text();
-    const parts = text.split('~');
-    if (parts[1]) {
-      document.getElementById('stockName').textContent = parts[1];
-      return;
-    }
-  } catch(e) {}
-
-  // 3. 东方财富API（备选）
-  const secid = getSecid(symbol);
-  try {
-    const res2 = await fetch(`https://push2.eastmoney.com/api/qt/stock/get?secid=${secid}&fields=f57,f58`);
-    const json = await res2.json();
-    if (json.data && json.data.f58) {
-      document.getElementById('stockName').textContent = json.data.f58;
-    }
-  } catch(e) {}
-}
-
-// 获取新浪市场前缀：6开头=sh，其余=sz
-function getSinaPrefix(symbol) {
-  if (symbol.startsWith('6')) return 'sh';
-  return 'sz';
-}
-
-// 获取东方财富 secid（备用数据源）
-function getSecid(symbol) {
-  if (/^\d{5}$/.test(symbol)) return '116.' + symbol;
-  if (symbol.startsWith('6')) return '1.' + symbol;
-  if (symbol.startsWith('8') || symbol.startsWith('43') || symbol.startsWith('83') || symbol.startsWith('87')) return '0.' + symbol;
-  return '0.' + symbol;
-}
-
-// 获取K线数据：新浪API为主，东方财富为备
-async function fetchKline(symbol, klt) {
-  // 1. 新浪财经API（对浏览器fetch友好）
-  const scaleMap = { 101: 240, 102: 1680, 103: 7200 };
-  const scale = scaleMap[klt] || 240;
-  const sinaSymbol = getSinaPrefix(symbol) + symbol;
-  try {
-    const url = `https://money.finance.sina.com.cn/quotes_service/api/json_v2.php/CN_MarketData.getKLineData?symbol=${sinaSymbol}&scale=${scale}&ma=no&datalen=300`;
-    const res = await fetch(url);
-    const text = await res.text();
-    const data = JSON.parse(text);
-    if (Array.isArray(data) && data.length > 0) {
-      return data.map(item => ({
-        date: item.day,
-        open: parseFloat(item.open),
-        close: parseFloat(item.close),
-        high: parseFloat(item.high),
-        low: parseFloat(item.low),
-        vol: parseInt(item.volume)
-      }));
-    }
-  } catch(e) { /* 新浪失败，尝试东方财富 */ }
-
-  // 2. 东方财富API（备用）
-  const secid = getSecid(symbol);
-  try {
-    const res2 = await fetch(`https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=${secid}&fields1=f1,f2,f3,f4,f5,f6&fields2=f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61&klt=${klt}&fqt=1&end=20500101&lmt=300`);
-    const json = await res2.json();
-    if (json.data && json.data.klines) {
-      return json.data.klines.map(line => {
-        const p = line.split(',');
-        return { date: p[0], open: +p[1], close: +p[2], high: +p[3], low: +p[4], vol: +p[5] };
-      });
-    }
-  } catch(e) {}
-
-  throw new Error('数据获取失败，请稍后重试');
-}
-
-// ========= 缠论核心 =========
-function processContain(data) {
-  const r = [data[0]];
-  for (let i = 1; i < data.length; i++) {
-    const c = data[i], p = r[r.length-1];
-    if ((c.high >= p.high && c.low <= p.low) || (c.high <= p.high && c.low >= p.low)) {
-      const up = r.length < 2 || p.high > r[r.length-2].high;
-      r[r.length-1] = { ...c, high: up ? Math.max(c.high, p.high) : Math.min(c.high, p.high), low: up ? Math.max(c.low, p.low) : Math.min(c.low, p.low) };
-    } else r.push(c);
-  }
-  return r;
-}
-
-function findFractals(data) {
-  const tops = [], bots = [];
-  for (let i = 2; i < data.length - 2; i++) {
-    const P2 = data[i-2], P1 = data[i-1], C = data[i], N1 = data[i+1], N2 = data[i+2];
-    if (C.high > P1.high && C.high > N1.high && C.high >= P2.high && C.high >= N2.high &&
-        C.low > P1.low && C.low > N1.low) {
-      tops.push({date:C.date, price:C.high, idx:i});
-    }
-    if (C.low < P1.low && C.low < N1.low && C.low <= P2.low && C.low <= N2.low &&
-        C.high < P1.high && C.high < N1.high) {
-      bots.push({date:C.date, price:C.low, idx:i});
-    }
-  }
-  return { tops, bots };
-}
-
-function buildPens(tops, bots, data) {
-  const pens = [];
-  let lastType = null, lastIdx = -1, lastPrice = 0;
-  const allF = [...tops.map(t=>({...t,type:'t',isUp:false})), ...bots.map(b=>({...b,type:'b',isUp:true}))].sort((a,b)=>a.idx-b.idx);
-  
-  for (const f of allF) {
-    if (lastType === null) {
-      lastType = f.type;
-      lastIdx = f.idx;
-      lastPrice = f.price;
-    } else if (lastType !== f.type && f.idx - lastIdx >= 2) {
-      const isUp = f.type === 't';
-      pens.push({
-        startIdx: lastIdx, endIdx: f.idx,
-        startDate: data[lastIdx].date, endDate: f.date,
-        isUp: isUp, startPrice: lastPrice, endPrice: f.price,
-        high: Math.max(lastPrice, f.price), low: Math.min(lastPrice, f.price)
-      });
-      lastType = f.type; lastIdx = f.idx; lastPrice = f.price;
-    } else if (lastType === f.type) {
-      const shouldReplace = f.type === 't' ? f.price > lastPrice : f.price < lastPrice;
-      if (shouldReplace) {
-        if (pens.length > 0) {
-          const lastPen = pens[pens.length - 1];
-          if (lastPen.endIdx === lastIdx) {
-            lastPen.endIdx = f.idx; lastPen.endDate = f.date;
-            lastPen.endPrice = f.price;
-            lastPen.high = Math.max(lastPen.startPrice, f.price);
-            lastPen.low = Math.min(lastPen.startPrice, f.price);
-          }
-        }
-        lastIdx = f.idx; lastPrice = f.price;
+<!-- ==========================================================================
+     缠论核心算法：严格移植 12-缠论二买选股.py / 14-分型标注.py / 15-缠论一买选股.py
+     本段为纯算法，无任何 DOM 依赖，可被 Node 直接 require 做回归对拍。
+     ========================================================================== -->
+<script id="chan-core">
+/* ---------- 12 号：K线包含处理 ---------- */
+function mergeKlines(high, low) {
+  const n = high.length;
+  if (!n) return [];
+  const merged = [{ high: +high[0], low: +low[0], i0: 0, i1: 0 }];
+  let direction = 0;
+  for (let i = 1; i < n; i++) {
+    const h = +high[i], l = +low[i];
+    const last = merged[merged.length - 1];
+    const contained = (h <= last.high && l >= last.low) || (last.high <= h && last.low >= l);
+    if (contained) {
+      if (direction >= 0) {
+        last.high = Math.max(last.high, h);
+        last.low = Math.max(last.low, l);
+      } else {
+        last.high = Math.min(last.high, h);
+        last.low = Math.min(last.low, l);
       }
+      last.i1 = i;
+      continue;
     }
+    if (h > last.high) direction = 1;
+    else if (l < last.low) direction = -1;
+    merged.push({ high: h, low: l, i0: i, i1: i });
   }
-  return pens;
+  return merged;
 }
 
-function findZhongshu(data, tops, bots) {
-  const pens = buildPens(tops, bots, data);
-  if (pens.length < 3) {
-    const r = data.slice(Math.floor(data.length * 0.4));
-    const hs = r.map(d=>d.high).sort((a,b)=>a-b), ls = r.map(d=>d.low).sort((a,b)=>a-b);
-    return { top: hs[Math.floor(hs.length*0.75)], bot: ls[Math.floor(ls.length*0.25)], mid: r[Math.floor(r.length/2)].close, pens: [] };
-  }
-
-  const lastPrice = data[data.length - 1].close;
-  const prevPrice = data[Math.max(0, data.length - 20)].close;
-  const isUpTrend = lastPrice > prevPrice;
-
-  let best = null;
-  for (let i = pens.length - 3; i >= 0; i--) {
-    const windowPens = pens.slice(i, i + 3);
-    let isValid = false;
-    if (isUpTrend) isValid = windowPens[0].isUp && !windowPens[1].isUp && windowPens[2].isUp;
-    else isValid = !windowPens[0].isUp && windowPens[1].isUp && !windowPens[2].isUp;
-
-    if (!isValid) continue;
-    const zg = Math.min(windowPens[0].high, windowPens[1].high, windowPens[2].high);
-    const zd = Math.max(windowPens[0].low, windowPens[1].low, windowPens[2].low);
-
-    if (zg > zd) {
-      best = { top: zg, bot: zd, mid: (zg + zd) / 2, pens: windowPens, penStartIdx: windowPens[0].startIdx, penEndIdx: windowPens[2].endIdx, structure: isUpTrend ? '上下上' : '下上下' };
-      break;
+/* ---------- 12 号：分型 ---------- */
+function findFenxing(merged) {
+  const fx = [];
+  for (let i = 1; i < merged.length - 1; i++) {
+    const a = merged[i - 1], b = merged[i], c = merged[i + 1];
+    if (b.high > a.high && b.high > c.high && b.low > a.low && b.low > c.low) {
+      fx.push({ kind: 1, idx: i, high: b.high, low: b.low, raw0: b.i0, raw1: b.i1 });
+    } else if (b.high < a.high && b.high < c.high && b.low < a.low && b.low < c.low) {
+      fx.push({ kind: -1, idx: i, high: b.high, low: b.low, raw0: b.i0, raw1: b.i1 });
     }
   }
+  return fx;
+}
 
-  if (!best) {
-    const r = data.slice(Math.floor(data.length * 0.4));
-    const hs = r.map(d=>d.high).sort((a,b)=>a-b), ls = r.map(d=>d.low).sort((a,b)=>a-b);
-    best = { top: hs[Math.floor(hs.length*0.75)], bot: ls[Math.floor(ls.length*0.25)], mid: r[Math.floor(r.length/2)].close, pens: [] };
+/* ---------- 14 号：结合律特例，顶底不共用K（间隔<3 丢弃），同向留更极端 ---------- */
+function pickFenxing(fx) {
+  if (!fx || !fx.length) return [];
+  const picked = [fx[0]];
+  for (let k = 1; k < fx.length; k++) {
+    const cur = fx[k], prev = picked[picked.length - 1];
+    if (cur.idx - prev.idx < 3) {
+      if (cur.kind === prev.kind) {
+        if (cur.kind === 1 && cur.high >= prev.high) picked[picked.length - 1] = cur;
+        else if (cur.kind === -1 && cur.low <= prev.low) picked[picked.length - 1] = cur;
+      }
+      continue;
+    }
+    if (cur.kind === prev.kind) {
+      if (cur.kind === 1 && cur.high >= prev.high) picked[picked.length - 1] = cur;
+      else if (cur.kind === -1 && cur.low <= prev.low) picked[picked.length - 1] = cur;
+      continue;
+    }
+    picked.push(cur);
+  }
+  return picked;
+}
+
+/* ---------- 14 号：分型标在合并区间里真正创极值的那根原始K（取首个极值，同 np.argmax/argmin） ---------- */
+function extremeX(high, low, fx) {
+  const i0 = fx.raw0, i1 = fx.raw1;
+  let best = i0;
+  if (fx.kind === 1) {
+    let bv = +high[i0];
+    for (let i = i0 + 1; i <= i1; i++) if (+high[i] > bv) { bv = +high[i]; best = i; }
+  } else {
+    let bv = +low[i0];
+    for (let i = i0 + 1; i <= i1; i++) if (+low[i] < bv) { bv = +low[i]; best = i; }
   }
   return best;
 }
 
-function calcMACD(closes) {
-  const ema = (arr, sp) => { 
-    const k=2/(sp+1); 
-    const result = [arr[0]];
-    for (let i = 1; i < arr.length; i++) result.push(arr[i]*k + result[i-1]*(1-k));
-    return result;
-  };
-  const e12 = ema(closes, 12), e26 = ema(closes, 26);
-  const dif = e12.map((v,i) => v - e26[i]);
-  const dea = ema(dif, 9);
-  const macd = dif.map((v,i) => (v - dea[i]) * 2);
-  return { dif, dea, macd };
+/* ---------- 14 号：相邻顶底连成笔，底→顶向上，顶→底向下 ---------- */
+function fenxingToBis(fx, high, low) {
+  const bis = [];
+  for (let k = 0; k + 1 < fx.length; k++) {
+    const a = fx[k], b = fx[k + 1];
+    if (a.kind === b.kind) continue;
+    bis.push({
+      dir: a.kind === -1 ? 1 : -1,
+      high: Math.max(a.high, b.high),
+      low: Math.min(a.low, b.low),
+      raw0: extremeX(high, low, a),
+      raw1: extremeX(high, low, b),
+    });
+  }
+  return bis;
 }
 
-function analyze(data, zs) {
-  const cp = data[data.length-1].close;
-  let pos = cp > zs.top ? 'above' : cp < zs.bot ? 'below' : 'inside';
-  const posCN = pos === 'above' ? '中枢上方（上涨趋势区）' : pos === 'below' ? '中枢下方（下跌趋势区）' : '中枢内部（震荡盘整区）';
-  const { dif, dea, macd } = calcMACD(data.map(d => d.close));
-  const m = macd.slice(-50);
-  let div = false, divT = '';
-  if (m.length > 10) {
-    const h = Math.floor(m.length/2);
-    if (Math.abs(m.slice(h).reduce((a,b)=>a+b,0)) < Math.abs(m.slice(0,h).reduce((a,b)=>a+b,0)) * 0.75) {
-      div = true; divT = cp < zs.mid ? '底背驰' : '顶背驰';
+/* ---------- 14 号：课18 连续三笔重叠即中枢，ZG>ZD 才成立，取完三笔即跳走，不延伸 ---------- */
+function buildZhongshu3Bi(bis) {
+  const zs = [];
+  let i = 0;
+  while (i <= bis.length - 3) {
+    const zg = Math.min(bis[i].high, bis[i + 1].high, bis[i + 2].high);
+    const zd = Math.max(bis[i].low, bis[i + 1].low, bis[i + 2].low);
+    if (zg > zd) {
+      zs.push({ s0: i, s1: i + 2, zg, zd, raw0: bis[i].raw0, raw1: bis[i + 2].raw1 });
+      i += 3;
+    } else {
+      i += 1;
     }
   }
-  return { pos, posCN, cp, dif, dea, macd, div, divT };
+  return zs;
 }
 
-// ========= 绘图 =========
-function drawKline(canvasId, data, zs, fractals, analysis) {
-  const canvas = document.getElementById(canvasId);
-  const rect = canvas.parentElement.getBoundingClientRect();
-  const w = rect.width, h = rect.height;
-  canvas.width = w * 2; canvas.height = h * 2;
-  canvas.style.width = w+'px'; canvas.style.height = h+'px';
-  const ctx = canvas.getContext('2d'); ctx.scale(2,2);
-
-  const pL=60, pR=70, pT=30, pB=40;
-  const cw = w-pL-pR, ch = h-pT-pB;
-  const N = data.length, bw = cw/N;
-  const highs = data.map(d=>d.high), lows = data.map(d=>d.low);
-  const pMin = Math.min(...lows)*0.995, pMax = Math.max(...highs)*1.005;
-  const toX = i => pL + i*bw + bw/2;
-  const toY = p => pT + (1-(p-pMin)/(pMax-pMin))*ch;
-
-  ctx.strokeStyle='#21262d'; ctx.lineWidth=0.5;
-  for (let i=0;i<=6;i++) {
-    const y=pT+(ch/6)*i;
-    ctx.beginPath(); ctx.moveTo(pL,y); ctx.lineTo(w-pR,y); ctx.stroke();
-    ctx.fillStyle='#8b949e'; ctx.font='10px Microsoft YaHei'; ctx.textAlign='right';
-    ctx.fillText((pMax-(pMax-pMin)*(i/6)).toFixed(2), pL-8, y+3);
+/* ---------- 14 号：课17 一段走势只出一套一卖/二卖/一买 ---------- */
+function findZoushiPoints(bis, zs, x0, x1) {
+  let sell1 = null, sell1_i = null;
+  for (let i = 0; i < bis.length; i++) {
+    const b = bis[i];
+    if (b.dir !== 1 || !(x0 <= b.raw1 && b.raw1 <= x1)) continue;
+    if (sell1 === null || b.high > sell1.high) { sell1 = b; sell1_i = i; }
   }
-
-  ctx.fillStyle='#8b949e'; ctx.font='9px Microsoft YaHei'; ctx.textAlign='center';
-  const step = Math.max(1,Math.floor(N/6));
-  for (let i=0;i<N;i+=step) {
-    const dateStr = data[i].date.substring(2);
-    ctx.fillText(dateStr, toX(i), h-10);
+  if (sell1 === null) return [];
+  let prevZ = null;
+  for (let i = 0; i < zs.length; i++) if (zs[i].s1 < sell1_i) prevZ = zs[i];
+  const zd1 = prevZ ? prevZ.zd : sell1.low;
+  const zg1 = prevZ ? prevZ.zg : sell1.high;
+  const pts = [{ kind: '一卖', x: sell1.raw1, y: sell1.high, zd: zd1, zg: zg1 }];
+  if (sell1_i + 2 < bis.length) {
+    const down = bis[sell1_i + 1], up = bis[sell1_i + 2];
+    if (down.dir === -1 && up.dir === 1 && up.high <= sell1.high) {
+      pts.push({ kind: '二卖', x: up.raw1, y: up.high, zd: zd1, zg: zg1 });
+    }
   }
-
-  if (zs.pens && zs.pens.length === 3) {
-    const y1=toY(zs.top), y2=toY(zs.bot);
-    ctx.fillStyle='rgba(243,156,18,0.15)'; ctx.fillRect(pL, y1, cw, y2-y1);
-    ctx.setLineDash([8,4]); ctx.strokeStyle='#f39c12'; ctx.lineWidth=2;
-    ctx.beginPath(); ctx.moveTo(pL,y1); ctx.lineTo(w-pR,y1); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(pL,y2); ctx.lineTo(w-pR,y2); ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.font='bold 11px Microsoft YaHei'; ctx.fillStyle='#f39c12'; ctx.textAlign='right';
-    ctx.fillText(zs.top.toFixed(2), pL-8, y1+4);
-    ctx.fillText(zs.bot.toFixed(2), pL-8, y2+4);
+  let lastZ = null;
+  for (let i = 0; i < zs.length; i++) if (zs[i].raw0 <= x1 && zs[i].raw1 >= x0) lastZ = zs[i];
+  if (lastZ === null) return pts;
+  let firstDown = null;
+  for (let j = lastZ.s0 - 1; j >= 0; j--) if (bis[j].dir === -1) { firstDown = bis[j]; break; }
+  let leave = null;
+  for (let k = lastZ.s1; k < bis.length; k++) {
+    const b = bis[k];
+    if (b.raw1 < x0 || b.raw1 > x1) continue;
+    if (b.dir !== -1 || b.low >= lastZ.zd) continue;
+    if (firstDown !== null && b.low >= firstDown.low) continue;
+    if (leave === null || b.low < leave.low) leave = b;
   }
-
-  if (zs.pens && zs.pens.length === 3) {
-    const penColors = ['rgba(255,107,107,0.4)', 'rgba(78,205,196,0.4)', 'rgba(255,230,109,0.4)'];
-    zs.pens.forEach((pen, idx) => {
-      ctx.strokeStyle=penColors[idx]; ctx.lineWidth=4;
-      const x1 = toX(pen.startIdx), y1 = toY(pen.startPrice);
-      const x2 = toX(pen.endIdx), y2 = toY(pen.endPrice);
-      ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
-    });
-  }
-
-  data.forEach((d,i) => {
-    const x=toX(i), up=d.close>=d.open, col=up?'#ff6b6b':'#4ecdc4';
-    ctx.strokeStyle=col; ctx.lineWidth=1;
-    ctx.beginPath(); ctx.moveTo(x,toY(d.high)); ctx.lineTo(x,toY(d.low)); ctx.stroke();
-    const bt=toY(Math.max(d.open,d.close)), bb=toY(Math.min(d.open,d.close));
-    ctx.fillStyle=col; ctx.fillRect(x-bw*0.4, bt, bw*0.8, Math.max(bb-bt,1));
-  });
-
-  const curY=toY(analysis.cp);
-  const cc=analysis.pos==='above'?'#ff6b6b':analysis.pos==='below'?'#4ecdc4':'#f39c12';
-  ctx.strokeStyle=cc; ctx.lineWidth=1.5; ctx.setLineDash([5,3]);
-  ctx.beginPath(); ctx.moveTo(pL,curY); ctx.lineTo(w-pR,curY); ctx.stroke();
-  ctx.setLineDash([]);
-  ctx.font='bold 12px Microsoft YaHei'; ctx.fillStyle=cc; ctx.textAlign='right';
-  ctx.fillText(analysis.cp.toFixed(2), pL-8, curY+4);
+  if (leave !== null) pts.push({ kind: '一买', x: leave.raw1, y: leave.low, zd: lastZ.zd, zg: lastZ.zg });
+  return pts;
 }
 
-function drawMACD(canvasId, data, analysis) {
-  const canvas = document.getElementById(canvasId);
-  const rect = canvas.parentElement.getBoundingClientRect();
-  const w = rect.width, h = rect.height;
-  canvas.width = w*2; canvas.height = h*2;
-  canvas.style.width = w+'px'; canvas.style.height = h+'px';
-  const ctx = canvas.getContext('2d'); ctx.scale(2,2);
-
-  const pL=60, pR=70, pT=20, pB=25;
-  const cw = w-pL-pR, ch = h-pT-pB;
-  const N = data.length, bw = cw/N;
-  const {dif,dea,macd} = analysis;
-  const allV=[...macd,...dif,...dea];
-  const mx=Math.max(...allV)*1.1, mn=Math.min(...allV)*1.1, vr=mx-mn||1;
-  const toX=i=>pL+i*bw+bw/2, toY=v=>pT+(1-(v-mn)/vr)*ch;
-
-  ctx.strokeStyle='#30363d'; ctx.lineWidth=0.8;
-  const zy=toY(0);
-  ctx.beginPath(); ctx.moveTo(pL,zy); ctx.lineTo(w-pR,zy); ctx.stroke();
-
-  macd.forEach((v,i) => {
-    ctx.fillStyle=v>=0?'rgba(255,107,107,0.8)':'rgba(78,205,196,0.8)';
-    const x=toX(i), barWidth = bw*0.7;
-    if (v >= 0) ctx.fillRect(x - barWidth/2, toY(v), barWidth, toY(0) - toY(v));
-    else ctx.fillRect(x - barWidth/2, toY(0), barWidth, toY(v) - toY(0));
-  });
-
-  [['#58a6ff',dif],['#f78166',dea]].forEach(([col,arr]) => {
-    ctx.strokeStyle=col; ctx.lineWidth=1.5; ctx.beginPath();
-    arr.forEach((v,i)=>i===0?ctx.moveTo(toX(i),toY(v)):ctx.lineTo(toX(i),toY(v)));
-    ctx.stroke();
-  });
+/* ---------- 15 号：建结构（分型/笔/中枢 + 每笔确认根） ---------- */
+function buildChan(bars) {
+  const n = bars.length;
+  const high = new Array(n), low = new Array(n), close = new Array(n), times = new Array(n);
+  for (let i = 0; i < n; i++) {
+    high[i] = +bars[i].high; low[i] = +bars[i].low;
+    close[i] = +bars[i].close; times[i] = bars[i].date;
+  }
+  const merged = mergeKlines(high, low);
+  const fx = pickFenxing(findFenxing(merged));
+  const bis = fenxingToBis(fx, high, low);
+  const pairs = [];
+  for (let k = 0; k + 1 < fx.length; k++) if (fx[k].kind !== fx[k + 1].kind) pairs.push([fx[k], fx[k + 1]]);
+  if (pairs.length !== bis.length) throw new Error('笔与分型对不齐');
+  for (let k = 0; k < bis.length; k++) {
+    const fb = pairs[k][1];
+    const cidx = fb.idx + 1;
+    bis[k].confirm_raw = cidx < merged.length ? merged[cidx].i1 : null;
+  }
+  const zs = buildZhongshu3Bi(bis);
+  return { high, low, close, times, merged, fx, bis, zs };
 }
 
-function getGuideHTML(analysis) {
-  const g = analysis;
-  const dragHandle = `<div class="drag-handle" style="position:absolute;top:4px;right:6px;font-size:18px;color:#58a6ff;cursor:grab;line-height:1;opacity:0.6;">≡</div>`;
-  if (g.pos==='above') return `<div class="guide above draggable" style="position:relative;cursor:move;">${dragHandle}<h3>📍 中枢上方 → 上涨趋势</h3><ul><li>持仓者：继续持有，跟趋势走</li><li>等待回踩中枢上轨（ZG）</li><li>回踩守住 → 第三类买点 → 加仓</li><li>回踩跌破 → 减仓观望</li></ul><p class="warn">止损：跌破ZG减仓，跌入中枢清仓</p></div>`;
-  if (g.pos==='below') return `<div class="guide below draggable" style="position:relative;cursor:move;">${dragHandle}<h3>📍 中枢下方 → 下跌趋势</h3><ul><li>空仓者：不要抄底，等信号</li><li>观察MACD绿柱是否萎缩</li><li>绿柱萎缩+底分型 → 第一类买点</li><li>回调不破前低 → 第二类买点</li></ul><p class="warn">止损：买入后跌破前低立刻止损</p></div>`;
-  return `<div class="guide inside draggable" style="position:relative;cursor:move;">${dragHandle}<h3>📍 中枢内部 → 震荡盘整</h3><ul><li>中枢内不轻易操作</li><li>突破ZG+回踩不破 → 第三类买点</li><li>跌破ZD+反弹不过 → 第三类卖点</li></ul><p class="warn">假突破多，确认后再动，仓位宜轻</p></div>`;
+/* ---------- 15 号：i 之前最近的向下笔 ---------- */
+function prevDown(bis, i) {
+  for (let j = i - 1; j >= 0; j--) if (bis[j].dir === -1) return bis[j];
+  return null;
 }
 
-function toggleSidebar(period) {
-  const sidebar = document.getElementById('sidebar-' + period);
-  const btn = sidebar.parentElement.querySelector('.toggle-btn');
-  if (sidebar.classList.contains('collapsed')) {
-    sidebar.classList.remove('collapsed');
-    btn.textContent = '';
+/* ---------- 15 号：从最后中枢往前收同一段下跌 ---------- */
+function trendChainStart(zs) {
+  const k = zs.length - 1;
+  let s0 = zs[k].s0;
+  let minZd = zs[k].zd;
+  for (let i = k - 1; i >= 0; i--) {
+    if (zs[i].zg < minZd) break;
+    s0 = zs[i].s0;
+    minZd = Math.min(minZd, zs[i].zd);
+  }
+  return s0;
+}
+
+/* ---------- 15 号：一买判定（9 道闸门） ---------- */
+function fmt(v) { return (+v).toFixed(3); }
+
+function evaluate(bars, opts) {
+  opts = opts || {};
+  const requireToday = !!opts.requireConfirmToday;
+  let st;
+  try { st = buildChan(bars); }
+  catch (e) { return { hit: null, reason: '结构构建失败：' + e.message, st: null }; }
+
+  const bis = st.bis, zs = st.zs, times = st.times, close = st.close;
+  const lastDay = times[times.length - 1];
+
+  if (!zs.length) return { hit: null, reason: '没有中枢，不构成「下跌 + 盘整 + 下跌」', st };
+
+  const last_i = bis.length - 1;
+  const last = bis[last_i];
+  if (last.dir !== -1) return { hit: null, reason: '最后一笔向上，一买未在当下确认', st };
+  if (last.confirm_raw === null || last.confirm_raw === undefined) {
+    return { hit: null, reason: '最后一笔尚未确认（结束分型之后没有确认K）', st };
+  }
+  if (requireToday && times[last.confirm_raw] !== lastDay) {
+    return { hit: null, reason: '一买确认日=' + times[last.confirm_raw] + '，不是最后收盘日=' + lastDay, st };
+  }
+  const last_z = zs[zs.length - 1];
+  if (last_i < last_z.s1) return { hit: null, reason: '最后一笔仍在中枢内，尚未向下离开', st };
+  if (last.low >= last_z.zd) {
+    return { hit: null, reason: '最后一笔低点 ' + fmt(last.low) + ' 未跌破中枢 ZD ' + fmt(last_z.zd), st };
+  }
+  const first_down = prevDown(bis, last_z.s0);
+  if (!first_down) return { hit: null, reason: '中枢之前没有下跌笔', st };
+  if (last.low >= first_down.low) {
+    return { hit: null, reason: '一买低点 ' + fmt(last.low) + ' 未低于中枢前那一下跌 ' + fmt(first_down.low), st };
+  }
+  const chain_s0 = trendChainStart(zs);
+  let sell1_i = null;
+  for (let i = chain_s0; i < last_i; i++) {
+    if (bis[i].dir !== 1) continue;
+    if (sell1_i === null || bis[i].high >= bis[sell1_i].high) sell1_i = i;
+  }
+  if (sell1_i === null) return { hit: null, reason: '这一段下跌找不到一卖（起点）', st };
+  let floor = Infinity;
+  for (let i = sell1_i + 1; i <= last_i; i++) if (bis[i].dir === -1 && bis[i].low < floor) floor = bis[i].low;
+  if (last.low > floor + 1e-9) {
+    return { hit: null, reason: '一买低点 ' + fmt(last.low) + ' 不是一卖之后的最低（已有 ' + fmt(floor) + '）', st };
+  }
+
+  const hit = {
+    code: opts.code || '', name: opts.name || '',
+    time: times[last.confirm_raw],        // 确认日（底分型第三根合并K）
+    l1_day: times[last.raw1],             // 一买最低点所在交易日
+    close: close[close.length - 1],
+    l1: last.low,
+    first_low: first_down.low,
+    first_day: times[first_down.raw1],
+    sell1: bis[sell1_i].high,
+    sell1_day: times[bis[sell1_i].raw1],
+    zd: last_z.zd, zg: last_z.zg,
+    zs0: times[last_z.raw0], zs1: times[last_z.raw1],
+    n_bi: bis.length, n_zs: zs.length,
+    x0: bis[sell1_i].raw0,                // 段起点（一卖那笔的起始原始K）
+    x1: last.raw1,
+    lastDay: lastDay,
+  };
+  return { hit, reason: null, st };
+}
+
+/* ---------- MACD（仅绘图参考，不参与信号） ---------- */
+function ema(arr, n) {
+  const k = 2 / (n + 1), out = new Array(arr.length);
+  let prev = arr[0];
+  out[0] = prev;
+  for (let i = 1; i < arr.length; i++) { prev = arr[i] * k + prev * (1 - k); out[i] = prev; }
+  return out;
+}
+function macdSeries(close, fast, slow, sig) {
+  fast = fast || 12; slow = slow || 26; sig = sig || 9;
+  const e1 = ema(close, fast), e2 = ema(close, slow);
+  const dif = close.map((_, i) => e1[i] - e2[i]);
+  const dea = ema(dif, sig);
+  const hist = dif.map((v, i) => 2 * (v - dea[i]));
+  return { dif, dea, hist };
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    mergeKlines, findFenxing, pickFenxing, extremeX, fenxingToBis,
+    buildZhongshu3Bi, findZoushiPoints, buildChan, prevDown,
+    trendChainStart, evaluate, ema, macdSeries,
+  };
+}
+</script>
+
+<!-- ============================ 扩展分析（不动 chan-core） ============================ -->
+<script id="chan-ext">
+/* ---------- 笔区间内 MACD 柱同号面积（力度） ---------- */
+function segPower(b, hist) {
+  var s = 0;
+  if (!hist) return 0;
+  for (var i = b.raw0; i <= b.raw1 && i < hist.length; i++) {
+    var v = hist[i] || 0;
+    if (b.dir === -1) { if (v < 0) s += -v; } else { if (v > 0) s += v; }
+  }
+  return s;
+}
+
+/* ---------- 走势全景：位置导航 / 二买 / 三买 / 背驰量化 ---------- */
+function analyzeExtended(bars, st, macd, opt) {
+  opt = opt || {};
+  var res = { pos: 'none', posCn: '—', lastZ: null, zsList: [], buy2: null, buy3: null, div: null, marks: [], hint: '' };
+  if (!st || !bars || !bars.length) return res;
+
+  var bis = st.bis, zs = st.zs, times = st.times, close = st.close;
+  var lastClose = close[close.length - 1], n = bars.length;
+
+  /* --- 中枢清单（最近 6 个） --- */
+  for (var i = Math.max(0, zs.length - 6); i < zs.length; i++) {
+    res.zsList.push({ idx: i, zd: zs[i].zd, zg: zs[i].zg, t0: times[zs[i].raw0], t1: times[zs[i].raw1] });
+  }
+  var lz = zs.length ? zs[zs.length - 1] : null;
+  if (lz) res.lastZ = { zd: lz.zd, zg: lz.zg, t0: times[lz.raw0], t1: times[lz.raw1], s0: lz.s0, s1: lz.s1 };
+
+  /* --- 位置导航：最新收盘 vs 最后中枢 --- */
+  if (lz) {
+    res.pos = lastClose > lz.zg ? 'above' : (lastClose < lz.zd ? 'below' : 'inside');
+    res.posCn = res.pos === 'above' ? '中枢上方（上涨趋势区）'
+      : res.pos === 'below' ? '中枢下方（下跌趋势区）' : '中枢内部（震荡盘整区）';
   } else {
-    sidebar.classList.add('collapsed');
-    btn.textContent = '';
+    res.posCn = '无中枢（单边走势）';
   }
+
+  /* --- 二买：一买（或前低）之后，回抽不破前低的那一下跌已确认 --- */
+  var refLow = opt.l1, refIdx = (opt.l1Idx != null && opt.l1Idx >= 0) ? opt.l1Idx : null;
+  if (refLow == null || refIdx == null) {
+    var mi = -1, mv = Infinity;
+    for (var j = Math.max(0, n - 160); j < n; j++) if (bars[j].low < mv) { mv = bars[j].low; mi = j; }
+    refLow = mv; refIdx = mi;
+  }
+  for (var k = 0; k + 1 < bis.length; k++) {
+    var up = bis[k], dn = bis[k + 1];
+    if (up.dir !== 1 || dn.dir !== -1) continue;
+    if (up.raw0 < refIdx) continue;                       // 必须在一买/前低之后
+    if (dn.low <= refLow) continue;                       // 跌破前低 → 不是二买
+    if (dn.confirm_raw == null) continue;                 // 未确认
+    res.buy2 = { x: dn.raw1, y: dn.low, date: times[dn.raw1], low: dn.low, ref: refLow, ago: n - 1 - dn.raw1 };
+    break;
+  }
+  if (res.buy2) res.marks.push({ kind: '二买', x: res.buy2.x, y: res.buy2.y });
+
+  /* --- 三买：离开中枢后向上突破 ZG，回抽不入中枢 --- */
+  if (lz) {
+    var broke = null;
+    for (var a = Math.max(0, lz.s1); a < bis.length; a++) {
+      if (bis[a].dir === 1 && bis[a].high > lz.zg) { broke = bis[a]; break; }
+    }
+    if (broke) {
+      res.hint = '已向上突破中枢 ZG ' + lz.zg.toFixed(2) + '，等待回抽确认三买';
+      for (var b2 = 0; b2 < bis.length; b2++) {
+        if (bis[b2].raw0 < broke.raw1) continue;
+        if (bis[b2].dir !== -1) continue;
+        if (bis[b2].low < lz.zg) { res.hint = '回抽已跌回中枢内，三买失效（回到震荡）'; break; }
+        if (bis[b2].confirm_raw == null) { res.hint = '回抽中，尚未确认（等确认K）'; break; }
+        res.buy3 = { x: bis[b2].raw1, y: bis[b2].low, date: times[bis[b2].raw1], zg: lz.zg, ago: n - 1 - bis[b2].raw1 };
+        break;
+      }
+      if (res.buy3) res.marks.push({ kind: '三买', x: res.buy3.x, y: res.buy3.y });
+    }
+  }
+
+  /* --- 背驰量化：与本段前一个同向笔比 MACD 力度 --- */
+  if (bis.length >= 2 && macd && macd.hist) {
+    var last = bis[bis.length - 1];
+    var prev = null;
+    for (var q = bis.length - 2; q >= 0; q--) if (bis[q].dir === last.dir) { prev = bis[q]; break; }
+    if (prev) {
+      var pa = segPower(last, macd.hist), pb = segPower(prev, macd.hist);
+      var lower = last.low < prev.low, higher = last.high > prev.high;
+      if (last.dir === -1 && lower && pa < pb) {
+        res.div = { type: '底背驰', now: pa, prev: pb, ratio: pb > 0 ? pa / pb : 1, day: times[last.raw1] };
+      } else if (last.dir === 1 && higher && pa < pb) {
+        res.div = { type: '顶背驰', now: pa, prev: pb, ratio: pb > 0 ? pa / pb : 1, day: times[last.raw1] };
+      }
+      res.power = { now: pa, prev: pb, dir: last.dir };
+    }
+  }
+  return res;
 }
 
-function initDraggable() {
-  document.querySelectorAll('.draggable').forEach(el => {
-    const handle = el.querySelector('.drag-handle');
-    if (!handle) return;
-    let isDragging = false, startX, startY, initialLeft, initialTop;
-    
-    handle.addEventListener('mousedown', (e) => {
-      isDragging = true; startX = e.clientX; startY = e.clientY;
-      initialLeft = el.offsetLeft; initialTop = el.offsetTop;
-      handle.style.cursor = 'grabbing';
-      e.preventDefault(); e.stopPropagation();
-    });
-    
-    document.addEventListener('mousemove', (e) => {
-      if (!isDragging) return;
-      el.style.left = `${initialLeft + e.clientX - startX}px`;
-      el.style.top = `${initialTop + e.clientY - startY}px`;
-    });
-    
-    document.addEventListener('mouseup', () => {
-      if (isDragging) { isDragging = false; handle.style.cursor = 'grab'; }
-    });
-  });
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { segPower: segPower, analyzeExtended: analyzeExtended };
 }
+</script>
 
-async function init() {
-  const [monthly, weekly, daily] = await Promise.all([
-    fetchKline(currentSymbol, 103),
-    fetchKline(currentSymbol, 102),
-    fetchKline(currentSymbol, 101)
-  ]);
+<!-- ============================ 界面与绘图 ============================ -->
+<script>
+(function () {
+  'use strict';
 
-  const allResults = {};
-  ['monthly','weekly','daily'].forEach((period, idx) => {
-    const raw = [monthly, weekly, daily][idx];
-    const processed = processContain(raw);
-    const fractals = findFractals(processed);
-    const zs = findZhongshu(raw, fractals.tops, fractals.bots);
-    const a = analyze(raw, zs);
-    allResults[period] = { raw, processed, fractals, zs, analysis: a };
+  var EF = 'https://push2his.eastmoney.com/api/qt/stock/kline/get';
+  var LOOKBACK_DAYS = 800;          // 日线窗口：对齐原脚本（其余周期用固定根数）
+  var MAXBARS = 10000;
+
+  /* 周期定义：日线保持 800 自然日窗口（与原脚本/对拍套件一致）；其余周期固定根数 */
+  var PERIODS = {
+    m5:  { key: 'm5',  label: '5分', kind: 'minute', scale: 5,  bars: 480 },
+    m15: { key: 'm15', label: '15分', kind: 'minute', scale: 15, bars: 480 },
+    m30: { key: 'm30', label: '30分', kind: 'minute', scale: 30, bars: 480 },
+    m60: { key: 'm60', label: '60分', kind: 'minute', scale: 60, bars: 480 },
+    d:   { key: 'd',   label: '日',  kind: 'daily',   days: 800 },
+    w:   { key: 'w',   label: '周',  kind: 'weekly',  bars: 240 },
+    mo:  { key: 'mo',  label: '月',  kind: 'monthly', bars: 180 }
+  };
+  var POINT_STYLE = {
+    '一买': { color: '#1c7ed6', shape: 'up' },
+    '二买': { color: '#2f9e44', shape: 'up' },
+    '三买': { color: '#0b7285', shape: 'up' },
+    '一卖': { color: '#d64545', shape: 'down' },
+    '二卖': { color: '#e8590c', shape: 'down' },
+    '三卖': { color: '#7b2d8e', shape: 'x' }
+  };
+
+  var S = {
+    bars: [], st: null, hit: null, reason: '', meta: { code: '', name: '' },
+    pts: [], macd: null, ext: null,
+    period: 'd',
+    vx0: 0, vx1: 0, hover: -1,
+    W: 900, H: 480,
+    layers: { fenxing: true, bi: true, zs: true, pts: true, macd: true },
+    drag: null
+  };
+  function P() { return PERIODS[S.period]; }
+  /* 文案用的单位：日线用「交易日」，其余用「根K线」 */
+  function barLabel() { var p = P(); return p.kind === 'daily' ? '日线' : (p.label + 'K线'); }
+  function unitLabel() { return P().kind === 'daily' ? '个交易日' : '根K线'; }
+
+  var $ = function (id) { return document.getElementById(id); };
+  var cv = $('chart'), ctx = cv.getContext('2d'), tipEl = $('tip');
+
+  /* ------------------------------------------------------------------ 工具 */
+  function pad2(n) { return (n < 10 ? '0' : '') + n; }
+  function dateNDaysAgo(d, days) { var x = new Date(d.getTime()); x.setDate(x.getDate() - days); return x; }
+  function ymd(d) { return d.getFullYear() + pad2(d.getMonth() + 1) + pad2(d.getDate()); }
+  function n2(v) { return (+v).toFixed(2); }
+  function n3(v) { return (+v).toFixed(3); }
+
+  function parseCode(raw) {
+    var s = String(raw || '').trim().toLowerCase();
+    var m = s.match(/(\d{6})/);
+    if (!m) return null;
+    var code = m[1];
+    var secid = (/^(6|9)/.test(code) ? '1.' : '0.') + code;
+    return { code: code, secid: secid };
+  }
+
+  /* -------------------------------------------------------------- 数据拉取 */
+  function buildUrl(secid, klt, asofDate) {
+    var end = new Date();
+    var beg = dateNDaysAgo(end, LOOKBACK_DAYS);
+    if (asofDate) {
+      end = asofDate;
+      beg = dateNDaysAgo(asofDate, LOOKBACK_DAYS);
+    }
+    return EF
+      + '?secid=' + secid
+      + '&fields1=f1,f2,f3,f4,f5,f6'
+      + '&fields2=f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61'
+      + '&klt=' + klt + '&fqt=1'
+      + '&beg=' + ymd(beg) + '&end=' + ymd(end)
+      + '&lmt=' + MAXBARS + '&_=' + Date.now();
+  }
+  function emKlt(p) {
+    return p.kind === 'daily' ? 101 : p.kind === 'weekly' ? 102 : p.kind === 'monthly' ? 103 : p.scale;
+  }
+
+  /* 三数据源：日/周/月→腾讯(首)＋东财(备)；分时→新浪(首)＋东财(备)。
+     成功过的源记进 localStorage，下次优先用它，避免重复等待失败请求。 */
+  var SRC_KEY = 'chanlun_yimai_src';
+  var SRC_LABEL = { eastmoney: '东方财富', tencent: '腾讯行情', sina: '新浪' };
+
+  function getPreferred() {
+    try {
+      var v = localStorage.getItem(SRC_KEY);
+      if (v === 'eastmoney' || v === 'tencent' || v === 'sina') return v;
+    } catch (e) { }
+    return 'tencent';
+  }
+  function setPreferred(s) { try { localStorage.setItem(SRC_KEY, s); } catch (e) { } }
+
+  function fetchJson(url, ms) {
+    return new Promise(function (resolve, reject) {
+      var ctl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+      var done = false;
+      var timer = setTimeout(function () {
+        if (done) return; done = true;
+        if (ctl) { try { ctl.abort(); } catch (e) { } }
+        reject(new Error('请求超时'));
+      }, ms || 12000);
+      fetch(url, { cache: 'no-store', signal: ctl ? ctl.signal : undefined })
+        .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+        .then(function (j) { if (done) return; done = true; clearTimeout(timer); resolve(j); })
+        .catch(function (e) { if (done) return; done = true; clearTimeout(timer); reject(e); });
+    });
+  }
+
+  /* --- 东方财富（klt: 5/15/30/60=分时，101=日，102=周，103=月） --- */
+  function fetchEastmoney(pr, p, asofDate) {
+    return fetchJson(buildUrl(pr.secid, emKlt(p), asofDate), 12000).then(function (j) {
+      var d = j && j.data;
+      if (!d || !d.klines || !d.klines.length) throw new Error('接口返回空数据');
+      var bars = [];
+      for (var i = 0; i < d.klines.length; i++) {
+        var q = d.klines[i].split(',');
+        bars.push({
+          date: q[0], open: +q[1], close: +q[2], high: +q[3], low: +q[4],
+          volume: +q[5], amount: +q[6], pct: +q[8]
+        });
+      }
+      return { bars: bars, name: d.name || '' };
+    });
+  }
+
+  function txSymbol(code) {
+    if (/^(4|8|92)/.test(code)) return 'bj' + code;   // 北交所
+    if (/^(6|9)/.test(code)) return 'sh' + code;
+    return 'sz' + code;
+  }
+
+  /* --- 腾讯行情（day / week / month，前复权） --- */
+  function fetchTencent(pr, p) {
+    var sym = txSymbol(pr.code);
+    var pk = p.kind === 'daily' ? 'day' : p.kind === 'weekly' ? 'week' : 'month';
+    var cnt = p.kind === 'daily' ? 700 : p.kind === 'weekly' ? 320 : 200;
+    var url = 'https://web.ifzq.gtimg.cn/appstock/app/fqkline/get'
+      + '?param=' + sym + ',' + pk + ',,,' + cnt + ',qfq&_=' + Date.now();
+    return fetchJson(url, 12000).then(function (j) {
+      var node = j && j.data && j.data[sym];
+      if (!node) throw new Error('接口返回空数据');
+      var arr = node['qfq' + pk] || node[pk];
+      if (!arr || !arr.length) throw new Error('接口无' + p.label + '数据');
+      var bars = [];
+      for (var i = 0; i < arr.length; i++) {
+        var a = arr[i];
+        bars.push({ date: a[0], open: +a[1], close: +a[2], high: +a[3], low: +a[4], volume: +a[5] });
+      }
+      var name = '';
+      var qt = node.qt && node.qt[sym];
+      if (qt && qt[1]) name = qt[1];
+      return { bars: bars, name: name };
+    });
+  }
+
+  /* JSONP：以 <script> 注入，天然免跨域（新浪分时接口无 CORS 头） */
+  function jsonpLoad(url, globalName, ms) {
+    return new Promise(function (resolve, reject) {
+      var s = document.createElement('script');
+      var done = false;
+      function cleanup() {
+        try { if (s.parentNode) s.parentNode.removeChild(s); } catch (e) { }
+        try { delete window[globalName]; } catch (e) { try { window[globalName] = undefined; } catch (e2) { } }
+      }
+      var timer = setTimeout(function () { if (done) return; done = true; cleanup(); reject(new Error('请求超时')); }, ms || 12000);
+      window[globalName] = undefined;
+      s.onload = function () {
+        if (done) return; done = true; clearTimeout(timer);
+        var v = window[globalName]; cleanup();
+        if (v && v.length) resolve(v); else reject(new Error('接口返回空数据'));
+      };
+      s.onerror = function () { if (done) return; done = true; clearTimeout(timer); cleanup(); reject(new Error('脚本加载失败')); };
+      s.src = url;
+      (document.head || document.documentElement).appendChild(s);
+    });
+  }
+
+  /* --- 新浪分时（jsonp，免跨域；疑似不复权） --- */
+  function fetchSina(pr, p, asofDate) {
+    var sym = txSymbol(pr.code);
+    var cb = '_sinaK';
+    var url = 'https://money.finance.sina.com.cn/quotes_service/api/jsonp.php/var%20' + cb + '=/CN_MarketData.getKLineData'
+      + '?symbol=' + sym + '&scale=' + p.scale + '&ma=no&datalen=1023&_=' + Date.now();
+    var nameP = fetchTencentName(sym);
+    return jsonpLoad(url, cb, 12000).then(function (arr) {
+      var bars = [];
+      for (var i = 0; i < arr.length; i++) {
+        var a = arr[i];
+        bars.push({ date: String(a.day), open: +a.open, close: +a.close, high: +a.high, low: +a.low, volume: +a.volume });
+      }
+      return nameP.then(function (nm) { return { bars: bars, name: nm }; });
+    });
+  }
+  /* 分时源不给股票名，顺手向腾讯要一个（失败不影响主流程） */
+  function fetchTencentName(sym) {
+    var url = 'https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=' + sym + ',day,,,2,qfq&_=' + Date.now();
+    return fetchJson(url, 8000).then(function (j) {
+      var node = j && j.data && j.data[sym];
+      var qt = node && node.qt && node.qt[sym];
+      return (qt && qt[1]) || '';
+    }).catch(function () { return ''; });
+  }
+
+  /* 窗口：日线＝截止日前 800 自然日（对齐原脚本）；其余周期＝最近 N 根 */
+  function applyWindow(bars, p, asofDate) {
+    if (p.kind === 'daily') {
+      var ref = asofDate || new Date();
+      var beg = ymdDash(dateNDaysAgo(ref, LOOKBACK_DAYS));
+      var out = bars.filter(function (b) { return b.date.slice(0, 10) >= beg; });
+      return out.length >= 60 ? out : bars;
+    }
+    return bars.slice(Math.max(0, bars.length - p.bars));
+  }
+
+  /* 按周期选择源顺序；上次成功的源优先（避免重复等待失败请求） */
+  function sourceList(p) {
+    return p.kind === 'minute' ? ['sina', 'eastmoney'] : ['tencent', 'eastmoney'];
+  }
+  function orderedSources(p) {
+    var list = sourceList(p).slice();
+    var pref = getPreferred();
+    var idx = list.indexOf(pref);
+    if (idx > 0) { list.splice(idx, 1); list.unshift(pref); }
+    return list;
+  }
+  function fetchOne(src, pr, p, asofDate) {
+    if (src === 'sina') return fetchSina(pr, p, asofDate);
+    if (src === 'tencent') return fetchTencent(pr, p);
+    return fetchEastmoney(pr, p, asofDate);
+  }
+
+  function fetchAny(pr, p, asofDate) {
+    var order = orderedSources(p);
+    var errs = [];
+    var lim = asofDate ? ymdDash(asofDate) : null;
+    var promise = Promise.reject();
+    order.forEach(function (s) {
+      promise = promise.catch(function () {
+        return fetchOne(s, pr, p, asofDate).then(function (res) {
+          res.bars.sort(function (a, b) { return a.date < b.date ? -1 : 1; });
+          if (lim) res.bars = res.bars.filter(function (b) { return b.date.slice(0, 10) <= lim; });
+          res.bars = applyWindow(res.bars, p, asofDate);
+          if (res.bars.length < 60) throw new Error('可用' + barLabel() + '不足 60 根');
+          res.source = s;
+          setPreferred(s);
+          return res;
+        }).catch(function (e) {
+          errs.push(SRC_LABEL[s] + '：' + (e && e.message ? e.message : e));
+          throw e;
+        });
+      });
+    });
+    return promise.catch(function () {
+      throw new Error(errs.join('；'));
+    });
+  }
+
+  /* 丢弃「未走完的当前周期K线」：
+     日→(<15:00 丢当日) | 分时→(盘中丢末根) | 周→(当前周未收丢末根) | 月→(当前月未收丢末根) */
+  function clipClosed(bars, p, asofDate) {
+    if (!bars.length) return bars;
+    if (asofDate) {
+      var lim = ymdDash(asofDate);
+      return bars.filter(function (b) { return b.date.slice(0, 10) <= lim; });
+    }
+    var now = new Date();
+    var out = bars;
+    if (p.kind === 'daily') {
+      if (now.getHours() < 15) {
+        var today = ymdDash(now);
+        out = bars.filter(function (b) { return b.date.slice(0, 10) < today; });
+      }
+    } else if (p.kind === 'minute') {
+      if (isTradingNow(now)) out = bars.slice(0, bars.length - 1);
+    } else if (p.kind === 'weekly') {
+      if (now < weekCloseOf(bars[bars.length - 1].date)) out = bars.slice(0, bars.length - 1);
+    } else if (p.kind === 'monthly') {
+      if (now < monthCloseOf(bars[bars.length - 1].date)) out = bars.slice(0, bars.length - 1);
+    }
+    return out.length >= 60 ? out : bars;
+  }
+  function isTradingNow(now) {
+    var wd = now.getDay();
+    if (wd === 0 || wd === 6) return false;
+    var m = now.getHours() * 60 + now.getMinutes();
+    return m >= 570 && m <= 900;              // 9:30 – 15:00
+  }
+  function weekCloseOf(dateStr) {             // 该周周五 15:00
+    var d = new Date(dateStr.slice(0, 10) + 'T12:00:00');
+    var day = d.getDay();
+    var diff = day === 0 ? -2 : day === 6 ? -1 : 5 - day;
+    d.setDate(d.getDate() + diff);
+    d.setHours(15, 0, 0, 0);
+    return d;
+  }
+  function monthCloseOf(dateStr) {            // 该月最后一天 15:00
+    var d = new Date(dateStr.slice(0, 10) + 'T12:00:00');
+    var e = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+    e.setHours(15, 0, 0, 0);
+    return e;
+  }
+  function ymdDash(d) { return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); }
+
+  /* ------------------------------------------------------------------ 布局 */
+  var PAD = { l: 6, r: 58, t: 16, b: 28 };
+  function panes() {
+    var innerW = S.W - PAD.l - PAD.r;
+    var innerH = S.H - PAD.t - PAD.b;
+    var macdH = S.layers.macd ? Math.round(innerH * 0.26) : 0;
+    var gap = macdH ? 16 : 0;
+    var mainH = innerH - macdH - gap;
+    return {
+      x0: PAD.l, x1: PAD.l + innerW, innerW: innerW,
+      main: { y0: PAD.t, y1: PAD.t + mainH, h: mainH },
+      macd: macdH ? { y0: PAD.t + mainH + gap, y1: PAD.t + innerH, h: macdH } : null,
+      axisY: PAD.t + innerH
+    };
+  }
+  function span() { return Math.max(1, S.vx1 - S.vx0 + 1); }
+  function xOf(i) { var p = panes(); return p.x0 + ((i - S.vx0 + 0.5) / span()) * p.innerW; }
+  function idxAtX(px) { var p = panes(); return S.vx0 + ((px - p.x0) / p.innerW) * span() - 0.5; }
+  function barW() { var p = panes(); return Math.max(0.6, (p.innerW / span()) * 0.7); }
+
+  function clampView() {
+    var n = S.bars.length;
+    if (!n) { S.vx0 = 0; S.vx1 = 1; return; }
+    var minSpan = Math.min(20, n);
+    if (S.vx1 - S.vx0 + 1 < minSpan) {
+      var c = (S.vx0 + S.vx1) / 2;
+      S.vx0 = c - minSpan / 2; S.vx1 = c + minSpan / 2;
+    }
+    var s = span();
+    if (s > n) { S.vx0 = 0; S.vx1 = n - 1; return; }
+    if (S.vx0 < -0.5) { S.vx0 = -0.5; S.vx1 = S.vx0 + s; }
+    if (S.vx1 > n - 0.5) { S.vx1 = n - 0.5; S.vx0 = S.vx1 - s; }
+  }
+  function fitView(a, b) {
+    var n = S.bars.length;
+    if (!n) return;
+    var lo = Math.max(0, Math.min(a, n - 1)), hi = Math.max(0, Math.min(b, n - 1));
+    if (hi - lo < 19) { var mid = (lo + hi) / 2; lo = mid - 10; hi = mid + 10; }
+    S.vx0 = lo - 0.5; S.vx1 = hi + 0.5;
+    clampView();
+  }
+
+  /* ------------------------------------------------------------------ 绘图 */
+  function resize() {
+    var box = $('chartBox');
+    var w = Math.max(520, box.clientWidth || 900);
+    var h = Math.max(430, Math.min(760, Math.round(w * 0.5)));
+    var dpr = window.devicePixelRatio || 1;
+    cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+    cv.style.height = h + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    S.W = w; S.H = h;
+    draw();
+  }
+
+  function pickTicks(i0, i1, want) {
+    var out = [], spanN = i1 - i0;
+    if (spanN <= 0) return [i0];
+    var step = Math.max(1, Math.round(spanN / want));
+    for (var i = i0; i <= i1; i += step) out.push(i);
+    if (out[out.length - 1] !== i1) out.push(i1);
+    return out;
+  }
+
+  function draw() {
+    var p = panes();
+    ctx.clearRect(0, 0, S.W, S.H);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, S.W, S.H);
+    if (!S.bars.length) {
+      ctx.fillStyle = '#9aa4b0'; ctx.font = '13px "Microsoft YaHei",sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('等待数据…', S.W / 2, S.H / 2);
+      return;
+    }
+
+    var n = S.bars.length;
+    var i0 = Math.max(0, Math.floor(S.vx0)), i1 = Math.min(n - 1, Math.ceil(S.vx1));
+
+    /* --- 主图 y 值域：可见 K + 可见标记 --- */
+    var yMin = Infinity, yMax = -Infinity;
+    for (var i = i0; i <= i1; i++) {
+      if (S.bars[i].high > yMax) yMax = S.bars[i].high;
+      if (S.bars[i].low < yMin) yMin = S.bars[i].low;
+    }
+    var st = S.st;
+    if (st) {
+      if (S.layers.fenxing) {
+        for (var k = 0; k < st.fx.length; k++) {
+          var fxx = extremeX(st.high, st.low, st.fx[k]);
+          if (fxx < S.vx0 || fxx > S.vx1) continue;
+          var fy = st.fx[k].kind === 1 ? st.fx[k].high : st.fx[k].low;
+          if (fy > yMax) yMax = fy; if (fy < yMin) yMin = fy;
+        }
+      }
+      if (S.layers.pts) {
+        for (var q = 0; q < S.pts.length; q++) {
+          if (S.pts[q].x < S.vx0 || S.pts[q].x > S.vx1) continue;
+          if (S.pts[q].y > yMax) yMax = S.pts[q].y;
+          if (S.pts[q].y < yMin) yMin = S.pts[q].y;
+        }
+      }
+    }
+    if (!isFinite(yMin) || !isFinite(yMax)) { yMin = 0; yMax = 1; }
+    if (yMax - yMin < 1e-6) { yMax += 1; yMin -= 1; }
+    var padY = (yMax - yMin) * 0.08;
+    yMin -= padY; yMax += padY;
+    S.yMin = yMin; S.yMax = yMax;
+
+    var yOf = function (v) { return p.main.y1 - ((v - yMin) / (yMax - yMin)) * p.main.h; };
+
+    /* --- 横向网格 + 右侧价格刻度 --- */
+    ctx.font = '11px "Microsoft YaHei",sans-serif';
+    ctx.textBaseline = 'middle';
+    var gridN = 5;
+    for (var g = 0; g <= gridN; g++) {
+      var yy = p.main.y0 + (p.main.h * g / gridN);
+      var val = yMax - (yMax - yMin) * g / gridN;
+      ctx.strokeStyle = '#f0f2f5'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(p.x0, Math.round(yy) + 0.5); ctx.lineTo(p.x1, Math.round(yy) + 0.5); ctx.stroke();
+      ctx.fillStyle = '#98a2ad'; ctx.textAlign = 'left';
+      ctx.fillText(n2(val), p.x1 + 6, yy);
+    }
+
+    /* --- 主图裁剪区 --- */
+    ctx.save();
+    ctx.beginPath(); ctx.rect(p.x0, p.main.y0 - 2, p.innerW, p.main.h + 6); ctx.clip();
+
+    /* 1) 中枢 */
+    if (st && S.layers.zs) {
+      var zsLabelX = -1e9;
+      for (var zi = 0; zi < st.zs.length; zi++) {
+        var z = st.zs[zi];
+        if (z.raw1 < S.vx0 - 1 || z.raw0 > S.vx1 + 1) continue;
+        var zx0 = xOf(z.raw0) - barW() / 2, zx1 = xOf(z.raw1) + barW() / 2;
+        var zy0 = yOf(z.zg), zy1 = yOf(z.zd);
+        ctx.fillStyle = 'rgba(59,91,165,0.13)';
+        ctx.strokeStyle = 'rgba(59,91,165,0.85)';
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.rect(zx0, zy0, Math.max(zx1 - zx0, 2), Math.max(zy1 - zy0, 2));
+        ctx.fill(); ctx.stroke();
+        var cxLbl = (Math.max(zx0, p.x0) + Math.min(zx1, p.x1)) / 2;
+        if ((zx1 - zx0) > 86 && cxLbl - zsLabelX > 78) {
+          ctx.fillStyle = '#3b5ba5'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+          ctx.font = '10.5px "Microsoft YaHei",sans-serif';
+          ctx.fillText('[' + n2(z.zd) + ',' + n2(z.zg) + ']', cxLbl, zy0 - 3);
+          zsLabelX = cxLbl;
+        }
+      }
+    }
+
+    /* 2) K 线 */
+    var w = barW();
+    var upCol = '#d64545', dnCol = '#2f9e44';
+    for (var ci = i0; ci <= i1; ci++) {
+      var b = S.bars[ci], cx = xOf(ci);
+      var col = b.close >= b.open ? upCol : dnCol;
+      ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(Math.round(cx) + 0.5, yOf(b.high));
+      ctx.lineTo(Math.round(cx) + 0.5, yOf(b.low));
+      ctx.stroke();
+      var yo = yOf(b.open), yc = yOf(b.close);
+      var top = Math.min(yo, yc), hgt = Math.max(Math.abs(yc - yo), 1);
+      if (w >= 2.2) ctx.fillRect(cx - w / 2, top, w, hgt);
+      else ctx.fillRect(Math.round(cx), top, 1, hgt);
+    }
+
+    /* 3) 分型连线（笔）+ 分型点 */
+    if (st && (S.layers.fenxing || S.layers.bi)) {
+      var vis = [];
+      for (var vi = 0; vi < st.fx.length; vi++) {
+        var vxx = extremeX(st.high, st.low, st.fx[vi]);
+        if (vxx < S.vx0 - 2 || vxx > S.vx1 + 2) continue;
+        vis.push({ x: vxx, y: st.fx[vi].kind === 1 ? st.fx[vi].high : st.fx[vi].low, kind: st.fx[vi].kind });
+      }
+      if (S.layers.bi) {
+        for (var bi = 0; bi + 1 < vis.length; bi++) {
+          ctx.strokeStyle = vis[bi].kind === -1 ? upCol : dnCol;
+          ctx.lineWidth = 1.4; ctx.beginPath();
+          ctx.moveTo(xOf(vis[bi].x), yOf(vis[bi].y));
+          ctx.lineTo(xOf(vis[bi + 1].x), yOf(vis[bi + 1].y));
+          ctx.stroke();
+        }
+      }
+      if (S.layers.fenxing) {
+        for (var fi = 0; fi < vis.length; fi++) {
+          var vx = xOf(vis[fi].x), vy = yOf(vis[fi].y);
+          ctx.fillStyle = vis[fi].kind === 1 ? upCol : '#1c7ed6';
+          ctx.beginPath();
+          if (vis[fi].kind === 1) { ctx.moveTo(vx, vy + 7); ctx.lineTo(vx - 4.5, vy - 1); ctx.lineTo(vx + 4.5, vy - 1); }
+          else { ctx.moveTo(vx, vy - 7); ctx.lineTo(vx - 4.5, vy + 1); ctx.lineTo(vx + 4.5, vy + 1); }
+          ctx.closePath(); ctx.fill();
+        }
+      }
+    }
+
+    /* 4) 买卖点 */
+    if (S.layers.pts && S.pts.length) {
+      for (var pi = 0; pi < S.pts.length; pi++) {
+        var pt = S.pts[pi];
+        if (pt.x < S.vx0 - 2 || pt.x > S.vx1 + 2) continue;
+        var sty = POINT_STYLE[pt.kind] || { color: '#666', shape: 'up' };
+        var px = xOf(pt.x), py = yOf(pt.y);
+        var isBuy = pt.kind.indexOf('买') >= 0;
+        drawMarker(px, py, sty, isBuy, pt.kind === '一买' && S.hit);
+        var lx = px + 7, ly = isBuy ? py + 16 : py - 16;
+        ctx.font = 'bold 11px "Microsoft YaHei",sans-serif';
+        ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+        var lbl = pt.kind + ' ' + pt.y.toFixed(2);
+        ctx.fillStyle = 'rgba(255,255,255,0.86)';
+        var tw = ctx.measureText(lbl).width;
+        ctx.fillRect(lx - 2, ly - 8, tw + 4, 16);
+        ctx.fillStyle = sty.color;
+        ctx.fillText(lbl, lx, ly);
+      }
+    }
+
+    /* 5) 命中高亮：一买区间 + 一买点 */
+    if (S.hit) {
+      var hx0 = Math.max(p.x0, xOf(S.hit.x0) - barW() / 2);
+      var hx1 = Math.min(p.x1, xOf(S.hit.x1) + barW() / 2);
+      if (hx1 > hx0) {
+        ctx.fillStyle = 'rgba(200,155,26,0.10)';
+        ctx.fillRect(hx0, p.main.y0, hx1 - hx0, p.main.h);
+        ctx.strokeStyle = 'rgba(200,155,26,0.55)'; ctx.setLineDash([4, 3]); ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(hx0, p.main.y0); ctx.lineTo(hx0, p.main.y1);
+        ctx.moveTo(hx1, p.main.y0); ctx.lineTo(hx1, p.main.y1);
+        ctx.stroke(); ctx.setLineDash([]);
+      }
+      var ly2 = yOf(S.hit.l1);
+      ctx.strokeStyle = 'rgba(200,155,26,0.9)'; ctx.setLineDash([3, 3]); ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(p.x0, ly2); ctx.lineTo(p.x1, ly2); ctx.stroke(); ctx.setLineDash([]);
+      ctx.font = 'bold 10.5px "Microsoft YaHei",sans-serif';
+      var ltxt = '一买 ' + n2(S.hit.l1);
+      var lwid = ctx.measureText(ltxt).width;
+      var lx0 = p.x0 + 4;
+      var lyTop = Math.min(Math.max(ly2 - 19, p.main.y0 + 1), p.main.y1 - 17);
+      ctx.fillStyle = 'rgba(255,252,242,0.95)';
+      ctx.fillRect(lx0, lyTop, lwid + 9, 15);
+      ctx.strokeStyle = 'rgba(200,155,26,0.55)'; ctx.lineWidth = 1;
+      ctx.strokeRect(lx0 + 0.5, lyTop + 0.5, lwid + 8, 14);
+      ctx.fillStyle = '#a8801a'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      ctx.fillText(ltxt, lx0 + 4.5, lyTop + 8);
+    }
+
+    ctx.restore();
+
+    /* --- 主图外框 --- */
+    ctx.strokeStyle = '#e6e9ee'; ctx.lineWidth = 1;
+    ctx.strokeRect(p.x0 + 0.5, p.main.y0 + 0.5, p.innerW - 1, p.main.h - 1);
+
+    /* --- 横轴日期 --- */
+    ctx.font = '11px "Microsoft YaHei",sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    var ticks = pickTicks(i0, i1, Math.max(3, Math.round(p.innerW / 110)));
+    var wide = span() > 240;
+    var multiDay = S.bars[i0].date.slice(0, 10) !== S.bars[i1].date.slice(0, 10);
+    var lastLbl = null;
+    for (var ti = 0; ti < ticks.length; ti++) {
+      var tIdx = ticks[ti], tx = xOf(tIdx);
+      ctx.strokeStyle = '#eef0f3';
+      ctx.beginPath(); ctx.moveTo(Math.round(tx) + 0.5, p.main.y0); ctx.lineTo(Math.round(tx) + 0.5, p.main.y1); ctx.stroke();
+      ctx.fillStyle = '#98a2ad';
+      var ds = S.bars[tIdx].date;
+      var lbl;
+      if (P().kind === 'minute') {
+        lbl = multiDay ? ds.slice(5, 10) : ds.slice(11, 16);
+      } else {
+        lbl = wide ? ds.slice(2) : ds.slice(5);
+      }
+      if (lbl !== lastLbl) { ctx.fillText(lbl, tx, p.axisY + 6); lastLbl = lbl; }
+    }
+
+    /* --- 悬停竖线 --- */
+    if (S.hover >= 0 && S.hover >= i0 && S.hover <= i1) {
+      var hv = xOf(S.hover);
+      ctx.strokeStyle = 'rgba(28,126,214,0.45)'; ctx.setLineDash([3, 3]); ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(Math.round(hv) + 0.5, p.main.y0); ctx.lineTo(Math.round(hv) + 0.5, p.main.y1); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = '#1c7ed6';
+      ctx.beginPath(); ctx.arc(hv, yOf(S.bars[S.hover].close), 3, 0, Math.PI * 2); ctx.fill();
+    }
+
+    /* --- MACD 副图 --- */
+    if (p.macd && S.macd) {
+      var mm = p.macd, dif = S.macd.dif, dea = S.macd.dea, hist = S.macd.hist;
+      var mn = Infinity, mx = -Infinity;
+      for (var mi = i0; mi <= i1; mi++) {
+        mn = Math.min(mn, dif[mi], dea[mi], hist[mi]);
+        mx = Math.max(mx, dif[mi], dea[mi], hist[mi]);
+      }
+      var amp = Math.max(Math.abs(mn), Math.abs(mx));
+      if (!isFinite(amp) || amp < 1e-9) amp = 1;
+      mn = -amp; mx = amp;
+      var my = function (v) { return mm.y1 - ((v - mn) / (mx - mn)) * mm.h; };
+      ctx.save();
+      ctx.beginPath(); ctx.rect(p.x0, mm.y0 - 2, p.innerW, mm.h + 4); ctx.clip();
+      ctx.strokeStyle = '#eef0f3'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(p.x0, Math.round(my(0)) + 0.5); ctx.lineTo(p.x1, Math.round(my(0)) + 0.5); ctx.stroke();
+      var zy = my(0);
+      for (var hi = i0; hi <= i1; hi++) {
+        var hx = xOf(hi), hh = my(hist[hi]);
+        ctx.fillStyle = hist[hi] >= 0 ? 'rgba(214,69,69,0.75)' : 'rgba(47,158,68,0.75)';
+        var bw = Math.max(1, w * 0.6);
+        ctx.fillRect(hx - bw / 2, Math.min(zy, hh), bw, Math.max(Math.abs(hh - zy), 1));
+      }
+      ctx.strokeStyle = '#1c7ed6'; ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      for (var di = i0; di <= i1; di++) { var dy = my(dif[di]); di === i0 ? ctx.moveTo(xOf(di), dy) : ctx.lineTo(xOf(di), dy); }
+      ctx.stroke();
+      ctx.strokeStyle = '#e8863c'; ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      for (var ei = i0; ei <= i1; ei++) { var ey = my(dea[ei]); ei === i0 ? ctx.moveTo(xOf(ei), ey) : ctx.lineTo(xOf(ei), ey); }
+      ctx.stroke();
+      ctx.restore();
+      ctx.strokeStyle = '#e6e9ee'; ctx.lineWidth = 1;
+      ctx.strokeRect(p.x0 + 0.5, mm.y0 + 0.5, p.innerW - 1, mm.h - 1);
+      ctx.font = '10.5px "Microsoft YaHei",sans-serif';
+      ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#98a2ad'; ctx.fillText('MACD', p.x0 + 5, mm.y0 + 9);
+      ctx.fillStyle = '#1c7ed6'; ctx.fillText('DIF', p.x0 + 48, mm.y0 + 9);
+      ctx.fillStyle = '#e8863c'; ctx.fillText('DEA', p.x0 + 76, mm.y0 + 9);
+      ctx.fillStyle = '#98a2ad'; ctx.textAlign = 'right';
+      ctx.fillText(n2(mx), p.x1 - 4, mm.y0 + 9);
+    }
+
+    /* --- 扩展标记：二买 / 三买 --- */
+    if (S.ext && S.ext.marks && S.layers.pts) {
+      for (var ei2 = 0; ei2 < S.ext.marks.length; ei2++) {
+        var mk = S.ext.marks[ei2];
+        if (mk.x < i0 || mk.x > i1) continue;
+        var sty2 = POINT_STYLE[mk.kind] || { color: '#666', shape: 'up' };
+        var myp = yOf(mk.y);
+        drawMarker(xOf(mk.x), myp + (sty2.shape === 'up' ? -11 : 11), sty2, true, false);
+        ctx.fillStyle = sty2.color;
+        ctx.font = '10.5px "Microsoft YaHei",sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = sty2.shape === 'up' ? 'bottom' : 'top';
+        ctx.fillText(mk.kind, xOf(mk.x), myp + (sty2.shape === 'up' ? -13 : 13));
+      }
+    }
+  }
+
+  function drawMarker(x, y, sty, isBuy, glow) {
+    if (glow) {
+      ctx.beginPath(); ctx.arc(x, y, 10, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(200,155,26,0.20)'; ctx.fill();
+      ctx.strokeStyle = 'rgba(200,155,26,0.85)'; ctx.lineWidth = 1.6; ctx.stroke();
+    }
+    ctx.fillStyle = sty.color;
+    ctx.strokeStyle = sty.color;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    if (sty.shape === 'x') {
+      ctx.moveTo(x - 5, y - 5); ctx.lineTo(x + 5, y + 5);
+      ctx.moveTo(x + 5, y - 5); ctx.lineTo(x - 5, y + 5);
+      ctx.stroke();
+    } else if (sty.shape === 'up') {
+      ctx.moveTo(x, y); ctx.lineTo(x - 5.5, y + 9); ctx.lineTo(x + 5.5, y + 9);
+      ctx.closePath(); ctx.fill();
+    } else {
+      ctx.moveTo(x, y); ctx.lineTo(x - 5.5, y - 9); ctx.lineTo(x + 5.5, y - 9);
+      ctx.closePath(); ctx.fill();
+    }
+  }
+
+  /* ---------------------------------------------------------------- tooltip */
+  function showTip(px, py) {
+    var i = S.hover;
+    if (i < 0 || i >= S.bars.length) { tipEl.style.display = 'none'; return; }
+    var b = S.bars[i];
+    var prev = i > 0 ? S.bars[i - 1].close : b.open;
+    var chg = prev ? (b.close - prev) / prev * 100 : 0;
+    var col = chg >= 0 ? '#d64545' : '#2f9e44';
+    var html = '<div class="t">' + b.date + '</div>'
+      + '<div class="l"><span>开</span><b>' + n2(b.open) + '</b></div>'
+      + '<div class="l"><span>高</span><b>' + n2(b.high) + '</b></div>'
+      + '<div class="l"><span>低</span><b>' + n2(b.low) + '</b></div>'
+      + '<div class="l"><span>收</span><b>' + n2(b.close) + '</b></div>'
+      + '<div class="l"><span>涨跌</span><b style="color:' + col + '">' + (chg >= 0 ? '+' : '') + chg.toFixed(2) + '%</b></div>';
+    var notes = [];
+    if (S.st) {
+      for (var k = 0; k < S.st.fx.length; k++) {
+        var x = extremeX(S.st.high, S.st.low, S.st.fx[k]);
+        if (x === i) notes.push(S.st.fx[k].kind === 1 ? '顶分型' : '底分型');
+      }
+      for (var z = 0; z < S.st.zs.length; z++) {
+        if (i === S.st.zs[z].raw0 || i === S.st.zs[z].raw1) {
+          notes.push('中枢端点 [' + n2(S.st.zs[z].zd) + ',' + n2(S.st.zs[z].zg) + ']');
+        }
+      }
+      for (var q = 0; q < S.pts.length; q++) if (S.pts[q].x === i) notes.push(S.pts[q].kind);
+      if (S.hit && (i === S.hit.x1 || i === S.hit.l1_dayIdx)) notes.push('一买低点');
+    }
+    if (notes.length) html += '<div class="sep"></div><div class="note">' + notes.join(' · ') + '</div>';
+    tipEl.innerHTML = html;
+    tipEl.style.display = 'block';
+    var bw = tipEl.offsetWidth, bh = tipEl.offsetHeight;
+    var left = px + 16, top = py - bh / 2;
+    if (left + bw > S.W - 4) left = px - bw - 16;
+    if (top < 0) top = 4;
+    if (top + bh > S.H - 4) top = S.H - bh - 4;
+    tipEl.style.left = left + 'px';
+    tipEl.style.top = top + 'px';
+  }
+
+  /* ------------------------------------------------------------ 事件绑定 */
+  cv.addEventListener('wheel', function (e) {
+    if (!S.bars.length) return;
+    e.preventDefault();
+    var rect = cv.getBoundingClientRect();
+    var mx = e.clientX - rect.left;
+    var anchor = idxAtX(mx);
+    var f = e.deltaY < 0 ? 0.86 : 1.16;
+    var ns = Math.max(20, Math.min(S.bars.length, span() * f));
+    var ratio = (anchor - S.vx0) / span();
+    S.vx0 = anchor - ratio * ns;
+    S.vx1 = S.vx0 + ns - 1;
+    clampView(); draw();
+  }, { passive: false });
+
+  cv.addEventListener('mousedown', function (e) {
+    S.drag = { x: e.clientX, v0: S.vx0, v1: S.vx1 };
+    cv.style.cursor = 'grabbing';
   });
-
-  // 显示股票名称（从日线数据获取）
-  const stockName = allResults.daily.raw[allResults.daily.raw.length-1].date || '';
-  document.getElementById('stockName').textContent = currentSymbol;
-
-  document.getElementById('loading').classList.add('hidden');
-  document.getElementById('content').style.display = 'block';
-
-  ['daily','weekly','monthly'].forEach(period => {
-    const r = allResults[period];
-    const sec = document.getElementById('sec-'+period);
-
-    const klineWrap = sec.querySelector('.kline-wrap');
-    klineWrap.innerHTML = `
-      <button class="toggle-btn" onclick="toggleSidebar('${period}')">收起提示</button>
-      <div class="sidebar" id="sidebar-${period}">${getGuideHTML(r.analysis)}</div>
-      <div class="zs-labels" id="zslabels-${period}">
-        <div class="zg">ZG ${r.zs.top.toFixed(2)}</div>
-        <div class="zd">ZD ${r.zs.bot.toFixed(2)}</div>
-      </div>
-      <canvas id="kline-${period}"></canvas>`;
-
-    const hdr = document.getElementById('hdr-'+period);
-    const posCls = r.analysis.pos==='above'?'up':r.analysis.pos==='below'?'down':'mid';
-    hdr.innerHTML = `<span class="zs-info">中枢：<strong>${r.zs.bot.toFixed(2)}</strong> ~ <strong>${r.zs.top.toFixed(2)}</strong></span><span class="price-info ${posCls}">${r.analysis.cp.toFixed(2)}</span>`;
-
-    const macdWrap = sec.querySelector('.macd-wrap');
-    macdWrap.innerHTML = `<canvas id="macd-${period}"></canvas>`;
-
-    drawKline('kline-'+period, r.raw, r.zs, r.fractals, r.analysis);
-    drawMACD('macd-'+period, r.raw, r.analysis);
+  window.addEventListener('mousemove', function (e) {
+    var rect = cv.getBoundingClientRect();
+    if (S.drag) {
+      var dxPx = e.clientX - S.drag.x;
+      var perPx = span() / panes().innerW;
+      var shift = dxPx * perPx;
+      S.vx0 = S.drag.v0 - shift; S.vx1 = S.drag.v1 - shift;
+      clampView(); draw();
+      return;
+    }
+    if (e.clientX < rect.left || e.clientX > rect.right || e.clientY < rect.top || e.clientY > rect.bottom) {
+      if (S.hover !== -1) { S.hover = -1; tipEl.style.display = 'none'; draw(); }
+      return;
+    }
+    var i = Math.round(idxAtX(e.clientX - rect.left));
+    if (i < 0) i = 0; if (i > S.bars.length - 1) i = S.bars.length - 1;
+    if (i !== S.hover) { S.hover = i; draw(); }
+    showTip(e.clientX - rect.left, e.clientY - rect.top);
   });
-  
-  initDraggable();
-
-  const posDesc = p => p==='above'?'上涨趋势区':p==='below'?'下跌趋势区':'震荡盘整区';
-  const posCls = p => p==='above'?'up':p==='below'?'down':'mid';
-  let rows = '';
-  ['daily','weekly','monthly'].forEach(period => {
-    const r = allResults[period];
-    const div = r.analysis.div ? ` ⚠${r.analysis.divT}` : '';
-    rows += `<tr><td>${PERIOD_CN[period]}</td><td>${r.zs.bot.toFixed(2)} ~ ${r.zs.top.toFixed(2)}</td><td class="${posCls(r.analysis.pos)}">${posDesc(r.analysis.pos)}${div}</td><td class="${posCls(r.analysis.pos)}">${r.analysis.cp.toFixed(2)}</td></tr>`;
+  window.addEventListener('mouseup', function () {
+    if (S.drag) { S.drag = null; cv.style.cursor = 'crosshair'; }
   });
-  document.getElementById('summary').innerHTML = `
-    <h2>📋 ${currentSymbol} 缠论多级别中枢汇总</h2>
-    <table><tr><th>级别</th><th>中枢区间 (ZD ~ ZG)</th><th>当前位置</th><th>当前价</th></tr>${rows}</table>
-    <p style="margin-top:14px;color:#8b949e;font-size:12px">
-      💡 图例说明：<span style="color:#ff6b6b">红线=第1笔</span> | <span style="color:#4ecdc4">青线=第2笔</span> | <span style="color:#ffe66d">黄线=第3笔</span> | <span style="color:#f39c12">黄虚线=中枢区间</span>
-    </p>`;
+  cv.addEventListener('mouseleave', function () {
+    S.hover = -1; tipEl.style.display = 'none'; draw();
+  });
+  cv.addEventListener('dblclick', function () { fitCurrent(); draw(); });
 
-  window.addEventListener('resize', () => {
-    ['daily','weekly','monthly'].forEach(period => {
-      const r = allResults[period];
-      drawKline('kline-'+period, r.raw, r.zs, r.fractals, r.analysis);
-      drawMACD('macd-'+period, r.raw, r.analysis);
+  $('zin').onclick = function () { zoomBy(0.75); };
+  $('zout').onclick = function () { zoomBy(1.34); };
+  $('zfit').onclick = function () { fitAll(); draw(); };
+  $('reset').onclick = function () { fitCurrent(); draw(); };
+
+  ['fenxing', 'bi', 'zs', 'pts', 'macd'].forEach(function (k) {
+    $('L_' + k).addEventListener('change', function (e) {
+      S.layers[k] = e.target.checked;
+      resize();
     });
   });
-}
 
-// 页面加载时自动分析默认股票
-window.onload = () => {
-  analyzeStock();
-};
+  function zoomBy(f) {
+    if (!S.bars.length) return;
+    var c = (S.vx0 + S.vx1) / 2;
+    var ns = Math.max(20, Math.min(S.bars.length, span() * f));
+    S.vx0 = c - ns / 2; S.vx1 = c + ns / 2;
+    clampView(); draw();
+  }
+  function fitAll() {
+    if (!S.bars.length) return;
+    fitView(0, S.bars.length - 1);
+  }
+  function fitCurrent() {
+    if (!S.bars.length) return;
+    if (S.hit) fitView(Math.max(0, S.hit.x0 - 22), S.bars.length - 1);
+    else fitView(Math.max(0, S.bars.length - 200), S.bars.length - 1);
+  }
+
+  /* ------------------------------------------------------------- 结果渲染 */
+  function idxOfDate(ds) {
+    for (var i = S.bars.length - 1; i >= 0; i--) if (S.bars[i].date === ds) return i;
+    return -1;
+  }
+
+  function renderVerdict() {
+    var el = $('verdict');
+    var h = S.hit;
+    if (!S.bars.length) return;
+    var head = '<div class="vhead">'
+      + '<span class="badge ' + (h ? 'hit' : 'miss') + '">' + (h ? '✅ 一买确认' : '— 未命中') + '</span>'
+      + '<span class="vname">' + (S.meta.name || '') + '</span>'
+      + '<span class="vcode">' + S.meta.code + '</span>';
+    var tags = [];
+    var lastDay = S.bars[S.bars.length - 1].date;
+    tags.push('<span class="tag">级别 ' + P().label + '</span>');
+    tags.push('<span class="tag">数据截止 ' + lastDay + '</span>');
+    tags.push('<span class="tag">' + barLabel() + ' ' + S.bars.length + ' 根</span>');
+    if (S.meta.source) tags.push('<span class="tag">源 ' + (SRC_LABEL[S.meta.source] || '') + '</span>');
+    if (P().kind === 'minute') tags.push('<span class="tag warn">小级别信号 · 需大级别配合</span>');
+    if (S.st) tags.push('<span class="tag">笔 ' + S.st.bis.length + ' · 中枢 ' + S.st.zs.length + '</span>');
+    head += tags.join('') + '</div>';
+
+    if (h) {
+      var confIdx = idxOfDate(h.time);
+      var after = confIdx >= 0 ? (S.bars.length - 1 - confIdx) : 0;
+      var sinceIdx = idxOfDate(h.l1_day);
+      var chg = h.l1 ? (h.close - h.l1) / h.l1 * 100 : 0;
+      var badge = after > 0
+        ? '<span class="tag warn">历史确认 · 已过 ' + after + ' ' + unitLabel() + '</span>'
+        : '<span class="tag ok">' + (P().kind === 'daily' ? '最后收盘日确认' : '最新K线确认') + '</span>';
+      var body = '<div class="vhead" style="margin:0 0 8px">' + badge
+        + '<span class="tag">形态：下跌 + 盘整 + 下跌</span>'
+        + '<span class="tag">一买 = 一卖后最低的向下笔</span></div>'
+        + '<div class="kv">'
+        + row('一买点（低点）', n3(h.l1), 'color:#1c7ed6')
+        + row(P().kind === 'daily' ? '确认日' : '确认K线', h.time + (after > 0 ? '（距今 ' + after + ' ' + unitLabel() + '）' : ''))
+        + row(P().kind === 'daily' ? '最低点交易日' : '最低点K线', h.l1_day)
+        + row('一卖（段起点）', n3(h.sell1) + ' @ ' + h.sell1_day)
+        + row('中枢区间', n2(h.zd) + ' ~ ' + n2(h.zg))
+        + row('中枢时间', h.zs0 + ' ~ ' + h.zs1)
+        + row('中枢前那一下跌', n3(h.first_low) + ' @ ' + h.first_day)
+        + row('最新收盘', n2(h.close))
+        + row('相对一买点', (chg >= 0 ? '+' : '') + chg.toFixed(2) + '%', 'color:' + (chg >= 0 ? '#d64545' : '#2f9e44'))
+        + row('笔 / 中枢', h.n_bi + ' / ' + h.n_zs)
+        + '</div>';
+      el.innerHTML = head + renderPano() + body;
+      el.className = 'card hit';
+    } else {
+      var lastBi = S.st && S.st.bis.length ? S.st.bis[S.st.bis.length - 1] : null;
+      var dirTxt = lastBi ? (lastBi.dir === -1 ? '向下' : '向上') : '—';
+      var confTxt = (lastBi && lastBi.confirm_raw != null) ? S.bars[lastBi.confirm_raw].date : '未确认';
+      var body2 = '<div class="reason">未构成一买：<b>' + S.reason + '</b></div>'
+        + '<div class="kv" style="margin-top:10px">'
+        + row('最后一笔方向', dirTxt)
+        + row(P().kind === 'daily' ? '最后一笔确认日' : '最后一笔确认K线', confTxt)
+        + row('已有中枢数', S.st ? S.st.zs.length : 0)
+        + row('笔数', S.st ? S.st.bis.length : 0)
+        + row('最新收盘', n2(S.bars[S.bars.length - 1].close))
+        + '</div>';
+      el.innerHTML = head + renderPano() + body2;
+      el.className = 'card';
+    }
+  }
+  function row(k, v, style) {
+    return '<div class="row"><span class="k">' + k + '</span><span class="v"' + (style ? ' style="' + style + '"' : '') + '>' + v + '</span></div>';
+  }
+
+  /* 走势全景：位置导航 / 二买 / 三买 / 背驰量化 */
+  function renderPano() {
+    var e = S.ext;
+    if (!e) return '';
+    var u = unitLabel();
+    var h = '<div class="pano">';
+
+    h += '<div class="box pos"><div class="bt">当前位置 · 相对最后中枢</div>'
+      + '<div class="bv">' + e.posCn + '</div>'
+      + '<div class="bm">' + (e.lastZ
+        ? ('ZD ' + n2(e.lastZ.zd) + ' ~ ZG ' + n2(e.lastZ.zg) + '<br>最新收盘 ' + n2(S.bars[S.bars.length - 1].close))
+        : '本级别尚未形成中枢') + '</div></div>';
+
+    if (e.buy2) {
+      h += '<div class="box on2"><div class="bt">二买 · 回抽不破前低</div>'
+        + '<div class="bv">' + n2(e.buy2.y) + ' @ ' + e.buy2.date + '</div>'
+        + '<div class="bm">前低 ' + n2(e.buy2.ref) + ' · 距今 ' + e.buy2.ago + ' ' + u + '</div></div>';
+    } else {
+      h += '<div class="box"><div class="bt">二买</div><div class="bv" style="color:#8b949e">未成立</div>'
+        + '<div class="bm">需先有一买（或前低），再回抽不破且已确认</div></div>';
+    }
+
+    if (e.buy3) {
+      h += '<div class="box on3"><div class="bt">三买 · 突破后回抽不入中枢</div>'
+        + '<div class="bv">' + n2(e.buy3.y) + ' @ ' + e.buy3.date + '</div>'
+        + '<div class="bm">ZG ' + n2(e.buy3.zg) + ' · 距今 ' + e.buy3.ago + ' ' + u + '</div></div>';
+    } else {
+      h += '<div class="box"><div class="bt">三买</div><div class="bv" style="color:#8b949e">未成立</div>'
+        + '<div class="bm">' + (e.hint || '需先向上突破中枢 ZG，再回抽不破') + '</div></div>';
+    }
+
+    if (e.div) {
+      h += '<div class="box div"><div class="bt">' + e.div.type + ' · MACD 力度衰减</div>'
+        + '<div class="bv">本段 / 前段 = ' + (e.div.ratio * 100).toFixed(0) + '%</div>'
+        + '<div class="bm">力度 ' + e.div.now.toFixed(2) + ' vs ' + e.div.prev.toFixed(2) + '<br>确认于 ' + e.div.day + '</div></div>';
+    } else {
+      h += '<div class="box"><div class="bt">背驰量化</div>'
+        + '<div class="bv" style="color:#8b949e">' + (e.power ? '无背驰' : '—') + '</div>'
+        + '<div class="bm">' + (e.power
+          ? ('力度 ' + e.power.now.toFixed(2) + ' vs ' + e.power.prev.toFixed(2) + '（同向笔对比）')
+          : '可用笔数不足') + '</div></div>';
+    }
+    return h + '</div>';
+  }
+
+  function renderSide() {
+    /* 结构统计 */
+    var el = $('pStat');
+    if (!S.st) { el.innerHTML = '<h3>结构统计</h3><div class="empty">待分析</div>'; }
+    else {
+      var st = S.st;
+      var tops = 0, bots = 0;
+      for (var i = 0; i < st.fx.length; i++) st.fx[i].kind === 1 ? tops++ : bots++;
+      var lastBi = st.bis[st.bis.length - 1];
+      el.innerHTML = '<h3>结构统计</h3>'
+        + stat(barLabel() + '根数', S.bars.length)
+        + stat('顶 / 底分型', tops + ' / ' + bots)
+        + stat('笔数', st.bis.length)
+        + stat('中枢数', st.zs.length)
+        + stat('最后一笔', lastBi ? (lastBi.dir === -1 ? '向下 ↓' : '向上 ↑') : '—')
+        + stat(P().kind === 'daily' ? '末笔确认日' : '末笔确认K线', (lastBi && lastBi.confirm_raw != null) ? S.bars[lastBi.confirm_raw].date : '未确认')
+        + (st.zs.length ? stat('最后中枢', n2(st.zs[st.zs.length - 1].zd) + ' ~ ' + n2(st.zs[st.zs.length - 1].zg)) : '')
+        + (S.ext && S.ext.zsList.length
+          ? ('<div style="margin-top:9px"><div style="font-size:12px;color:#8b949e;margin-bottom:3px">中枢清单 · 课18 三笔重叠</div>'
+            + S.ext.zsList.slice().reverse().map(function (z) {
+              return '<div class="zsrow"><span class="k">' + z.t0.slice(5) + ' → ' + z.t1.slice(5) + '</span>'
+                + '<span class="v">' + n2(z.zd) + ' ~ ' + n2(z.zg) + '</span></div>';
+            }).join('') + '</div>')
+          : '');
+    }
+    /* 段内买卖点 */
+    var ep = $('pPts');
+    if (!S.pts.length) { ep.innerHTML = '<h3>段内买卖点 <span class="hint">课17 一段走势</span></h3><div class="empty">本段无标记点</div>'; return; }
+    var rows = S.pts.slice().sort(function (a, b) { return a.x - b.x; }).map(function (p) {
+      var sty = POINT_STYLE[p.kind] || { color: '#666' };
+      return '<div class="pt"><span class="dot" style="background:' + sty.color + '"></span>'
+        + '<span class="nm">' + p.kind + '</span>'
+        + '<span class="dt">' + (S.bars[p.x] ? S.bars[p.x].date : '') + '</span>'
+        + '<span class="pr">' + n2(p.y) + '</span></div>';
+    }).join('');
+    ep.innerHTML = '<h3>段内买卖点 <span class="hint">课17 一段走势</span></h3><div class="plist">' + rows + '</div>';
+  }
+  function stat(k, v) { return '<div class="stat"><span class="k">' + k + '</span><span class="v">' + v + '</span></div>'; }
+
+  /* ---------------------------------------------------------------- 主流程 */
+  function run() {
+    var parsed = parseCode($('code').value);
+    if (!parsed) {
+      $('verdict').className = 'card';
+      $('verdict').innerHTML = '<div class="reason">请输入 6 位 A 股代码，例如 <b>002400</b></div>';
+      return;
+    }
+    var p = P();
+    var asofRaw = $('asof').value;
+    var asofDate = asofRaw ? new Date(asofRaw + 'T15:05:00') : null;
+    $('headSub').textContent = p.label + '笔 · 分型 → 笔 → 中枢 → 走势段 → 一买/二买/三买 + 背驰量化 · 口径对齐 12/14/15 号脚本';
+
+    $('run').disabled = true;
+    $('verdict').className = 'card';
+    $('verdict').innerHTML = '<div class="loading"><span class="spin"></span>正在拉取 ' + parsed.code + ' 的 ' + barLabel() + '并计算结构…</div>';
+
+    fetchAny(parsed, p, asofDate).then(function (res) {
+      var bars = clipClosed(res.bars, p, asofDate);
+      if (bars.length < 60) throw new Error('可用' + barLabel() + '不足 60 根（当前 ' + bars.length + '），无法构建结构');
+      S.bars = bars;
+      S.meta = { code: parsed.code, name: res.name, source: res.source };
+      S.macd = macdSeries(bars.map(function (b) { return b.close; }));
+
+      var out = evaluate(bars, { code: parsed.code, name: res.name });
+      S.st = out.st; S.hit = out.hit; S.reason = out.reason || '';
+
+      /* 段内买卖点：命中时用命中段窗口（同 15 号 draw_hit），否则用最近 240 根 */
+      if (S.st && S.st.bis.length) {
+        var win0 = S.hit ? Math.max(0, S.hit.x0 - 8) : Math.max(0, bars.length - 240);
+        S.pts = findZoushiPoints(S.st.bis, S.st.zs, win0, bars.length - 1);
+      } else S.pts = [];
+
+      if (S.hit) S.hit.l1_dayIdx = idxOfDate(S.hit.l1_day);
+      S.ext = analyzeExtended(bars, S.st, S.macd, {
+        l1: S.hit ? S.hit.l1 : null,
+        l1Idx: S.hit ? S.hit.l1_dayIdx : null
+      });
+
+      renderVerdict();
+      renderSide();
+      fitCurrent();
+      resize();
+      $('run').disabled = false;
+    }).catch(function (err) {
+      S.bars = []; S.st = null; S.hit = null; S.pts = []; S.macd = null; S.ext = null;
+      $('verdict').className = 'card';
+      $('verdict').innerHTML = '<div class="reason">取数失败：<b>' + err.message + '</b><br>'
+        + '<span style="font-size:12.5px;color:#7a6a6a">已按周期依次尝试可用数据源（分时→新浪；日/周/月→腾讯、东财）。常见原因：代码不存在或已退市 / 本机网络限制 / 接口对高频请求临时限流（稍等 1–2 分钟再试）。<br>'
+        + '若你使用代理或公司网络，可点击下方按钮换一个数据源重试。</span>'
+        + '<div style="margin-top:9px"><button class="btn mini" id="swapSrc">换数据源重试</button></div></div>';
+      var bs = document.getElementById('swapSrc');
+      if (bs) bs.onclick = function () {
+        var lst = sourceList(P());
+        var i = lst.indexOf(getPreferred());
+        setPreferred(lst[(i + 1) % lst.length]);
+        run();
+      };
+      $('pStat').innerHTML = '<h3>结构统计</h3><div class="empty">待分析</div>';
+      $('pPts').innerHTML = '<h3>段内买卖点</h3><div class="empty">待分析</div>';
+      draw();
+      $('run').disabled = false;
+    });
+  }
+
+  $('run').onclick = run;
+  $('code').addEventListener('keydown', function (e) { if (e.key === 'Enter') run(); });
+  $('asof').addEventListener('change', function () { if (S.bars.length) run(); });
+  document.querySelectorAll('.pbtn').forEach(function (b) {
+    b.onclick = function () {
+      var k = b.getAttribute('data-p');
+      if (!PERIODS[k] || k === S.period) return;
+      S.period = k;
+      document.querySelectorAll('.pbtn').forEach(function (x) { x.classList.toggle('active', x === b); });
+      run();
+    };
+  });
+  document.querySelectorAll('.chip').forEach(function (c) {
+    c.onclick = function () { $('code').value = c.dataset.c; run(); };
+  });
+
+  window.addEventListener('resize', function () { resize(); });
+
+  /* 首屏（支持 ?code=002400&period=m30 预置，便于深链/自检） */
+  try {
+    var qs = new URLSearchParams(location.search);
+    if (qs.get('code')) $('code').value = qs.get('code');
+    var qp = qs.get('period');
+    if (qp && PERIODS[qp]) {
+      S.period = qp;
+      document.querySelectorAll('.pbtn').forEach(function (x) { x.classList.toggle('active', x.getAttribute('data-p') === qp); });
+    }
+  } catch (e) { }
+  resize();
+  draw();
+  run();
+})();
 </script>
 </body>
 </html>

@@ -6,81 +6,81 @@
 <title>缠论多级别中枢分析 - 通用版</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { background: #0d1117; color: #e6edf3; font-family: 'Microsoft YaHei', sans-serif; }
+body { background: #f5f6f8; color: #1f2329; font-family: 'Microsoft YaHei', sans-serif; }
 .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
 
 /* 输入区域 */
-.input-section { text-align: center; margin-bottom: 24px; padding: 20px; background: #161b22; border: 1px solid #30363d; border-radius: 8px; }
+.input-section { text-align: center; margin-bottom: 24px; padding: 20px; background: #ffffff; border: 1px solid #e3e6ea; border-radius: 8px; }
 .input-section h1 { font-size: 22px; margin-bottom: 16px; }
 .input-box { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
-.input-box input { padding: 10px 16px; font-size: 16px; border: 1px solid #30363d; border-radius: 6px; background: #0d1117; color: #e6edf3; width: 160px; text-align: center; }
-.input-box input:focus { outline: none; border-color: #58a6ff; }
-.input-box button { padding: 10px 24px; font-size: 16px; border: none; border-radius: 6px; background: #238636; color: white; cursor: pointer; transition: background 0.2s; }
-.input-box button:hover { background: #2ea043; }
-.input-box button:disabled { background: #30363d; cursor: not-allowed; }
-.stock-name { color: #f39c12; font-size: 15px; margin-left: 10px; font-weight: bold; }
+.input-box input { padding: 10px 16px; font-size: 16px; border: 1px solid #e3e6ea; border-radius: 6px; background: #f5f6f8; color: #1f2329; width: 160px; text-align: center; }
+.input-box input:focus { outline: none; border-color: #1c7ed6; }
+.input-box button { padding: 10px 24px; font-size: 16px; border: none; border-radius: 6px; background: #2f9e44; color: white; cursor: pointer; transition: background 0.2s; }
+.input-box button:hover { background: #2f9e44; }
+.input-box button:disabled { background: #e3e6ea; cursor: not-allowed; }
+.stock-name { color: #c89b1a; font-size: 15px; margin-left: 10px; font-weight: bold; }
 
 /* 图表区域 */
-.chart-box { background: #161b22; border: 1px solid #30363d; border-radius: 8px; position: relative; margin-bottom: 4px; overflow: hidden; }
+.chart-box { background: #ffffff; border: 1px solid #e3e6ea; border-radius: 8px; position: relative; margin-bottom: 4px; overflow: hidden; }
 .kline-wrap { position: relative; height: 520px; padding: 10px; overflow-x: auto; overflow-y: hidden; }
 .kline-wrap::-webkit-scrollbar { height: 6px; }
-.kline-wrap::-webkit-scrollbar-track { background: #21262d; border-radius: 3px; }
-.kline-wrap::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+.kline-wrap::-webkit-scrollbar-track { background: #f7f9fb; border-radius: 3px; }
+.kline-wrap::-webkit-scrollbar-thumb { background: #e3e6ea; border-radius: 3px; }
 .kline-inner { position: relative; height: 500px; }
 .macd-wrap { position: relative; height: 160px; padding: 10px; }
 canvas { width: 100%; height: 100%; }
 .sidebar { position: absolute; top: 14px; left: 10px; z-index: 10; max-width: 280px; transition: transform 0.3s ease; }
 .sidebar.collapsed { transform: translateX(-290px); }
-.toggle-btn { position: absolute; top: 10px; left: 10px; z-index: 20; background: #238636; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; opacity: 0.3; }
+.toggle-btn { position: absolute; top: 10px; left: 10px; z-index: 20; background: #2f9e44; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; opacity: 0.3; }
 .toggle-btn:hover { opacity: 1; }
 .zs-labels { display: none; }
-.guide { background: rgba(13,17,23,0.95); border: 1.5px solid; border-radius: 10px; padding: 14px 16px; font-size: 12px; line-height: 1.9; }
-.guide.above { border-color: #ef5350; background: rgba(31,16,16,0.95); }
-.guide.below { border-color: #26a69a; background: rgba(15,31,24,0.95); }
-.guide.inside { border-color: #f39c12; background: rgba(31,26,10,0.95); }
+.guide { background: rgba(255,255,255,0.97); border: 1.5px solid; border-radius: 10px; padding: 14px 16px; font-size: 12px; line-height: 1.9; }
+.guide.above { border-color: #d64545; background: rgba(255,248,248,0.97); }
+.guide.below { border-color: #2f9e44; background: rgba(15,31,24,0.95); }
+.guide.inside { border-color: #c89b1a; background: rgba(255,250,240,0.97); }
 .guide h3 { font-size: 13px; margin-bottom: 6px; }
 .guide ul { padding-left: 16px; }
-.guide .warn { color: #f39c12; margin-top: 8px; font-weight: bold; }
-.legend { position: absolute; bottom: 10px; right: 14px; z-index: 10; display: flex; gap: 16px; font-size: 11px; color: #8b949e; }
+.guide .warn { color: #c89b1a; margin-top: 8px; font-weight: bold; }
+.legend { position: absolute; bottom: 10px; right: 14px; z-index: 10; display: flex; gap: 16px; font-size: 11px; color: #5b6470; }
 .legend span::before { content: ''; display: inline-block; width: 12px; height: 12px; border-radius: 2px; margin-right: 5px; vertical-align: middle; }
-.legend .zs::before { background: rgba(243,156,18,0.4); border: 1px solid #f39c12; }
-.legend .top::before { background: #ef5350; }
-.legend .bot::before { background: #26a69a; }
+.legend .zs::before { background: rgba(200,155,26,0.35); border: 1px solid #c89b1a; }
+.legend .top::before { background: #d64545; }
+.legend .bot::before { background: #2f9e44; }
 .draggable { cursor: move; user-select: none; }
-.drag-handle { position: absolute; top: 2px; right: 4px; font-size: 16px; color: #58a6ff; cursor: grab; line-height: 1; opacity: 0.6; transition: opacity 0.2s; }
+.drag-handle { position: absolute; top: 2px; right: 4px; font-size: 16px; color: #1c7ed6; cursor: grab; line-height: 1; opacity: 0.6; transition: opacity 0.2s; }
 .drag-handle:hover { opacity: 1; }
 .drag-handle:active { cursor: grabbing; }
 .sidebar.draggable .drag-handle { top: 4px; right: 6px; font-size: 20px; }
 .macd-legend.draggable .drag-handle { top: 4px; right: 6px; font-size: 18px; }
 .legend.draggable .drag-handle { top: 4px; right: 6px; font-size: 18px; }
-.macd-legend { position: absolute; top: 14px; left: 84px; z-index: 10; background: rgba(13,17,23,0.95); border: 1px solid #30363d; border-radius: 8px; padding: 10px 14px; font-size: 11px; color: #8b949e; line-height: 1.8; }
-.macd-legend .dif { color: #58a6ff; font-weight: bold; }
-.macd-legend .dea { color: #f78166; font-weight: bold; }
-.macd-legend .note { margin-top: 4px; color: #f39c12; }
-.chart-header { padding: 12px 16px; border-bottom: 1px solid #21262d; display: flex; justify-content: space-between; align-items: center; }
-.chart-header h2 { font-size: 15px; color: #e6edf3; }
-.chart-header .zs-info { font-size: 13px; color: #8b949e; }
-.chart-header .zs-info strong { color: #f39c12; }
+.macd-legend { position: absolute; top: 14px; left: 84px; z-index: 10; background: rgba(255,255,255,0.97); border: 1px solid #e3e6ea; border-radius: 8px; padding: 10px 14px; font-size: 11px; color: #5b6470; line-height: 1.8; }
+.macd-legend .dif { color: #1c7ed6; font-weight: bold; }
+.macd-legend .dea { color: #e8863c; font-weight: bold; }
+.macd-legend .note { margin-top: 4px; color: #c89b1a; }
+.chart-header { padding: 12px 16px; border-bottom: 1px solid #f7f9fb; display: flex; justify-content: space-between; align-items: center; }
+.chart-header h2 { font-size: 15px; color: #1f2329; }
+.chart-header .zs-info { font-size: 13px; color: #5b6470; }
+.chart-header .zs-info strong { color: #c89b1a; }
 .chart-header .price-info { font-size: 16px; font-weight: bold; }
-.chart-header .price-info.up { color: #ef5350; }
-.chart-header .price-info.down { color: #26a69a; }
-.chart-header .price-info.mid { color: #f39c12; }
-.summary { margin-top: 20px; background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 20px; }
+.chart-header .price-info.up { color: #d64545; }
+.chart-header .price-info.down { color: #2f9e44; }
+.chart-header .price-info.mid { color: #c89b1a; }
+.summary { margin-top: 20px; background: #ffffff; border: 1px solid #e3e6ea; border-radius: 8px; padding: 20px; }
 .summary h2 { font-size: 16px; margin-bottom: 14px; }
 .summary table { width: 100%; border-collapse: collapse; }
-.summary th, .summary td { padding: 10px 14px; text-align: center; border-bottom: 1px solid #21262d; }
-.summary th { color: #8b949e; font-size: 12px; font-weight: normal; }
+.summary th, .summary td { padding: 10px 14px; text-align: center; border-bottom: 1px solid #f7f9fb; }
+.summary th { color: #5b6470; font-size: 12px; font-weight: normal; }
 .summary td { font-size: 14px; }
-.loading { text-align: center; padding: 80px; color: #8b949e; font-size: 16px; }
-.loading .spinner { display: inline-block; width: 30px; height: 30px; border: 3px solid #30363d; border-top-color: #58a6ff; border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 12px; }
+.loading { text-align: center; padding: 80px; color: #5b6470; font-size: 16px; }
+.loading .spinner { display: inline-block; width: 30px; height: 30px; border: 3px solid #e3e6ea; border-top-color: #1c7ed6; border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 12px; }
 @keyframes spin { to { transform: rotate(360deg); } }
-.error { text-align: center; padding: 60px; color: #ef5350; font-size: 16px; }
+.error { text-align: center; padding: 60px; color: #d64545; font-size: 16px; }
 .hidden { display: none; }
-.nav{display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:9px 0;margin-bottom:10px;border-bottom:1px solid #30363d}
-.nav a{font-size:12.5px;color:#8b949e;text-decoration:none;border:1px solid #30363d;background:#0d1117;padding:4px 11px;border-radius:20px}
-.nav a:hover{color:#e6edf3;border-color:#58a6ff}
-.nav a.on{background:#1f6feb;border-color:#1f6feb;color:#fff}
-.nav .sp{margin-left:auto;color:#f0883e;font-size:11.5px}
+.nav{display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:9px 0;margin-bottom:10px;border-bottom:1px solid #e3e6ea}
+.nav a{font-size:12.5px;color:#5b6470;text-decoration:none;border:1px solid #e3e6ea;background:#f5f6f8;padding:4px 11px;border-radius:20px}
+.nav a:hover{color:#1f2329;border-color:#1c7ed6}
+.nav a.on{background:#1c7ed6;border-color:#1c7ed6;color:#fff}
+.nav .sp{margin-left:auto;color:#e8863c;font-size:11.5px}
 </style>
 </head>
 <body>
@@ -1130,15 +1130,15 @@ function drawKline(canvasId, data, zs, fractals, analysis) {
   const toX = i => pL + i*bw + bw/2;
   const toY = p => pT + (1-(p-pMin)/(pMax-pMin))*ch;
 
-  ctx.strokeStyle='#21262d'; ctx.lineWidth=0.5;
+  ctx.strokeStyle='#f7f9fb'; ctx.lineWidth=0.5;
   for (let i=0;i<=6;i++) {
     const y=pT+(ch/6)*i;
     ctx.beginPath(); ctx.moveTo(pL,y); ctx.lineTo(w-pR,y); ctx.stroke();
-    ctx.fillStyle='#8b949e'; ctx.font='10px Microsoft YaHei'; ctx.textAlign='right';
+    ctx.fillStyle='#5b6470'; ctx.font='10px Microsoft YaHei'; ctx.textAlign='right';
     ctx.fillText((pMax-(pMax-pMin)*(i/6)).toFixed(2), pL-8, y+3);
   }
 
-  ctx.fillStyle='#8b949e'; ctx.font='9px Microsoft YaHei'; ctx.textAlign='center';
+  ctx.fillStyle='#5b6470'; ctx.font='9px Microsoft YaHei'; ctx.textAlign='center';
   const step = Math.max(1,Math.floor(N/6));
   for (let i=0;i<N;i+=step) {
     const dateStr = data[i].date.substring(2);
@@ -1147,18 +1147,18 @@ function drawKline(canvasId, data, zs, fractals, analysis) {
 
   if (zs.pens && zs.pens.length === 3) {
     const y1=toY(zs.top), y2=toY(zs.bot);
-    ctx.fillStyle='rgba(243,156,18,0.15)'; ctx.fillRect(pL, y1, cw, y2-y1);
-    ctx.setLineDash([8,4]); ctx.strokeStyle='#f39c12'; ctx.lineWidth=2;
+    ctx.fillStyle='rgba(200,155,26,0.12)'; ctx.fillRect(pL, y1, cw, y2-y1);
+    ctx.setLineDash([8,4]); ctx.strokeStyle='#c89b1a'; ctx.lineWidth=2;
     ctx.beginPath(); ctx.moveTo(pL,y1); ctx.lineTo(w-pR,y1); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(pL,y2); ctx.lineTo(w-pR,y2); ctx.stroke();
     ctx.setLineDash([]);
-    ctx.font='bold 11px Microsoft YaHei'; ctx.fillStyle='#f39c12'; ctx.textAlign='right';
+    ctx.font='bold 11px Microsoft YaHei'; ctx.fillStyle='#c89b1a'; ctx.textAlign='right';
     ctx.fillText(zs.top.toFixed(2), pL-8, y1+4);
     ctx.fillText(zs.bot.toFixed(2), pL-8, y2+4);
   }
 
   if (zs.pens && zs.pens.length === 3) {
-    const penColors = ['rgba(255,107,107,0.4)', 'rgba(78,205,196,0.4)', 'rgba(255,230,109,0.4)'];
+    const penColors = ['rgba(214,69,69,0.35)', 'rgba(47,158,68,0.35)', 'rgba(200,155,26,0.35)'];
     zs.pens.forEach((pen, idx) => {
       ctx.strokeStyle=penColors[idx]; ctx.lineWidth=4;
       const x1 = toX(pen.startIdx), y1 = toY(pen.startPrice);
@@ -1168,7 +1168,7 @@ function drawKline(canvasId, data, zs, fractals, analysis) {
   }
 
   data.forEach((d,i) => {
-    const x=toX(i), up=d.close>=d.open, col=up?'#ff6b6b':'#4ecdc4';
+    const x=toX(i), up=d.close>=d.open, col=up?'#d64545':'#2f9e44';
     ctx.strokeStyle=col; ctx.lineWidth=1;
     ctx.beginPath(); ctx.moveTo(x,toY(d.high)); ctx.lineTo(x,toY(d.low)); ctx.stroke();
     const bt=toY(Math.max(d.open,d.close)), bb=toY(Math.min(d.open,d.close));
@@ -1176,7 +1176,7 @@ function drawKline(canvasId, data, zs, fractals, analysis) {
   });
 
   const curY=toY(analysis.cp);
-  const cc=analysis.pos==='above'?'#ff6b6b':analysis.pos==='below'?'#4ecdc4':'#f39c12';
+  const cc=analysis.pos==='above'?'#d64545':analysis.pos==='below'?'#2f9e44':'#c89b1a';
   ctx.strokeStyle=cc; ctx.lineWidth=1.5; ctx.setLineDash([5,3]);
   ctx.beginPath(); ctx.moveTo(pL,curY); ctx.lineTo(w-pR,curY); ctx.stroke();
   ctx.setLineDash([]);
@@ -1200,18 +1200,18 @@ function drawMACD(canvasId, data, analysis) {
   const mx=Math.max(...allV)*1.1, mn=Math.min(...allV)*1.1, vr=mx-mn||1;
   const toX=i=>pL+i*bw+bw/2, toY=v=>pT+(1-(v-mn)/vr)*ch;
 
-  ctx.strokeStyle='#30363d'; ctx.lineWidth=0.8;
+  ctx.strokeStyle='#e3e6ea'; ctx.lineWidth=0.8;
   const zy=toY(0);
   ctx.beginPath(); ctx.moveTo(pL,zy); ctx.lineTo(w-pR,zy); ctx.stroke();
 
   macd.forEach((v,i) => {
-    ctx.fillStyle=v>=0?'rgba(255,107,107,0.8)':'rgba(78,205,196,0.8)';
+    ctx.fillStyle=v>=0?'rgba(214,69,69,0.85)':'rgba(47,158,68,0.85)';
     const x=toX(i), barWidth = bw*0.7;
     if (v >= 0) ctx.fillRect(x - barWidth/2, toY(v), barWidth, toY(0) - toY(v));
     else ctx.fillRect(x - barWidth/2, toY(0), barWidth, toY(v) - toY(0));
   });
 
-  [['#58a6ff',dif],['#f78166',dea]].forEach(([col,arr]) => {
+  [['#1c7ed6',dif],['#e8863c',dea]].forEach(([col,arr]) => {
     ctx.strokeStyle=col; ctx.lineWidth=1.5; ctx.beginPath();
     arr.forEach((v,i)=>i===0?ctx.moveTo(toX(i),toY(v)):ctx.lineTo(toX(i),toY(v)));
     ctx.stroke();
@@ -1220,7 +1220,7 @@ function drawMACD(canvasId, data, analysis) {
 
 function getGuideHTML(analysis) {
   const g = analysis;
-  const dragHandle = `<div class="drag-handle" style="position:absolute;top:4px;right:6px;font-size:18px;color:#58a6ff;cursor:grab;line-height:1;opacity:0.6;">≡</div>`;
+  const dragHandle = `<div class="drag-handle" style="position:absolute;top:4px;right:6px;font-size:18px;color:#1c7ed6;cursor:grab;line-height:1;opacity:0.6;">≡</div>`;
   if (g.pos==='above') return `<div class="guide above draggable" style="position:relative;cursor:move;">${dragHandle}<h3>📍 中枢上方 → 上涨趋势</h3><ul><li>持仓者：继续持有，跟趋势走</li><li>等待回踩中枢上轨（ZG）</li><li>回踩守住 → 第三类买点 → 加仓</li><li>回踩跌破 → 减仓观望</li></ul><p class="warn">止损：跌破ZG减仓，跌入中枢清仓</p></div>`;
   if (g.pos==='below') return `<div class="guide below draggable" style="position:relative;cursor:move;">${dragHandle}<h3>📍 中枢下方 → 下跌趋势</h3><ul><li>空仓者：不要抄底，等信号</li><li>观察MACD绿柱是否萎缩</li><li>绿柱萎缩+底分型 → 第一类买点</li><li>回调不破前低 → 第二类买点</li></ul><p class="warn">止损：买入后跌破前低立刻止损</p></div>`;
   return `<div class="guide inside draggable" style="position:relative;cursor:move;">${dragHandle}<h3>📍 中枢内部 → 震荡盘整</h3><ul><li>中枢内不轻易操作</li><li>突破ZG+回踩不破 → 第三类买点</li><li>跌破ZD+反弹不过 → 第三类卖点</li></ul><p class="warn">假突破多，确认后再动，仓位宜轻</p></div>`;
@@ -1325,8 +1325,8 @@ async function init() {
   document.getElementById('summary').innerHTML = `
     <h2>📋 ${currentSymbol} 缠论多级别中枢汇总</h2>
     <table><tr><th>级别</th><th>中枢区间 (ZD ~ ZG)</th><th>当前位置</th><th>当前价</th></tr>${rows}</table>
-    <p style="margin-top:14px;color:#8b949e;font-size:12px">
-      💡 图例说明：<span style="color:#ff6b6b">红线=第1笔</span> | <span style="color:#4ecdc4">青线=第2笔</span> | <span style="color:#ffe66d">黄线=第3笔</span> | <span style="color:#f39c12">黄虚线=中枢区间</span>
+    <p style="margin-top:14px;color:#5b6470;font-size:12px">
+      💡 图例说明：<span style="color:#d64545">红线=第1笔</span> | <span style="color:#2f9e44">青线=第2笔</span> | <span style="color:#c89b1a">黄线=第3笔</span> | <span style="color:#c89b1a">黄虚线=中枢区间</span>
     </p>`;
 
   window.addEventListener('resize', () => {

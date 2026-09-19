@@ -1209,7 +1209,7 @@ if (typeof module !== 'undefined' && module.exports) {
     var ticks = pickTicks(i0, i1, Math.max(3, Math.round(p.innerW / 110)));
     var wide = span() > 240;
     var multiDay = S.bars[i0].date.slice(0, 10) !== S.bars[i1].date.slice(0, 10);
-    var lastLbl = null;
+    var lastLbl = null, lastLblX = -1e9;
     for (var ti = 0; ti < ticks.length; ti++) {
       var tIdx = ticks[ti], tx = xOf(tIdx);
       ctx.strokeStyle = '#eef0f3';
@@ -1222,7 +1222,12 @@ if (typeof module !== 'undefined' && module.exports) {
       } else {
         lbl = wide ? ds.slice(2) : ds.slice(5);
       }
-      if (lbl !== lastLbl) { ctx.fillText(lbl, tx, p.axisY + 6); lastLbl = lbl; }
+      /* 防重叠：与上一个已画标签至少留 40px，且不超出绘图区右缘 */
+      var tooClose = (tx - lastLblX) < 40;
+      var overflow = tx > p.x1 - 14;
+      if (lbl !== lastLbl && !tooClose && !overflow) {
+        ctx.fillText(lbl, tx, p.axisY + 6); lastLbl = lbl; lastLblX = tx;
+      }
     }
 
     /* --- 悬停竖线 --- */

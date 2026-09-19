@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2032%2032%27%3E%3Crect%20width%3D%2732%27%20height%3D%2732%27%20rx%3D%277%27%20fill%3D%27%23ffffff%27%2F%3E%3Crect%20x%3D%278%27%20y%3D%2712%27%20width%3D%2716%27%20height%3D%2711%27%20fill%3D%27rgba%2859%2C91%2C165%2C.10%29%27%20stroke%3D%27%233b5ba5%27%20stroke-width%3D%271.5%27%20stroke-dasharray%3D%273%202%27%2F%3E%3Cpath%20d%3D%27M11%2021%20L16%207%20L21%2015%27%20fill%3D%27none%27%20stroke%3D%27%231c7ed6%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%2F%3E%3Ccircle%20cx%3D%2721%27%20cy%3D%2715%27%20r%3D%272.4%27%20fill%3D%27%23d64545%27%2F%3E%3C%2Fsvg%3E">
 <title>板块轮动选股系统 · 缠论第106课</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
@@ -124,6 +125,17 @@ body{font-family:'Microsoft YaHei',sans-serif;background:#f5f6f8;color:#1f2329;m
 .nav a:hover{color:#1f2329;border-color:#c9d4e0}
 .nav a.on{background:#1c7ed6;border-color:#1c7ed6;color:#fff;font-weight:600}
 .nav .sp{margin-left:auto;color:#8b949e;font-size:11.5px}
+/* ---- 移动端 ---- */
+@media (max-width:720px){
+  .header{padding:16px 16px}
+  .header h1{font-size:19px}
+  .main{padding:14px}
+  .sector-grid{grid-template-columns:1fr;gap:12px}
+  .card-stats{grid-template-columns:1fr 1fr}
+  .hot-tag{padding:5px 12px;font-size:11.5px}
+  .modal-box{width:96%}
+  .nav .sp{display:none}          /* 长说明在窄屏会撑破导航 */
+}
 </style>
 </head>
 <body>

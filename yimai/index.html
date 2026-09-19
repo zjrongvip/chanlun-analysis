@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2032%2032%27%3E%3Crect%20width%3D%2732%27%20height%3D%2732%27%20rx%3D%277%27%20fill%3D%27%23ffffff%27%2F%3E%3Crect%20x%3D%278%27%20y%3D%2712%27%20width%3D%2716%27%20height%3D%2711%27%20fill%3D%27rgba%2859%2C91%2C165%2C.10%29%27%20stroke%3D%27%233b5ba5%27%20stroke-width%3D%271.5%27%20stroke-dasharray%3D%273%202%27%2F%3E%3Cpath%20d%3D%27M11%2021%20L16%207%20L21%2015%27%20fill%3D%27none%27%20stroke%3D%27%231c7ed6%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%2F%3E%3Ccircle%20cx%3D%2721%27%20cy%3D%2715%27%20r%3D%272.4%27%20fill%3D%27%23d64545%27%2F%3E%3C%2Fsvg%3E">
 <title>缠论一买选股 · 单票即时判定</title>
 <style>
   :root{
@@ -74,6 +75,23 @@
   /* ---- 图表 ---- */
   .wrap{display:grid;grid-template-columns:minmax(0,1fr) 302px;gap:12px;align-items:start}
   @media (max-width:1080px){.wrap{grid-template-columns:minmax(0,1fr)}}
+  /* ---- 移动端（七周期按钮固定不收缩，小屏必须压缩内边距，否则横向溢出） ---- */
+  @media (max-width:720px){
+    body{padding:10px 10px 30px}
+    .head h1{font-size:16.5px}
+    .head .sub{font-size:11.5px}
+    .ctrl{padding:9px 10px;gap:7px}
+    input[type=text]{width:128px}
+    input[type=date]{width:136px}
+    .pbtn{padding:0 5px;font-size:12px}
+    .btn{padding:0 10px;font-size:13px}
+    .quick{margin-left:0;width:100%}
+    .nav .sp{display:none}          /* 长说明在窄屏会撑破导航 */
+    #verdict{padding:12px 12px}
+    .kv{grid-template-columns:1fr}
+    .pano{grid-template-columns:1fr}
+    canvas{height:300px}
+  }
   #chartCard{padding:10px 10px 6px;position:relative}
   .layers{display:flex;gap:14px;align-items:center;flex-wrap:wrap;padding:2px 4px 8px;border-bottom:1px solid var(--line2);margin-bottom:8px}
   .layers label{font-size:12.5px;color:var(--tx2);cursor:pointer;user-select:none;display:flex;align-items:center;gap:5px}
@@ -1107,11 +1125,11 @@ if (typeof module !== 'undefined' && module.exports) {
       } else {
         lbl = wide ? ds.slice(2) : ds.slice(5);
       }
-      /* 防重叠：与上一个已画标签至少留 40px，且不超出绘图区右缘 */
-      var tooClose = (tx - lastLblX) < 40;
-      var overflow = tx > p.x1 - 14;
-      if (lbl !== lastLbl && !tooClose && !overflow) {
-        ctx.fillText(lbl, tx, p.axisY + 6); lastLbl = lbl; lastLblX = tx;
+      /* 防重叠：按文字实测宽度避让（窄屏下 40px 固定间距不足，会叠印） */
+      var lw = ctx.measureText(lbl).width;
+      var lx = Math.max(p.x0 + lw / 2, Math.min(tx, p.x1 - lw / 2));
+      if (lbl !== lastLbl && (lx - lw / 2) > lastLblX + 6) {
+        ctx.fillText(lbl, lx, p.axisY + 6); lastLbl = lbl; lastLblX = lx + lw / 2;
       }
     }
 

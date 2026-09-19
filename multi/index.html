@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2032%2032%27%3E%3Crect%20width%3D%2732%27%20height%3D%2732%27%20rx%3D%277%27%20fill%3D%27%23ffffff%27%2F%3E%3Crect%20x%3D%278%27%20y%3D%2712%27%20width%3D%2716%27%20height%3D%2711%27%20fill%3D%27rgba%2859%2C91%2C165%2C.10%29%27%20stroke%3D%27%233b5ba5%27%20stroke-width%3D%271.5%27%20stroke-dasharray%3D%273%202%27%2F%3E%3Cpath%20d%3D%27M11%2021%20L16%207%20L21%2015%27%20fill%3D%27none%27%20stroke%3D%27%231c7ed6%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%2F%3E%3Ccircle%20cx%3D%2721%27%20cy%3D%2715%27%20r%3D%272.4%27%20fill%3D%27%23d64545%27%2F%3E%3C%2Fsvg%3E">
 <title>缠论多级别中枢分析 · 日/周/月同屏</title>
 <style>
   :root{
@@ -99,6 +100,20 @@
   .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--tx2);margin-top:8px;align-items:center}
   .legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:4px;vertical-align:-1px}
   .foot{color:var(--tx3);font-size:12px;line-height:1.75;margin-top:16px}
+  /* ---- 移动端 ---- */
+  @media (max-width:720px){
+    body{padding:10px 10px 30px}
+    .head h1{font-size:16.5px}
+    .ctrl{padding:9px 10px;gap:7px}
+    input[type=text]{width:132px}
+    input[type=date]{width:138px}
+    .quick{margin-left:0;width:100%}
+    canvas{height:250px}
+    .lconcl{grid-template-columns:repeat(auto-fill,minmax(148px,1fr))}
+    .zslist{grid-template-columns:1fr;max-width:none}
+    .legend{gap:10px}
+    .nav .sp{display:none}          /* 长说明在窄屏会撑破导航 */
+  }
 </style>
 </head>
 <body>
@@ -749,20 +764,25 @@ if (typeof module !== 'undefined' && module.exports) {
     if (pts && pts.length) for (var m = 0; m < pts.length; m++) marker(pts[m].x, pts[m].y, pts[m].kind);
     if (ext && ext.marks && ext.marks.length) for (var m2 = 0; m2 < ext.marks.length; m2++) marker(ext.marks[m2].x, ext.marks[m2].y, ext.marks[m2].kind);
 
-    /* 时间轴 */
-    ctx.fillStyle = '#98a2ad'; ctx.font = '11px -apple-system,"Microsoft YaHei",sans-serif';
-    ctx.textBaseline = 'top'; ctx.textAlign = 'center';
-    var ticks = 6, lastRight = -1e9;
+    /* 时间轴（按画布宽度定刻度数 + 按实际文字宽度避让，小屏不重叠） */
+    ctx.font = '11px -apple-system,"Microsoft YaHei",sans-serif';
+    ctx.textBaseline = 'top'; ctx.textAlign = 'left';
+    var chW = x1 - x0;
+    var ticks = Math.max(3, Math.min(6, Math.round(chW / 115)));
+    var lastRight = -1e9;
     for (var t = 0; t <= ticks; t++) {
       var ti = Math.round((n - 1) * t / ticks), tx = xOf(ti);
       var lbl = bars[ti].date.slice(2, 10);
       ctx.fillStyle = '#eef0f3';
       ctx.fillRect(Math.round(tx) + 0.5, y0, 1, y1 - y0);
+      var lw = ctx.measureText(lbl).width;
+      var lx = tx - lw / 2;
+      if (lx < x0) lx = x0;
+      if (lx + lw > x1) lx = x1 - lw;
+      if (lx < lastRight + 8) continue;     /* 与前一个标签挤在一起 → 跳过 */
       ctx.fillStyle = '#98a2ad';
-      if (t === 0) ctx.textAlign = 'left';
-      else if (t === ticks) ctx.textAlign = 'right';
-      else ctx.textAlign = 'center';
-      if (tx - lastRight > 34) { ctx.fillText(lbl, tx, y1 + 5); lastRight = tx; }
+      ctx.fillText(lbl, lx, y1 + 5);
+      lastRight = lx + lw;
     }
 
     return { x0: x0, x1: x1, y0: y0, y1: y1, xOf: xOf, yOf: yOf, lo: lo, hi: hi, n: n };

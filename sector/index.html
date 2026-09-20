@@ -158,7 +158,7 @@ body{font-family:'Microsoft YaHei',sans-serif;background:#f5f6f8;color:#1f2329;m
     <div class="header-sub">基于缠论第106课 · 均线分类论 · 轮动论 · 板块强弱指标 · 双轨制分析</div>
   </div>
   <div class="update-badge">
-    📅 最新更新：2026-03-23<br>
+    📅 最新更新：2026-09-18<br>
     📊 数据源：腾讯行情（前复权）<br>
     🔄 周度更新 · 每周一/五 16:00
   </div>
@@ -168,14 +168,13 @@ body{font-family:'Microsoft YaHei',sans-serif;background:#f5f6f8;color:#1f2329;m
 
   <!-- 近期热点 -->
   <div class="section">
-    <div class="section-title">🔥 近期市场热点（2026-03月）</div>
+    <div class="section-title">🔥 近期市场热点（2026-09月）</div>
     <div class="hotbar">
-      <div class="hot-tag up">🔥 AI算力产业链爆发</div>
-      <div class="hot-tag up">🔥 半导体国产替代加速</div>
-      <div class="hot-tag up">🔥 新型储能写入政府工作报告</div>
-      <div class="hot-tag up">🔥 商业航天 & 低空经济</div>
-      <div class="hot-tag up">🔥 有色金属 全球复苏受益</div>
-      <div class="hot-tag up">🔥 创新药 医改利好</div>
+      <div class="hot-tag up">🔥 金融服务 ↘6.4</div>
+      <div class="hot-tag up">🔥 AI算力产业链 ↗6.2</div>
+      <div class="hot-tag up">🔥 半导体芯片 ↗5.9</div>
+      <div class="hot-tag down">❄ 新能源汽车 ↓1.8</div>
+      <div class="hot-tag down">❄ 光伏新能源 ↓1.7</div>
     </div>
   </div>
 
@@ -268,172 +267,172 @@ const LEVEL_INFO = [
 // 10大板块数据
 const SECTORS = [
   {
-    name:'AI算力产业链',code:'AI',strength:6.8,prevStrength:6.3,trend:'up',desc:'GPU芯片·数据中心·光通信',
+    name:'金融服务',code:'FIN',strength:6.4,prevStrength:7.8,trend:'down',desc:'银行·证券·保险',
     level:'strong',rec:'强烈推荐',
     stocks:[
-      {name:'中芯国际',code:'688981',level:8},
-      {name:'澜起科技',code:'688008',level:8},
-      {name:'光迅科技',code:'002281',level:7},
-      {name:'紫光国芯',code:'002049',level:7},
-      {name:'中际旭创',code:'300308',level:9},
-      {name:'新易盛',code:'300502',level:8},
-      {name:'天孚通信',code:'300394',level:8},
-      {name:'寒武纪',code:'688256',level:7},
-      {name:'海光信息',code:'688041',level:7},
-      {name:'龙芯中科',code:'688047',level:6},
+      {name:'招商银行',code:'600036',level:9},
+      {name:'中信证券',code:'600030',level:2},
+      {name:'中国平安',code:'601318',level:7},
+      {name:'工商银行',code:'601398',level:9},
+      {name:'建设银行',code:'601939',level:9},
+      {name:'宁波银行',code:'002142',level:9},
+      {name:'东方财富',code:'300059',level:2},
+      {name:'中国人寿',code:'601628',level:8},
+      {name:'浦发银行',code:'600000',level:7},
+      {name:'兴业银行',code:'601166',level:1},
     ]
   },
   {
-    name:'半导体芯片',code:'SEMI',strength:6.4,prevStrength:6.1,trend:'up',desc:'集成电路·芯片设计·制造',
-    level:'strong',rec:'强烈推荐',
-    stocks:[
-      {name:'北方华创',code:'002371',level:9},
-      {name:'中微公司',code:'688012',level:8},
-      {name:'卓胜微',code:'300782',level:7},
-      {name:'圣邦股份',code:'300661',level:7},
-      {name:'芯原股份',code:'688521',level:6},
-      {name:'汇顶科技',code:'603160',level:6},
-      {name:'富瀚微',code:'300613',level:5},
-      {name:'恒玄科技',code:'688608',level:5},
-      {name:'思瑞浦',code:'688536',level:4},
-      {name:'晶晨股份',code:'688099',level:4},
-    ]
-  },
-  {
-    name:'新型储能',code:'NRG',strength:5.9,prevStrength:5.7,trend:'up',desc:'储能电池·储能系统·能源管理',
+    name:'AI算力产业链',code:'AI',strength:6.2,prevStrength:6.0,trend:'up',desc:'GPU芯片·数据中心·光通信',
     level:'strong',rec:'推荐',
     stocks:[
-      {name:'宁德时代',code:'300750',level:9},
-      {name:'阳光电源',code:'300274',level:8},
-      {name:'比亚迪',code:'002594',level:8},
-      {name:'科陆电子',code:'002121',level:7},
-      {name:'南都电源',code:'300068',level:6},
-      {name:'亿纬锂能',code:'300014',level:6},
-      {name:'派能科技',code:'688063',level:6},
-      {name:'固德威',code:'688390',level:5},
-      {name:'鹏辉能源',code:'300438',level:4},
-      {name:'昆宇电源',code:'688120',level:3},
+      {name:'中芯国际',code:'688981',level:4},
+      {name:'澜起科技',code:'688008',level:9},
+      {name:'光迅科技',code:'002281',level:9},
+      {name:'紫光国芯',code:'002049',level:3},
+      {name:'中际旭创',code:'300308',level:9},
+      {name:'新易盛',code:'300502',level:9},
+      {name:'天孚通信',code:'300394',level:9},
+      {name:'寒武纪',code:'688256',level:9},
+      {name:'海光信息',code:'688041',level:4},
+      {name:'龙芯中科',code:'688047',level:4},
     ]
   },
   {
-    name:'光伏新能源',code:'PV',strength:5.6,prevStrength:5.8,trend:'flat',desc:'光伏电池·逆变器·装机',
-    level:'neutral',rec:'观察',
+    name:'半导体芯片',code:'SEMI',strength:5.9,prevStrength:5.5,trend:'up',desc:'集成电路·芯片设计·制造',
+    level:'strong',rec:'推荐',
     stocks:[
-      {name:'隆基绿能',code:'601012',level:7},
-      {name:'通威股份',code:'600438',level:7},
-      {name:'晶澳科技',code:'002459',level:6},
-      {name:'天合光能',code:'688599',level:6},
-      {name:'爱旭股份',code:'600732',level:5},
-      {name:'福莱特',code:'601865',level:5},
-      {name:'中环股份',code:'002129',level:4},
-      {name:'钧达股份',code:'002865',level:4},
-      {name:'迈为股份',code:'300751',level:3},
-      {name:'捷佳伟创',code:'300724',level:3},
+      {name:'北方华创',code:'002371',level:9},
+      {name:'中微公司',code:'688012',level:9},
+      {name:'卓胜微',code:'300782',level:3},
+      {name:'圣邦股份',code:'300661',level:9},
+      {name:'芯原股份',code:'688521',level:5},
+      {name:'汇顶科技',code:'603160',level:6},
+      {name:'富瀚微',code:'300613',level:9},
+      {name:'恒玄科技',code:'688608',level:4},
+      {name:'思瑞浦',code:'688536',level:9},
+      {name:'晶晨股份',code:'688099',level:3},
     ]
   },
   {
-    name:'新能源汽车',code:'NEV',strength:5.2,prevStrength:5.5,trend:'down',desc:'电池·整车·充电桩',
+    name:'有色金属',code:'NM',strength:4.3,prevStrength:5.6,trend:'down',desc:'铜·铝·锌·稀土',
     level:'neutral',rec:'观察',
     stocks:[
-      {name:'比亚迪',code:'002594',level:8},
-      {name:'宁德时代',code:'300750',level:9},
-      {name:'中国汽研',code:'601965',level:6},
-      {name:'拓普集团',code:'601689',level:6},
+      {name:'紫金矿业',code:'601899',level:7},
+      {name:'洛阳钼业',code:'603993',level:1},
+      {name:'铜陵有色',code:'000630',level:2},
+      {name:'中国铝业',code:'601600',level:6},
+      {name:'驰宏锌锗',code:'600497',level:9},
+      {name:'盛和资源',code:'600392',level:2},
+      {name:'北方稀土',code:'600111',level:1},
+      {name:'五矿稀土',code:'000831',level:9},
+      {name:'厦门钨业',code:'600549',level:3},
+      {name:'中国稀土',code:'000831',level:9},
+    ]
+  },
+  {
+    name:'医药生物',code:'MED',strength:3.9,prevStrength:4.2,trend:'down',desc:'创新药·生物科技·医疗器械',
+    level:'weak',rec:'规避',
+    stocks:[
+      {name:'恒瑞医药',code:'600276',level:2},
+      {name:'药明康德',code:'603259',level:9},
+      {name:'迈瑞医疗',code:'300760',level:8},
+      {name:'智飞生物',code:'300122',level:2},
+      {name:'长春高新',code:'000661',level:1},
+      {name:'康泰生物',code:'300601',level:2},
+      {name:'复星医药',code:'600196',level:2},
+      {name:'华东医药',code:'000963',level:2},
+      {name:'华海药业',code:'600521',level:8},
+      {name:'科伦药业',code:'002422',level:9},
+    ]
+  },
+  {
+    name:'消费电子',code:'CE',strength:3.3,prevStrength:3.6,trend:'down',desc:'手机·平板·可穿戴',
+    level:'weak',rec:'规避',
+    stocks:[
+      {name:'立讯精密',code:'002475',level:2},
+      {name:'歌尔股份',code:'002241',level:6},
+      {name:'蓝思科技',code:'300433',level:2},
+      {name:'欣旺达',code:'300207',level:7},
+      {name:'长盈精密',code:'300115',level:4},
+      {name:'领益智造',code:'002600',level:4},
+      {name:'东山精密',code:'002384',level:9},
+      {name:'深天马A',code:'000050',level:5},
+      {name:'信维通信',code:'300136',level:4},
+      {name:'硕贝德',code:'300322',level:6},
+    ]
+  },
+  {
+    name:'新型储能',code:'NRG',strength:2.8,prevStrength:2.6,trend:'up',desc:'储能电池·储能系统·能源管理',
+    level:'weak',rec:'规避',
+    stocks:[
+      {name:'宁德时代',code:'300750',level:1},
+      {name:'阳光电源',code:'300274',level:3},
+      {name:'比亚迪',code:'002594',level:1},
+      {name:'科陆电子',code:'002121',level:1},
+      {name:'南都电源',code:'300068',level:7},
+      {name:'亿纬锂能',code:'300014',level:4},
+      {name:'派能科技',code:'688063',level:3},
+      {name:'固德威',code:'688390',level:3},
+      {name:'鹏辉能源',code:'300438',level:2},
+      {name:'昆宇电源',code:'688120',level:9},
+    ]
+  },
+  {
+    name:'房地产开发',code:'RE',strength:2.2,prevStrength:4.2,trend:'down',desc:'开发·建筑·建材',
+    level:'weak',rec:'规避',
+    stocks:[
+      {name:'保利发展',code:'600048',level:7},
+      {name:'万科A',code:'000002',level:7},
+      {name:'招商蛇口',code:'001979',level:6},
+      {name:'中国建筑',code:'601668',level:1},
+      {name:'海螺水泥',code:'600585',level:1},
+      {name:'华侨城A',code:'000069',level:7},
+      {name:'北新建材',code:'000786',level:2},
+      {name:'金地集团',code:'600383',level:6},
+      {name:'滨江集团',code:'002244',level:2},
+      {name:'新城控股',code:'601155',level:7},
+    ]
+  },
+  {
+    name:'新能源汽车',code:'NEV',strength:1.8,prevStrength:2.4,trend:'down',desc:'电池·整车·充电桩',
+    level:'weak',rec:'规避',
+    stocks:[
+      {name:'比亚迪',code:'002594',level:1},
+      {name:'宁德时代',code:'300750',level:1},
+      {name:'中国汽研',code:'601965',level:1},
+      {name:'拓普集团',code:'601689',level:3},
       {name:'均胜电子',code:'600699',level:5},
-      {name:'星宇股份',code:'601799',level:5},
-      {name:'文灿股份',code:'603348',level:4},
-      {name:'博俊科技',code:'301459',level:3},
-      {name:'旭升集团',code:'603305',level:3},
+      {name:'星宇股份',code:'601799',level:2},
+      {name:'文灿股份',code:'603348',level:1},
+      {name:'博俊科技',code:'301459',level:4},
+      {name:'旭升集团',code:'603305',level:4},
       {name:'科博达',code:'603786',level:2},
     ]
   },
   {
-    name:'有色金属',code:'NM',strength:4.8,prevStrength:4.6,trend:'up',desc:'铜·铝·锌·稀土',
-    level:'neutral',rec:'可选',
-    stocks:[
-      {name:'紫金矿业',code:'601899',level:7},
-      {name:'洛阳钼业',code:'603993',level:6},
-      {name:'铜陵有色',code:'000630',level:6},
-      {name:'中国铝业',code:'601600',level:5},
-      {name:'驰宏锌锗',code:'600497',level:5},
-      {name:'盛和资源',code:'600392',level:5},
-      {name:'北方稀土',code:'600111',level:4},
-      {name:'五矿稀土',code:'000831',level:4},
-      {name:'厦门钨业',code:'600549',level:3},
-      {name:'中国稀土',code:'000831',level:3},
-    ]
-  },
-  {
-    name:'消费电子',code:'CE',strength:4.2,prevStrength:4.3,trend:'flat',desc:'手机·平板·可穿戴',
-    level:'neutral',rec:'观察',
-    stocks:[
-      {name:'立讯精密',code:'002475',level:6},
-      {name:'歌尔股份',code:'002241',level:5},
-      {name:'蓝思科技',code:'300433',level:5},
-      {name:'欣旺达',code:'300207',level:4},
-      {name:'长盈精密',code:'300115',level:4},
-      {name:'领益智造',code:'002600',level:4},
-      {name:'东山精密',code:'002384',level:3},
-      {name:'深天马A',code:'000050',level:3},
-      {name:'信维通信',code:'300136',level:2},
-      {name:'硕贝德',code:'300322',level:2},
-    ]
-  },
-  {
-    name:'医药生物',code:'MED',strength:3.8,prevStrength:3.6,trend:'up',desc:'创新药·生物科技·医疗器械',
-    level:'weak',rec:'可选',
-    stocks:[
-      {name:'恒瑞医药',code:'600276',level:5},
-      {name:'药明康德',code:'603259',level:5},
-      {name:'迈瑞医疗',code:'300760',level:5},
-      {name:'智飞生物',code:'300122',level:4},
-      {name:'长春高新',code:'000661',level:4},
-      {name:'康泰生物',code:'300601',level:3},
-      {name:'复星医药',code:'600196',level:3},
-      {name:'华东医药',code:'000963',level:3},
-      {name:'华海药业',code:'600521',level:2},
-      {name:'科伦药业',code:'002422',level:2},
-    ]
-  },
-  {
-    name:'金融服务',code:'FIN',strength:3.5,prevStrength:3.7,trend:'down',desc:'银行·证券·保险',
+    name:'光伏新能源',code:'PV',strength:1.7,prevStrength:2.0,trend:'down',desc:'光伏电池·逆变器·装机',
     level:'weak',rec:'规避',
     stocks:[
-      {name:'招商银行',code:'600036',level:5},
-      {name:'中信证券',code:'600030',level:4},
-      {name:'中国平安',code:'601318',level:4},
-      {name:'工商银行',code:'601398',level:3},
-      {name:'建设银行',code:'601939',level:3},
-      {name:'宁波银行',code:'002142',level:3},
-      {name:'东方财富',code:'300059',level:3},
-      {name:'中国人寿',code:'601628',level:2},
-      {name:'浦发银行',code:'600000',level:2},
-      {name:'兴业银行',code:'601166',level:2},
-    ]
-  },
-  {
-    name:'房地产开发',code:'RE',strength:2.9,prevStrength:3.1,trend:'down',desc:'开发·建筑·建材',
-    level:'weak',rec:'规避',
-    stocks:[
-      {name:'保利发展',code:'600048',level:4},
-      {name:'万科A',code:'000002',level:3},
-      {name:'招商蛇口',code:'001979',level:3},
-      {name:'中国建筑',code:'601668',level:3},
-      {name:'海螺水泥',code:'600585',level:2},
-      {name:'华侨城A',code:'000069',level:2},
-      {name:'北新建材',code:'000786',level:2},
-      {name:'金地集团',code:'600383',level:2},
-      {name:'滨江集团',code:'002244',level:1},
-      {name:'新城控股',code:'601155',level:1},
+      {name:'隆基绿能',code:'601012',level:2},
+      {name:'通威股份',code:'600438',level:2},
+      {name:'晶澳科技',code:'002459',level:3},
+      {name:'天合光能',code:'688599',level:3},
+      {name:'爱旭股份',code:'600732',level:3},
+      {name:'福莱特',code:'601865',level:2},
+      {name:'中环股份',code:'002129',level:2},
+      {name:'钧达股份',code:'002865',level:3},
+      {name:'迈为股份',code:'300751',level:6},
+      {name:'捷佳伟创',code:'300724',level:3},
     ]
   },
 ];
 
 const TIMELINE = [
-  {date:'2026-03-10',title:'科技成长走强',desc:'AI算力、半导体板块开始脱离低位，强弱指标同步上移，资金流入科技成长方向。'},
-  {date:'2026-03-16',title:'AI产业链突破，半导体跟进',desc:'AI算力强弱指标突破6.5，数据中心和光通信概念股明显上涨。半导体同步跟进突破，国产替代主题强化。'},
-  {date:'2026-03-19',title:'新能源分化，光伏走弱，储能走强',desc:'光伏板块指标从5.8回落至5.6，储能指标继续上升。新能源内部出现明显分化，资金向储能迁移。'},
-  {date:'2026-03-23',title:'🔴 当前：三大主线共振，轮动加速',desc:'AI算力(6.8)+半导体(6.4)+新型储能(5.9)三大板块同时上行。建议优先配置前两个板块，警惕指标开始回落时的轮动信号。'},
+  {date:'2026-08-28',title:'领跑：金融服务(7.6) · 有色金属(7.4) · AI算力产业链(6.2)',desc:'周度强弱指标排序，前三为 金融服务；其后 医药生物(5.9)；半导体芯片(5.4)。'},
+  {date:'2026-09-04',title:'领跑：金融服务(7.8) · AI算力产业链(6.4) · 有色金属(6.4)',desc:'周度强弱指标排序，前三为 金融服务；其后 半导体芯片(6.1)；医药生物(5.2)。'},
+  {date:'2026-09-11',title:'领跑：金融服务(7.8) · AI算力产业链(6.0) · 有色金属(5.6)',desc:'周度强弱指标排序，前三为 金融服务；其后 半导体芯片(5.5)；医药生物(4.2)。'},
+  {date:'2026-09-18',title:'领跑：金融服务(6.4) · AI算力产业链(6.2) · 半导体芯片(5.9)',desc:'周度强弱指标排序，前三为 金融服务；其后 有色金属(4.3)；医药生物(3.9)。'},
 ];
 
 // ─────────────── 渲染函数 ───────────────

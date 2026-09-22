@@ -18,10 +18,10 @@
   body{
     background:var(--bg); color:var(--tx);
     font:14px/1.5 -apple-system,"Segoe UI","Microsoft YaHei",system-ui,sans-serif;
-    padding:14px 16px 40px;
+    padding:8px 12px 28px;
   }
-  .nav{display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:7px 10px;margin-bottom:10px}
-  .nav a{font-size:12.5px;color:var(--tx2);text-decoration:none;border:1px solid var(--line2);background:#fafbfc;padding:4px 11px;border-radius:20px}
+  .nav{display:flex;gap:5px;align-items:center;flex-wrap:wrap;padding:3px 8px;margin-bottom:6px}
+  .nav a{font-size:12px;color:var(--tx2);text-decoration:none;border:1px solid var(--line2);background:#fafbfc;padding:2px 9px;border-radius:14px}
   .nav a:hover{border-color:#c9d4e0;color:var(--tx)}
   .nav a.on{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:600}
   .nav .sp{margin-left:auto;color:var(--tx3);font-size:11.5px}
@@ -278,8 +278,61 @@ function buildZhongshu3Bi(bis) {
   return zs;
 }
 
+/* ---------- 14 号前置：背驰闸门（v4.8「彻底按级别」· 2026-09-22）----------
+   一买 = 下跌趋势的终点。本级别要出「一买」，本级别的下跌必须「力度衰竭」（背驰）。
+   力度口径 = 该笔区间内 MACD 同向柱**面积**（与页面既有「背驰量化」segPower 同源，
+   也是缠论原著口径），不设固定阈值 —— 只看是否比前一个同向笔衰减。
+
+   ⚠️ 为什么不用「面积 ÷ K 线数（单位力度）」做主判据：实测周线 7-24 那周，
+     笔32 面积 110.1 / 3 周 = 36.7，笔34 面积 346.5 / 10 周 = 34.7 —— 比值 0.94，
+     换个计数方式（含首尾 4 根 / 11 根）就变成 27.53 → 31.50 = 1.14，结论直接翻转。
+     面积比则被 3.15 倍稳稳压住，不随计数口径漂移。**判据必须选不漂移的那个。**
+
+   实测上证指数（2026-09-22，日/周同源腾讯前复权）：
+     日线 7-20 低点 3741.11（笔47）：本笔 288.5，前一跌笔 360.4 → 面积比 0.80
+       → 力度衰减 = 背驰成立 → 一买保留；
+     周线 7-24 低点 3741.11（笔34）：本笔 346.5，前一跌笔 110.1 → 面积比 3.15
+       → 力度更强、下跌仍在加速 → 7-24 不构成周线一买。
+   同一价位、同一日期，日线是一买、周线不是 —— 这就是「级别」：
+   本级别的力度只与本级别的笔比，绝不拿日线的衰减去套周线。
+
+   ⚠️ 未采用「最后两个中枢不重叠（趋势）」做硬闸门：实测日线 7-20 当时最后两个中枢
+      （中枢13 4061.82~4114.84 / 中枢14 4061.82~4175.35）同样重叠，加进去会把正确的一买一起误杀。
+      该条件记为观察项，见 算法议题.md A-01。
+   注：hist 缺失时本闸门跳过（保持旧行为），不静默判死。 */
+function downForce(b, hist) {
+  if (!hist || !b) return null;
+  let area = 0, n = 0;
+  for (let i = b.raw0; i <= b.raw1 && i < hist.length; i++) {
+    const v = hist[i] || 0;
+    if (v < 0) area += -v;
+    n++;
+  }
+  if (!n) return null;
+  return { area: area, n: n, unit: area / n };
+}
+
+function prevDownIdx(bis, i) {
+  for (let j = i - 1; j >= 0; j--) if (bis[j].dir === -1) return j;
+  return -1;
+}
+
+/* 通过（背驰成立 / 无法判定）→ null；不通过（力度未衰竭）→ {cur, prev, p}
+   判据：**面积**（MACD 同向柱面积）本笔 < 前一跌笔 → 衰竭 → 背驰成立。 */
+function l1DivGate(bis, i, hist) {
+  if (!bis || i == null || i < 0 || i >= bis.length || bis[i].dir !== -1) return null;
+  const cur = downForce(bis[i], hist);
+  const p = prevDownIdx(bis, i);
+  if (!cur || p < 0) return null;
+  const prev = downForce(bis[p], hist);
+  if (!prev || !prev.area) return null;
+  if (cur.area < prev.area) return null;          /* 面积衰减 → 背驰成立 */
+  return { cur: cur, prev: prev, p: p };
+}
+
 /* ---------- 14 号：课17 一段走势只出一套一卖/二卖/一买 ---------- */
-function findZoushiPoints(bis, zs, x0, x1) {
+function findZoushiPoints(bis, zs, x0, x1, hist) {
+  /* 一卖：窗口内最高的向上笔 */
   let sell1 = null, sell1_i = null;
   for (let i = 0; i < bis.length; i++) {
     const b = bis[i];
@@ -292,25 +345,49 @@ function findZoushiPoints(bis, zs, x0, x1) {
   const zd1 = prevZ ? prevZ.zd : sell1.low;
   const zg1 = prevZ ? prevZ.zg : sell1.high;
   const pts = [{ kind: '一卖', x: sell1.raw1, y: sell1.high, zd: zd1, zg: zg1 }];
+
+  /* 一买候选：跌破最后中枢 ZD 且创新低的向下笔（真伪由 15 号闸门 / ext 状态机裁定），
+     v4.8 起还要过「本级别背驰闸门」——见下方 l1DivGate */
+  let lastZ = null;
+  for (let i = 0; i < zs.length; i++) if (zs[i].raw0 <= x1 && zs[i].raw1 >= x0) lastZ = zs[i];
+  let leave = null, leave_i = -1;
+  if (lastZ !== null) {
+    let firstDown = null;
+    for (let j = lastZ.s0 - 1; j >= 0; j--) if (bis[j].dir === -1) { firstDown = bis[j]; break; }
+    for (let k = lastZ.s1; k < bis.length; k++) {
+      const b = bis[k];
+      if (b.raw1 < x0 || b.raw1 > x1) continue;
+      if (b.dir !== -1 || b.low >= lastZ.zd) continue;
+      if (firstDown !== null && b.low >= firstDown.low) continue;
+      if (leave === null || b.low < leave.low) { leave = b; leave_i = k; }
+    }
+  }
+  /* v4.8 背驰闸门：本级别力度未衰竭 → 这个新低只是加速下跌途中的普通低点，不画一买。
+     被拦下的候选挂到返回数组的 l1Blocked 上，供结论卡说明「为什么这里没有一买」。 */
+  if (leave !== null) {
+    const blk = l1DivGate(bis, leave_i, hist);
+    if (blk) {
+      pts.l1Blocked = { x: leave.raw1, y: leave.low, cur: blk.cur, prev: blk.prev };
+      leave = null; leave_i = -1;
+    }
+  }
+
+  /* 二卖：一卖后第一根不破一卖高点的反弹笔（课17「次级别回抽不创新高」），
+     并补两道原实现漏掉的约束（v4.7 修正）：
+        ① 窗口约束 —— 一卖/一买都查 x0<=raw1<=x1，唯独二卖漏了，会取到窗口外的点；
+        ② 时序不变量 —— 二卖必须早于一买。笔疏的级别上，「一卖后第 2 笔」可能已经落到
+           一买之后的反弹里（实测周线：一卖 5-15 → 一买 7-24，中间 6-26 反弹不构成独立笔，
+           第 2 笔直接落到 9-04 被误标「二卖」，出现「一买早于二卖」的时序倒置）。
+     口径仍是「第一根不创新高的反弹」，只是不再容许它越界或越时序。 */
   if (sell1_i + 2 < bis.length) {
     const down = bis[sell1_i + 1], up = bis[sell1_i + 2];
-    if (down.dir === -1 && up.dir === 1 && up.high <= sell1.high) {
+    if (down.dir === -1 && up.dir === 1 && up.high <= sell1.high
+        && x0 <= up.raw1 && up.raw1 <= x1                  // 补：窗口约束
+        && (leave_i < 0 || sell1_i + 2 < leave_i)) {        // 补：时序不变量（二卖必须早于一买）
       pts.push({ kind: '二卖', x: up.raw1, y: up.high, zd: zd1, zg: zg1 });
     }
   }
-  let lastZ = null;
-  for (let i = 0; i < zs.length; i++) if (zs[i].raw0 <= x1 && zs[i].raw1 >= x0) lastZ = zs[i];
-  if (lastZ === null) return pts;
-  let firstDown = null;
-  for (let j = lastZ.s0 - 1; j >= 0; j--) if (bis[j].dir === -1) { firstDown = bis[j]; break; }
-  let leave = null;
-  for (let k = lastZ.s1; k < bis.length; k++) {
-    const b = bis[k];
-    if (b.raw1 < x0 || b.raw1 > x1) continue;
-    if (b.dir !== -1 || b.low >= lastZ.zd) continue;
-    if (firstDown !== null && b.low >= firstDown.low) continue;
-    if (leave === null || b.low < leave.low) leave = b;
-  }
+
   if (leave !== null) pts.push({ kind: '一买', x: leave.raw1, y: leave.low, zd: lastZ.zd, zg: lastZ.zg });
   return pts;
 }
@@ -368,6 +445,7 @@ function evaluate(bars, opts) {
   catch (e) { return { hit: null, reason: '结构构建失败：' + e.message, st: null }; }
 
   const bis = st.bis, zs = st.zs, times = st.times, close = st.close;
+  const hist = (close && close.length) ? macdSeries(close).hist : null;
   const lastDay = times[times.length - 1];
 
   if (!zs.length) return { hit: null, reason: '没有中枢，不构成「下跌 + 盘整 + 下跌」', st };
@@ -390,6 +468,17 @@ function evaluate(bars, opts) {
   if (!first_down) return { hit: null, reason: '中枢之前没有下跌笔', st };
   if (last.low >= first_down.low) {
     return { hit: null, reason: '一买低点 ' + fmt(last.low) + ' 未低于中枢前那一下跌 ' + fmt(first_down.low), st };
+  }
+  /* 闸门（v4.8 彻底按级别）：本级别下跌必须力度衰竭（背驰），口径见 l1DivGate 注释。
+     实测：日线 7-20 单位力度 14.43 < 前一跌笔 20.02 → 放行；
+           周线 7-24 单位力度 31.50 ≥ 前一跌笔 27.53 → 拦下（下跌仍在加速，7-24 不是周线一买）。 */
+  const divHit = l1DivGate(bis, last_i, hist);
+  if (divHit) {
+    return {
+      hit: null, st,
+      reason: '本级别未背驰：本笔下跌力度（MACD 柱面积）' + fmt(divHit.cur.area) + ' ≥ 前一跌笔 ' + fmt(divHit.prev.area)
+        + '（比值 ' + (divHit.cur.area / divHit.prev.area).toFixed(2) + '），下跌仍在加速延续',
+    };
   }
   const chain_s0 = trendChainStart(zs);
   let sell1_i = null;
@@ -416,6 +505,10 @@ function evaluate(bars, opts) {
     sell1_day: times[bis[sell1_i].raw1],
     zd: last_z.zd, zg: last_z.zg,
     zs0: times[last_z.raw0], zs1: times[last_z.raw1],
+    force_unit: (function () { const f = downForce(last, hist); return f ? +f.unit.toFixed(3) : null; })(),
+    force_prev_unit: (function () { const p = prevDownIdx(bis, last_i); const f = p >= 0 ? downForce(bis[p], hist) : null; return f ? +f.unit.toFixed(3) : null; })(),
+    force_area: (function () { const f = downForce(last, hist); return f ? +f.area.toFixed(3) : null; })(),
+    force_prev_area: (function () { const p = prevDownIdx(bis, last_i); const f = p >= 0 ? downForce(bis[p], hist) : null; return f ? +f.area.toFixed(3) : null; })(),
     n_bi: bis.length, n_zs: zs.length,
     x0: bis[sell1_i].raw0,                // 段起点（一卖那笔的起始原始K）
     x1: last.raw1,
@@ -424,7 +517,7 @@ function evaluate(bars, opts) {
   return { hit, reason: null, st };
 }
 
-/* ---------- MACD（仅绘图参考，不参与信号） ---------- */
+/* ---------- MACD（绘图 + v4.8 起参与「本级别背驰闸门」判定） ---------- */
 function ema(arr, n) {
   const k = 2 / (n + 1), out = new Array(arr.length);
   let prev = arr[0];
@@ -446,6 +539,7 @@ if (typeof module !== 'undefined' && module.exports) {
     mergeKlines, findFenxing, pickFenxing, extremeX, fenxingToBis,
     buildZhongshu3Bi, findZoushiPoints, buildChan, prevDown,
     trendChainStart, evaluate, ema, macdSeries,
+    downForce, prevDownIdx, l1DivGate,
   };
 }
 </script>
@@ -461,10 +555,113 @@ function segPower(b, hist) {
   return s;
 }
 
+/* ---------- 活动一买状态机（v4.5b 2026-09-22）----------
+   九道闸门只回答「最后收盘日是不是一买」，它不记得自己出过一买：
+   一旦某个更低点出现，闸门 5（一买必须是一卖之后的最低）就把它永久封印，
+   于是「7-20 出过一买」这件事在系统里彻底丢失，页面只剩一句「未命中」。
+   这里按下述口径补上「当前有效一买」：
+     ① 在最近 LOOKBACK 根内逐日截断跑一遍九道闸门，收集所有命中；
+     ② 去重后按确认日排序，从最近往前找第一个「低点至今未被任何 K 线跌破」的；
+     ③ 找不到就返回 null（下跌仍在延续 / 尚无确认）。
+   注意：本函数属于「一买判定的时序层」，不改 chan-core 一个字符，闸门口径原样复用。 */
+function coreEvalApi(opt) {
+  if (opt && opt.core && typeof opt.core.evaluate === 'function') return opt.core;
+  if (typeof evaluate === 'function') return { evaluate: evaluate };   /* 浏览器内 chan-core 为全局 */
+  return null;
+}
+
+/* v4.8：本段是否已被后续新高刷新（旧段终结判定，供 scanActiveL1 用）
+   ci = 一买确认日在 bars 里的下标；sell1 = 该一买所在段的一卖（段起点高点）。
+   返回 true：确认日之后存在高于段起点的向上笔 → 这段下跌已终结，一买属旧段。 */
+function segSuperseded(bis, ci, sell1) {
+  if (!bis || sell1 == null) return false;
+  for (var j = 0; j < bis.length; j++) {
+    if (bis[j].dir !== 1) continue;
+    if (bis[j].raw1 <= ci) continue;
+    if (bis[j].high > sell1) return true;
+  }
+  return false;
+}
+
+function scanActiveL1(bars, st, opt) {
+  opt = opt || {};
+  var api = coreEvalApi(opt);
+  if (!api || !bars || bars.length < 60) return null;
+  var n = bars.length;
+  var LOOKBACK = opt.lookback || 250;
+  var lo = Math.max(60, n - LOOKBACK);
+  var seen = {}, list = [];
+  for (var i = lo; i < n; i++) {
+    var r;
+    try { r = api.evaluate(bars.slice(0, i + 1), {}); } catch (e) { continue; }
+    if (!r || !r.hit) continue;
+    var h = r.hit, key = h.l1_day + '|' + h.time;
+    if (seen[key]) continue;
+    seen[key] = 1;
+    list.push({ low: h.l1, lowDay: h.l1_day, confDay: h.time, sell1: h.sell1, sell1Day: h.sell1_day,
+                zd: h.zd, zg: h.zg, zs0: h.zs0, zs1: h.zs1, x0: h.x0, x1: h.x1,
+                forceArea: h.force_area, forcePrevArea: h.force_prev_area, forceUnit: h.force_unit });
+  }
+  list.sort(function (a, b) { return a.confDay < b.confDay ? -1 : (a.confDay > b.confDay ? 1 : 0); });
+  for (var k = list.length - 1; k >= 0; k--) {
+    var c = list[k], broken = false;
+    for (var j = n - 1; j >= 0; j--) {
+      if (bars[j].date <= c.confDay) break;
+      if (bars[j].low <= c.low + 1e-9) { broken = true; break; }
+    }
+    if (broken) continue;
+    /* v4.8：段不能被后续新高刷新 —— 若确认日之后出现高于「本段一卖」的向上笔，
+       说明这段下跌早已终结、市场已另起新段；该一买是旧段的买点，不再是「当前段的活动一买」。
+       实测（上证指数周线）：7-24 被背驰闸门拦下后，状态机会一路翻到 2024-02-08 的 2635.09
+       （它确实没被跌破），但其本段一卖（2023 高点）早已被 2026-05-15 的 4258.86 刷新，
+       属旧段买点 —— 加上本约束后，周线正确变为「无活动一买」（下跌尚未结束）。 */
+    var pi = -1;
+    for (var q2 = 0; q2 < n; q2++) if (bars[q2].date === c.confDay) { pi = q2; break; }
+    if (pi >= 0 && segSuperseded(st.bis, pi, c.sell1)) continue;
+    var li = -1, ci = -1;
+    for (var q = 0; q < n; q++) {
+      if (bars[q].date === c.lowDay) li = q;
+      if (bars[q].date === c.confDay) ci = q;
+    }
+    if (li < 0) continue;
+    return { low: c.low, idx: li, day: c.lowDay, confirmIdx: ci, confirmDay: c.confDay, x0: c.x0, x1: c.x1,
+             sell1: c.sell1, sell1Day: c.sell1Day, zd: c.zd, zg: c.zg, zs0: c.zs0, zs1: c.zs1,
+             forceArea: c.forceArea, forcePrevArea: c.forcePrevArea, forceUnit: c.forceUnit,
+             ago: n - 1 - li, confAgo: ci >= 0 ? n - 1 - ci : null };
+  }
+  return null;
+}
+
+/* ---------- 段内买卖点仲裁 ----------
+   走势段（15 号 findZoushiPoints）给出的「一买」只是「跌破最后中枢的向下笔」候选，
+   没过九道闸门就不该叫一买 —— 否则图上画着「9-16 一买」、结论卡写着「未命中」，自相矛盾。
+   口径：① 有活动一买 → 只认它；走势段那些候选不画（改由结论卡说明）；无活动一买 → 保留原口径；
+        ② 时序不变量（双保险）：活动一买之后的卖点一律不画 —— 同样的约束 v4.7 已从
+           findZoushiPoints 源头加上（二卖必须早于一买）；这里保留作兜底。 */
+function resolveBuyPoints(pts, ext) {
+  var al1 = ext && ext.activeL1 ? ext.activeL1 : null;
+  var out = [], has = false, cand = [];
+  for (var i = 0; i < pts.length; i++) {
+    var p = pts[i];
+    if (p.kind === '一买') {
+      if (al1 && p.x === al1.idx) { has = true; out.push(p); }
+      else if (al1) cand.push({ x: p.x, y: p.y });
+      else out.push(p);
+      continue;
+    }
+    if (al1 && p.kind.indexOf('卖') >= 0 && p.x > al1.idx) continue;   // ② 一买之后的卖点作废
+    out.push(p);
+  }
+  if (al1 && !has) out.push({ kind: '一买', x: al1.idx, y: al1.low });
+  if (ext) ext.l1Cand = cand;
+  return out;
+}
+
 /* ---------- 走势全景：位置导航 / 二买 / 三买 / 背驰量化 ---------- */
 function analyzeExtended(bars, st, macd, opt) {
   opt = opt || {};
-  var res = { pos: 'none', posCn: '—', lastZ: null, zsList: [], buy2: null, buy3: null, div: null, marks: [], hint: '' };
+  var res = { pos: 'none', posCn: '—', lastZ: null, zsList: [], activeL1: null, buy2: null, buy2First: null,
+              l1Cand: [], buy3: null, div: null, marks: [], hint: '' };
   if (!st || !bars || !bars.length) return res;
 
   var bis = st.bis, zs = st.zs, times = st.times, close = st.close;
@@ -486,21 +683,41 @@ function analyzeExtended(bars, st, macd, opt) {
     res.posCn = '无中枢（单边走势）';
   }
 
-  /* --- 二买：一买（或前低）之后，回抽不破前低的那一下跌已确认 --- */
-  var refLow = opt.l1, refIdx = (opt.l1Idx != null && opt.l1Idx >= 0) ? opt.l1Idx : null;
-  if (refLow == null || refIdx == null) {
-    var mi = -1, mv = Infinity;
-    for (var j = Math.max(0, n - 160); j < n; j++) if (bars[j].low < mv) { mv = bars[j].low; mi = j; }
-    refLow = mv; refIdx = mi;
-  }
-  for (var k = 0; k + 1 < bis.length; k++) {
-    var up = bis[k], dn = bis[k + 1];
-    if (up.dir !== 1 || dn.dir !== -1) continue;
-    if (up.raw0 < refIdx) continue;                       // 必须在一买/前低之后
-    if (dn.low <= refLow) continue;                       // 跌破前低 → 不是二买
-    if (dn.confirm_raw == null) continue;                 // 未确认
-    res.buy2 = { x: dn.raw1, y: dn.low, date: times[dn.raw1], low: dn.low, ref: refLow, ago: n - 1 - dn.raw1 };
-    break;
+  /* --- 活动一买：显式传入 → opt.l1 命中 → 状态机回溯（v4.5b）--- */
+  var al1 = null;
+  if (opt.activeL1 !== undefined) al1 = opt.activeL1;
+  else if (opt.l1 != null && opt.l1Idx != null && opt.l1Idx >= 0) {
+    al1 = { low: opt.l1, idx: opt.l1Idx, day: times[opt.l1Idx], confirmIdx: opt.l1Idx,
+            confirmDay: times[opt.l1Idx], ago: bars.length - 1 - opt.l1Idx };
+  } else if (opt.autoL1 !== false) al1 = scanActiveL1(bars, st, opt);
+  res.activeL1 = al1;
+
+  /* --- 二买：必须建立在「真一买」之上；无真一买则不判（宁缺勿错）---
+     ⚠️ v4.5（2026-09-21）修订：旧实现「一买未命中 → 兜底取最近 160 根最低点当前低」，
+       会让二买建立在一个从未过九道闸门的普通低点上
+       （实测：上证指数 2026-08-25 3850.86 被误标二买，其"参照"其实是 7-20 的普通低点）。
+     ⚠️ v4.5b（2026-09-22）修订：参照点由「当下命中」升级为「活动一买状态机」。
+       上证指数实测：九道闸门 7-21 命中过一买 3741.11，但闸门 5 之后被永久封印，
+       于是 9-16 的 3842.72 被走势段误标成一买。接上状态机后：一买 = 7-20，
+       9-16 回归为「一买后回抽不破一买低点」的二买。
+     规则：① 参照点只能是活动一买（opt.activeL1 / opt.l1 / 状态机三者之一）；
+           ② 时序不变量：二买必须晚于其参照一买；
+           ③ 作废：其后若跌破一买低点 → 一买已失败，二买随之作废；
+           ④ 取值：一买后可能多次回抽（中枢震荡），取「最近一次」有效回抽为当前二买，
+              首次回抽另存 buy2First 备查。 */
+  if (al1 && al1.idx != null) {
+    var refLow = al1.low, refIdx = al1.idx;
+    for (var k = 0; k + 1 < bis.length; k++) {
+      var up = bis[k], dn = bis[k + 1];
+      if (up.dir !== 1 || dn.dir !== -1) continue;
+      if (up.raw0 < refIdx) continue;                      // 涨笔须起自一买之后
+      if (dn.raw1 <= refIdx) continue;                     // ② 二买点须晚于一买
+      if (dn.low <= refLow) { res.buy2 = null; res.buy2First = null; break; }   // ③ 跌破一买低点 → 作废
+      if (dn.confirm_raw == null) continue;                // 未确认
+      var cand2 = { x: dn.raw1, y: dn.low, date: times[dn.raw1], low: dn.low, ref: refLow, ago: n - 1 - dn.raw1 };
+      if (!res.buy2First) res.buy2First = cand2;
+      res.buy2 = cand2;                                    // ④ 取最近一次
+    }
   }
   if (res.buy2) res.marks.push({ kind: '二买', x: res.buy2.x, y: res.buy2.y });
 
@@ -544,7 +761,8 @@ function analyzeExtended(bars, st, macd, opt) {
 }
 
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { segPower: segPower, analyzeExtended: analyzeExtended };
+  module.exports = { segPower: segPower, analyzeExtended: analyzeExtended,
+                     scanActiveL1: scanActiveL1, resolveBuyPoints: resolveBuyPoints };
 }
 </script>
 

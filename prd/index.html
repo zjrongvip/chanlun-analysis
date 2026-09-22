@@ -18,10 +18,10 @@
   body{
     background:var(--bg); color:var(--tx);
     font:14px/1.5 -apple-system,"Segoe UI","Microsoft YaHei",system-ui,sans-serif;
-    padding:14px 16px 60px;
+    padding:8px 12px 28px;
   }
-  .nav{display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:7px 10px;margin-bottom:10px}
-  .nav a{font-size:12.5px;color:var(--tx2);text-decoration:none;border:1px solid var(--line2);background:#fafbfc;padding:4px 11px;border-radius:20px}
+  .nav{display:flex;gap:5px;align-items:center;flex-wrap:wrap;padding:3px 8px;margin-bottom:6px}
+  .nav a{font-size:12px;color:var(--tx2);text-decoration:none;border:1px solid var(--line2);background:#fafbfc;padding:2px 9px;border-radius:14px}
   .nav a:hover{border-color:#c9d4e0;color:var(--tx)}
   .nav a.on{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:600}
   .nav .sp{margin-left:auto;color:var(--tx3);font-size:11.5px}
@@ -243,8 +243,8 @@
         <table>
           <tr><th>功能</th><th>规格</th></tr>
           <tr><td>周期切换</td><td><b>七周期</b>：5 / 15 / 30 / 60 分、日、周、月</td></tr>
-          <tr><td>一买判定</td><td>15 号脚本九道闸门，输出命中/未命中 + 未命中原因</td></tr>
-          <tr><td>二买判定</td><td>一买（或前低）之后回抽不破前低，且已确认</td></tr>
+          <tr><td>一买判定</td><td>15 号脚本九道闸门，输出命中/未命中 + 未命中原因；另回溯最近 250 根给出「活动一买」（确认后至今未被跌破）</td></tr>
+          <tr><td>二买判定</td><td><b>活动一买</b>之后回抽不破<b>一买低点</b>，且已确认；同一买段多次回抽取最近一次；无活动一买则不判</td></tr>
           <tr><td>三买判定</td><td>向上突破中枢 ZG 后回抽不跌回中枢</td></tr>
           <tr><td>背驰量化</td><td>同向相邻两笔 MACD 柱力度比，输出本段/前段比值与确认日</td></tr>
           <tr><td>走势全景卡</td><td>当前位置（中枢上方/内部/下方）、最后中枢 ZD~ZG、最新收盘</td></tr>
@@ -422,7 +422,7 @@
     <table>
       <tr><th>标记</th><th>定义</th><th>颜色</th><th>形状</th></tr>
       <tr><td><b>一买</b></td><td>下跌 + 盘整 + 下跌走完，一卖后最低的向下笔低点</td><td><code>#1c7ed6</code> 蓝</td><td>▲</td></tr>
-      <tr><td><b>二买</b></td><td>一买（或前低）之后回抽不破前低，且已确认</td><td><code>#2f9e44</code> 绿</td><td>▲</td></tr>
+      <tr><td><b>二买</b></td><td><b>活动一买</b>之后回抽不破<b>一买低点</b>，且已确认（同一买段多次回抽取最近一次；无活动一买则不判；其后跌破一买低点即作废）</td><td><code>#2f9e44</code> 绿</td><td>▲</td></tr>
       <tr><td><b>三买</b></td><td>向上突破中枢 ZG 后，回抽不跌回中枢</td><td><code>#0b7285</code> 青</td><td>▲</td></tr>
       <tr><td><b>一卖</b></td><td>一买结构的镜像形态</td><td><code>#d64545</code> 红</td><td>▼</td></tr>
       <tr><td><b>二卖</b></td><td>一卖后回抽不破前高</td><td><code>#e8590c</code> 橙</td><td>▼</td></tr>
@@ -492,7 +492,12 @@
       <tr><td>周线</td><td><code>w</code></td><td>240 根</td><td>由日线聚合</td></tr>
       <tr><td>月线</td><td><code>mo</code></td><td>180 根</td><td>由日线聚合</td></tr>
     </table>
-    <p><b>统一规则</b>：未走完的当前周期 K 线一律丢弃（避免把"半根周线"当成完整周线参与笔与中枢计算）。</p>
+    <p><b>统一规则</b>：未走完的当前周期 K 线<b>保留并参与计算</b>（v4.9 起，2026-09-22 修订）。<br>
+      缠论判的就是当下，未走完的 K 线正是当下的载体；而笔的成立仍要求<b>分型已确认</b>，
+      未确认的部分不会被当成完成的笔，无需在数据层提前砍掉。页面对进行中的末根标注「本周 / 本月进行中」
+      （<code>lastBarLive()</code>，仅标注、不做任何截断）。<br>
+      <span style="color:#a2621a">原规则「未走完的当前周期 K 线一律丢弃」已取消 —— 它会让 9-22 打开周线时停在上周五 9-18，
+      本周整根消失，走势停在过去，看不见当下。</span></p>
 
     <h3>5.4　降级与容错</h3>
     <ul>
@@ -673,7 +678,7 @@ msedge --headless=new --user-data-dir=&lt;临时目录&gt; --dump-dom &lt;URL&gt
       <tr><td><b>线段</b></td><td>至少三笔构成，用特征序列法判定结束</td></tr>
       <tr><td><b>中枢</b></td><td>连续三笔重叠的价格区间，记作 ZD（下沿）~ ZG（上沿）</td></tr>
       <tr><td><b>一买</b></td><td>一类买点：下跌 + 盘整 + 下跌走完的位置</td></tr>
-      <tr><td><b>二买</b></td><td>二类买点：一买后回抽不破前低的位置</td></tr>
+      <tr><td><b>二买</b></td><td>二类买点：活动一买（九道闸门过且至今未跌破）后回抽不破一买低点的位置（无活动一买不判）</td></tr>
       <tr><td><b>三买</b></td><td>三类买点：突破中枢 ZG 后回抽不跌回中枢的位置</td></tr>
       <tr><td><b>背驰</b></td><td>同向两段走势力度衰减（系统用 MACD 柱力度量化）</td></tr>
       <tr><td><b>chan-core</b></td><td>本项目算法内核脚本块，唯一维护点为走势分析台</td></tr>

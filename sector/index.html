@@ -6,132 +6,172 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2032%2032%27%3E%3Crect%20width%3D%2732%27%20height%3D%2732%27%20rx%3D%277%27%20fill%3D%27%23ffffff%27%2F%3E%3Crect%20x%3D%278%27%20y%3D%2712%27%20width%3D%2716%27%20height%3D%2711%27%20fill%3D%27rgba%2859%2C91%2C165%2C.10%29%27%20stroke%3D%27%233b5ba5%27%20stroke-width%3D%271.5%27%20stroke-dasharray%3D%273%202%27%2F%3E%3Cpath%20d%3D%27M11%2021%20L16%207%20L21%2015%27%20fill%3D%27none%27%20stroke%3D%27%231c7ed6%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%2F%3E%3Ccircle%20cx%3D%2721%27%20cy%3D%2715%27%20r%3D%272.4%27%20fill%3D%27%23d64545%27%2F%3E%3C%2Fsvg%3E">
 <title>板块轮动选股系统 · 缠论第106课</title>
 <style>
+:root{
+  --bg:#f5f6f8; --card:#ffffff; --line:#e3e6ea; --line2:#eef0f3;
+  --tx:#1f2329; --tx2:#5b6470; --tx3:#8b949e;
+  --brand:#1c7ed6; --gold:#c89b1a;
+  --up:#d64545; --down:#2f9e44;
+  --up-bg:rgba(214,69,69,.07); --down-bg:rgba(47,158,68,.07);
+}
 *{margin:0;padding:0;box-sizing:border-box;}
-body{font-family:'Microsoft YaHei',sans-serif;background:#f5f6f8;color:#1f2329;min-height:100vh;}
+body{font-family:'Microsoft YaHei',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;}
 
-/* ─── 顶部 Header ─── */
-.header{background:linear-gradient(135deg,#ffffff,#f2f6fb);padding:22px 30px;border-bottom:1px solid #e3e6ea;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
-.header h1{font-size:22px;color:#c89b1a;letter-spacing:2px;}
-.header-sub{font-size:12px;color:#5b6470;margin-top:4px;}
-.update-badge{background:#f7f9fb;border:1px solid #c9d4e0;border-radius:6px;padding:8px 14px;font-size:12px;color:#5b6470;text-align:right;}
-
-/* ─── 主体布局 ─── */
-.main{padding:24px;}
-.section{margin-bottom:36px;}
-.section-title{font-size:16px;font-weight:bold;color:#c89b1a;border-left:3px solid #c89b1a;padding-left:10px;margin-bottom:16px;}
-
-/* ─── 热点横幅 ─── */
-.hotbar{display:flex;gap:12px;overflow-x:auto;padding-bottom:6px;}
-.hotbar::-webkit-scrollbar{height:4px;}
-.hotbar::-webkit-scrollbar-thumb{background:#c9d4e0;border-radius:2px;}
-.hot-tag{flex-shrink:0;background:#f7f9fb;border:1px solid #d64545;border-radius:20px;padding:6px 16px;font-size:12px;color:#d64545;white-space:nowrap;}
-.hot-tag.up{border-color:#d64545;color:#d64545;}
-
-/* ─── 板块卡片网格 ─── */
-.sector-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:16px;}
-
-.sector-card{background:#ffffff;border:1px solid #e3e6ea;border-radius:10px;padding:16px;cursor:pointer;transition:all .25s;}
-.sector-card:hover{border-color:#c89b1a;box-shadow:0 4px 20px rgba(255,215,0,.15);transform:translateY(-3px);}
-.sector-card.strong{border-left:4px solid #d64545;}
-.sector-card.neutral{border-left:4px solid #c89b1a;}
-.sector-card.weak{border-left:4px solid #2f9e44;}
-
-.card-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;}
-.card-name{font-size:16px;font-weight:bold;color:#fff;}
-.card-badge{font-size:11px;padding:3px 10px;border-radius:12px;font-weight:bold;}
-.badge-strong{background:rgba(214,69,69,.10);color:#d64545;border:1px solid #d64545;}
-.badge-neutral{background:rgba(255,215,0,.1);color:#c89b1a;border:1px solid #c89b1a;}
-.badge-weak{background:rgba(47,158,68,.10);color:#2f9e44;border:1px solid #2f9e44;}
-
-.card-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;}
-.stat-box{background:#f5f6f8;border-radius:6px;padding:8px;text-align:center;}
-.stat-label{font-size:10px;color:#5b6470;margin-bottom:4px;}
-.stat-val{font-size:15px;font-weight:bold;}
-.val-up{color:#d64545;}
-.val-down{color:#2f9e44;}
-.val-flat{color:#c89b1a;}
-
-.trend-row{display:flex;align-items:center;justify-content:space-between;background:#f5f6f8;border-radius:6px;padding:8px 12px;margin-bottom:12px;font-size:12px;}
-.trend-arrow{font-size:18px;font-weight:bold;}
-
-.stocks-area{margin-top:10px;}
-.stocks-label{font-size:10px;color:#5b6470;margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;}
-.stocks-wrap{display:flex;flex-wrap:wrap;gap:6px;}
-.stock-btn{background:#f5f6f8;border:1px solid #d9e0ea;border-radius:4px;padding:4px 10px;font-size:12px;color:#5b6470;cursor:pointer;transition:all .2s;}
-.stock-btn:hover{background:#c89b1a;color:#000;border-color:#c89b1a;}
-.stock-btn.top{border-color:#d64545;color:#d64545;}
-.stock-btn.top:hover{background:#d64545;color:#fff;}
-
-/* ─── 板块强弱指标趋势图 ─── */
-.chart-bar-wrap{margin-top:10px;}
-.chart-bar-item{display:flex;align-items:center;margin-bottom:6px;gap:8px;}
-.bar-name{width:80px;font-size:11px;color:#5b6470;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.bar-track{flex:1;background:#f5f6f8;border-radius:3px;height:14px;overflow:hidden;}
-.bar-fill{height:100%;border-radius:3px;transition:width .8s ease;}
-.bar-val{width:32px;font-size:11px;text-align:right;flex-shrink:0;}
-
-/* ─── 时间线 ─── */
-.timeline-wrap{padding-left:16px;border-left:2px solid #e3e6ea;}
-.tl-item{margin-bottom:20px;position:relative;}
-.tl-item::before{content:'';position:absolute;left:-21px;top:4px;width:10px;height:10px;background:#c89b1a;border-radius:50%;}
-.tl-date{font-size:11px;color:#c89b1a;margin-bottom:4px;}
-.tl-title{font-size:13px;font-weight:bold;color:#fff;margin-bottom:4px;}
-.tl-desc{font-size:12px;color:#5b6470;line-height:1.6;}
-
-/* ─── 弹窗：个股周线图 ─── */
-.modal-overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.42);z-index:9999;align-items:center;justify-content:center;}
-.modal-overlay.show{display:flex;}
-.modal-box{background:#ffffff;border:1px solid #c89b1a;border-radius:12px;width:92%;max-width:900px;max-height:92vh;overflow:auto;padding:0;}
-.modal-head{background:#f5f6f8;padding:16px 20px;border-radius:12px 12px 0 0;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #e3e6ea;position:sticky;top:0;z-index:10;}
-.modal-title{font-size:18px;font-weight:bold;color:#c89b1a;}
-.modal-close{background:none;border:1px solid #8b949e;color:#5b6470;width:28px;height:28px;border-radius:6px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;}
-.modal-close:hover{border-color:#d64545;color:#d64545;}
-.modal-body{padding:20px;}
-
-/* 分类等级信息栏 */
-.level-bar{display:flex;align-items:center;gap:12px;background:#f5f6f8;border-radius:8px;padding:12px 16px;margin-bottom:16px;flex-wrap:wrap;}
-.level-num{font-size:28px;font-weight:bold;color:#c89b1a;}
-.level-info{flex:1;}
-.level-title{font-size:14px;font-weight:bold;color:#fff;margin-bottom:4px;}
-.level-desc{font-size:12px;color:#5b6470;line-height:1.5;}
-.level-tag{font-size:11px;padding:3px 10px;border-radius:12px;margin-top:6px;display:inline-block;}
-
-/* MA均线图例 */
-.ma-legend{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px;background:#f5f6f8;padding:10px 14px;border-radius:6px;}
-.ma-item{display:flex;align-items:center;gap:5px;font-size:11px;color:#5b6470;}
-.ma-dot{width:20px;height:3px;border-radius:2px;}
-
-/* canvas 区域 */
-.kline-wrap{position:relative;overflow-x:auto;background:#f5f6f8;border-radius:8px;border:1px solid #e3e6ea;}
-.kline-wrap canvas{display:block;}
-.kline-loading{text-align:center;padding:80px 20px;color:#5b6470;font-size:14px;}
-
-/* 理论说明区 */
-.theory-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-top:14px;}
-.theory-item{background:#f5f6f8;border-radius:6px;padding:10px 14px;border-left:3px solid #e3e6ea;}
-.theory-item.active{border-left-color:#c89b1a;}
-.th-level{font-size:20px;font-weight:bold;color:#c89b1a;margin-bottom:4px;}
-.th-ma{font-size:12px;color:#5b6470;margin-bottom:2px;}
-.th-desc{font-size:11px;color:#5b6470;}
-
-/* 加载动画 */
-@keyframes spin{to{transform:rotate(360deg)}}
-.spinner{width:32px;height:32px;border:3px solid #d9e0ea;border-top-color:#c89b1a;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px;}
-
-@keyframes fadeInUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
-.sector-card{animation:fadeInUp .4s ease both;}
+/* ─── 顶部导航（全站统一） ─── */
 .nav{display:flex;gap:4px;align-items:center;flex-wrap:wrap;padding:2px 6px;background:#ffffff;border-bottom:1px solid #e3e6ea}
 .nav a{font-size:11.5px;color:#5b6470;text-decoration:none;border:1px solid #eef0f3;background:#fafbfc;line-height:1.55;padding:1px 7px;border-radius:10px}
 .nav a:hover{color:#1f2329;border-color:#c9d4e0}
 .nav a.on{background:#1c7ed6;border-color:#1c7ed6;color:#fff;font-weight:600}
 .nav .sp{margin-left:auto;color:#8b949e;font-size:11.5px}
+
+/* ─── Header ─── */
+.header{background:linear-gradient(135deg,#ffffff 0%,#f4f7fc 60%,#f6f1e4 100%);padding:24px 30px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;}
+.header h1{font-size:22px;letter-spacing:1px;background:linear-gradient(90deg,#a37f12,#c89b1a 45%,#1c7ed6);-webkit-background-clip:text;background-clip:text;color:transparent;}
+.header-sub{font-size:12px;color:var(--tx2);margin-top:5px;}
+.auto-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:#1a7f4b;background:rgba(47,158,68,.08);border:1px solid rgba(47,158,68,.35);border-radius:10px;padding:1px 8px;margin-left:8px;vertical-align:2px;}
+.auto-badge i{width:6px;height:6px;border-radius:50%;background:#2f9e44;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.update-badge{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 16px;font-size:12px;color:var(--tx2);text-align:right;line-height:1.9;box-shadow:0 1px 4px rgba(15,23,42,.04);}
+.update-badge b{color:var(--tx);}
+
+/* ─── 主体布局 ─── */
+.main{max-width:1440px;margin:0 auto;padding:26px 24px 40px;}
+.section{margin-bottom:38px;}
+.section-title{font-size:16px;font-weight:bold;color:var(--tx);border-left:3px solid var(--gold);padding-left:10px;margin-bottom:6px;}
+.section-sub{font-size:12px;color:var(--tx3);margin-bottom:14px;padding-left:13px;}
+
+/* ─── 热点横幅 ─── */
+.hotbar{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px;}
+.hotbar::-webkit-scrollbar{height:4px;}
+.hotbar::-webkit-scrollbar-thumb{background:#c9d4e0;border-radius:2px;}
+.hot-tag{flex-shrink:0;display:inline-flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:7px 16px;font-size:12.5px;color:var(--tx);white-space:nowrap;box-shadow:0 1px 3px rgba(15,23,42,.04);}
+.hot-tag.up{border-color:rgba(214,69,69,.4);background:var(--up-bg);}
+.hot-tag.down{border-color:rgba(47,158,68,.4);background:var(--down-bg);color:var(--tx2);}
+
+/* ─── 理论：9级分类 ─── */
+.theory-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:8px;margin-top:12px;}
+.theory-item{background:var(--card);border:1px solid var(--line2);border-radius:8px;padding:10px 12px;transition:all .2s;}
+.theory-item:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(15,23,42,.08);}
+.th-level{font-size:15px;font-weight:bold;margin-bottom:3px;}
+.th-ma{font-size:11px;color:var(--tx2);margin-bottom:2px;}
+.th-desc{font-size:10.5px;color:var(--tx3);line-height:1.45;}
+
+/* ─── 板块卡片网格 ─── */
+.sector-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px;}
+.sector-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 16px 14px;cursor:default;transition:all .25s;position:relative;overflow:hidden;}
+.sector-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;}
+.sector-card.strong::before{background:var(--up);}
+.sector-card.neutral::before{background:var(--gold);}
+.sector-card.weak::before{background:var(--down);}
+.sector-card:hover{border-color:#c9d4e0;box-shadow:0 6px 22px rgba(15,23,42,.10);transform:translateY(-3px);}
+
+.card-head{display:flex;align-items:flex-start;gap:10px;margin-bottom:12px;}
+.card-rank{flex-shrink:0;width:30px;height:30px;border-radius:8px;background:var(--bg);border:1px solid var(--line2);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:bold;color:var(--tx3);}
+.sector-card.strong .card-rank{background:var(--up-bg);border-color:rgba(214,69,69,.35);color:var(--up);}
+.sector-card.neutral .card-rank{background:rgba(200,155,26,.08);border-color:rgba(200,155,26,.35);color:var(--gold);}
+.card-name{font-size:16px;font-weight:bold;color:var(--tx);line-height:1.3;}
+.card-desc{font-size:11px;color:var(--tx3);margin-top:2px;}
+.card-badge{margin-left:auto;flex-shrink:0;font-size:11px;padding:3px 10px;border-radius:12px;font-weight:bold;}
+.badge-strong{background:var(--up-bg);color:var(--up);border:1px solid rgba(214,69,69,.45);}
+.badge-neutral{background:rgba(200,155,26,.08);color:var(--gold);border:1px solid rgba(200,155,26,.45);}
+.badge-weak{background:var(--down-bg);color:var(--down);border:1px solid rgba(47,158,68,.45);}
+
+/* 强度条行 */
+.strength-row{display:flex;align-items:center;gap:10px;background:var(--bg);border-radius:8px;padding:10px 12px;margin-bottom:10px;}
+.strength-num{font-size:22px;font-weight:bold;line-height:1;}
+.strength-num small{font-size:11px;color:var(--tx3);font-weight:normal;}
+.strength-track{flex:1;height:8px;background:var(--line2);border-radius:4px;overflow:hidden;}
+.strength-fill{height:100%;border-radius:4px;transition:width .8s ease;}
+.delta-chip{flex-shrink:0;font-size:11.5px;font-weight:bold;padding:2px 8px;border-radius:10px;}
+.delta-chip.up{color:var(--up);background:var(--up-bg);}
+.delta-chip.down{color:var(--down);background:var(--down-bg);}
+.delta-chip.flat{color:var(--gold);background:rgba(200,155,26,.08);}
+
+.stocks-area{margin-top:10px;}
+.stocks-label{font-size:10px;color:var(--tx3);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;}
+.stocks-wrap{display:flex;flex-wrap:wrap;gap:5px;}
+.stock-btn{display:inline-flex;align-items:center;gap:4px;background:var(--card);border:1px solid var(--line);border-radius:6px;padding:4px 9px;font-size:12px;color:var(--tx2);cursor:pointer;transition:all .18s;font-family:inherit;}
+.stock-btn:hover{border-color:var(--brand);color:var(--brand);background:rgba(28,126,214,.05);transform:translateY(-1px);}
+.stock-btn .lv{font-size:9px;font-weight:bold;padding:1px 4px;border-radius:4px;color:#fff;line-height:1.4;}
+
+/* ─── 强弱排行 ─── */
+.chart-bar-wrap{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px;}
+.chart-bar-item{display:flex;align-items:center;margin-bottom:9px;gap:10px;}
+.chart-bar-item:last-child{margin-bottom:0;}
+.bar-name{width:96px;font-size:12px;color:var(--tx);flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right;}
+.bar-track{flex:1;position:relative;height:18px;background:var(--bg);border-radius:4px;overflow:hidden;}
+.bar-ghost{position:absolute;left:0;top:0;bottom:0;background:repeating-linear-gradient(45deg,var(--line2),var(--line2) 4px,var(--bg) 4px,var(--bg) 8px);border-radius:4px;}
+.bar-fill{position:absolute;left:0;top:0;bottom:0;border-radius:4px;transition:width .8s ease;}
+.bar-val{width:30px;font-size:12px;font-weight:bold;text-align:right;flex-shrink:0;}
+.bar-delta{width:48px;font-size:11px;text-align:right;flex-shrink:0;}
+.legend-row{display:flex;gap:16px;margin-top:12px;padding-top:10px;border-top:1px dashed var(--line2);font-size:11px;color:var(--tx3);}
+.legend-row i{display:inline-block;width:18px;height:8px;border-radius:3px;margin-right:5px;vertical-align:1px;}
+
+/* ─── 时间线 ─── */
+.timeline-wrap{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px 24px;}
+.tl-item{position:relative;padding:0 0 18px 22px;border-left:2px solid var(--line2);}
+.tl-item:last-child{padding-bottom:2px;border-left-color:transparent;}
+.tl-item::before{content:'';position:absolute;left:-6px;top:3px;width:10px;height:10px;background:var(--gold);border:2px solid #fff;border-radius:50%;box-shadow:0 0 0 1px var(--gold);}
+.tl-date{display:inline-block;font-size:11px;font-weight:bold;color:var(--gold);background:rgba(200,155,26,.08);border-radius:8px;padding:1px 8px;margin-bottom:5px;}
+.tl-title{font-size:13px;font-weight:bold;color:var(--tx);margin-bottom:3px;}
+.tl-desc{font-size:12px;color:var(--tx2);line-height:1.6;}
+
+/* ─── 选股建议 ─── */
+.rec-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;}
+.rec-card{background:var(--card);border-radius:12px;padding:16px;border:1px solid var(--line);}
+.rec-title{font-weight:bold;font-size:13.5px;margin-bottom:9px;}
+.rec-body{font-size:12px;color:var(--tx2);line-height:1.85;}
+.rec-chips{margin-top:10px;display:flex;flex-wrap:wrap;gap:4px;}
+.rec-chip{border-radius:5px;padding:2px 8px;font-size:11px;}
+.rec-strong{border-color:rgba(214,69,69,.45);border:1px solid rgba(214,69,69,.45);}
+.rec-neutral{border:1px solid rgba(200,155,26,.45);}
+.rec-weak{border:1px solid rgba(47,158,68,.45);}
+
+/* ─── 弹窗：个股周线图 ─── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.45);backdrop-filter:blur(2px);z-index:9999;align-items:center;justify-content:center;}
+.modal-overlay.show{display:flex;}
+.modal-box{background:var(--card);border-radius:14px;width:92%;max-width:900px;max-height:92vh;overflow:auto;padding:0;box-shadow:0 20px 60px rgba(15,23,42,.25);animation:fadeInUp .25s ease;}
+.modal-head{position:sticky;top:0;background:var(--card);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);z-index:10;border-radius:14px 14px 0 0;}
+.modal-title{font-size:17px;font-weight:bold;color:var(--tx);}
+.modal-close{background:none;border:1px solid var(--line);color:var(--tx2);width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;}
+.modal-close:hover{border-color:var(--up);color:var(--up);}
+.modal-body{padding:20px;}
+
+/* 分类等级信息栏 */
+.level-bar{display:flex;align-items:center;gap:14px;background:var(--bg);border-radius:10px;padding:14px 16px;margin-bottom:16px;flex-wrap:wrap;}
+.level-num{font-size:30px;font-weight:bold;line-height:1;}
+.level-info{flex:1;min-width:220px;}
+.level-title{font-size:14px;font-weight:bold;color:var(--tx);margin-bottom:4px;}
+.level-desc{font-size:12px;color:var(--tx2);line-height:1.5;}
+.level-tag{font-size:11px;padding:3px 10px;border-radius:12px;margin-top:7px;display:inline-block;}
+
+/* MA均线图例 */
+.ma-legend{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px;background:var(--bg);padding:9px 14px;border-radius:8px;}
+.ma-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--tx2);}
+.ma-dot{width:20px;height:3px;border-radius:2px;}
+
+/* canvas 区域 */
+.kline-wrap{position:relative;overflow-x:auto;background:var(--bg);border-radius:10px;border:1px solid var(--line2);}
+.kline-wrap canvas{display:block;}
+.kline-loading{text-align:center;padding:80px 20px;color:var(--tx2);font-size:14px;}
+
+/* 分析提示 */
+.analysis-tip{margin-top:16px;background:var(--bg);border-radius:10px;padding:14px 16px;font-size:12px;color:var(--tx2);line-height:1.8;}
+
+/* 加载动画 */
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner{width:32px;height:32px;border:3px solid var(--line);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px;}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.sector-card{animation:fadeInUp .4s ease both;}
+
 /* ---- 移动端 ---- */
 @media (max-width:720px){
-  .header{padding:16px 16px}
+  .header{padding:16px}
   .header h1{font-size:19px}
+  .auto-badge{margin-left:0;display:inline-flex;margin-top:4px}
+  .update-badge{text-align:left;width:100%}
   .main{padding:14px}
   .sector-grid{grid-template-columns:1fr;gap:12px}
-  .card-stats{grid-template-columns:1fr 1fr}
+  .bar-name{width:74px;font-size:11px}
   .hot-tag{padding:5px 12px;font-size:11.5px}
   .modal-box{width:96%}
   .nav .sp{display:none}          /* 长说明在窄屏会撑破导航 */
@@ -142,9 +182,9 @@ body{font-family:'Microsoft YaHei',sans-serif;background:#f5f6f8;color:#1f2329;m
 
 <nav class="nav">
   <a href="../">走势分析台</a>
-  <a href="../yimai/">一买选股</a>
-  <a href="../multi/">多级别中枢</a>
   <a href="../scan/">批量扫一买</a>
+  <a href="../multi/">多级别中枢</a>
+  <a href="../yimai/">一买选股</a>
   <a class="on" href="../sector/">板块轮动</a>
   <a href="../legacy/">旧版对照</a>
   <a href="../prd/">PRD</a>
@@ -155,12 +195,14 @@ body{font-family:'Microsoft YaHei',sans-serif;background:#f5f6f8;color:#1f2329;m
 <div class="header">
   <div>
     <h1>🚀 板块轮动选股系统</h1>
-    <div class="header-sub">基于缠论第106课 · 均线分类论 · 轮动论 · 板块强弱指标 · 双轨制分析</div>
+    <div class="header-sub">基于缠论第106课 · 均线分类论 · 轮动论 · 板块强弱指标 · 双轨制分析
+      <span class="auto-badge"><i></i>每周五 16:30 自动更新</span>
+    </div>
   </div>
   <div class="update-badge">
-    📅 最新更新：2026-09-18<br>
+    📅 最新更新：<b>2026-09-24</b><br>
     📊 数据源：腾讯行情（前复权）<br>
-    🔄 周度更新 · 每周一/五 16:00
+    🔄 板块快照每周更新 · 个股点开实时计算
   </div>
 </div>
 
@@ -169,44 +211,49 @@ body{font-family:'Microsoft YaHei',sans-serif;background:#f5f6f8;color:#1f2329;m
   <!-- 近期热点 -->
   <div class="section">
     <div class="section-title">🔥 近期市场热点（2026-09月）</div>
+    <div class="section-sub">按板块强弱指标排序 · 前三热点与后二冰点</div>
     <div class="hotbar">
-      <div class="hot-tag up">🔥 金融服务 ↘6.4</div>
-      <div class="hot-tag up">🔥 AI算力产业链 ↗6.2</div>
-      <div class="hot-tag up">🔥 半导体芯片 ↗5.9</div>
-      <div class="hot-tag down">❄ 新能源汽车 ↓1.8</div>
-      <div class="hot-tag down">❄ 光伏新能源 ↓1.7</div>
+      <div class="hot-tag up">🔥 半导体芯片 ↗7.3</div>
+      <div class="hot-tag up">🔥 金融服务 ↗7.2</div>
+      <div class="hot-tag up">🔥 AI算力产业链 ↗6.9</div>
+      <div class="hot-tag down">❄ 新能源汽车 ↓3.1</div>
+      <div class="hot-tag down">❄ 新型储能 ↓2.9</div>
     </div>
   </div>
 
   <!-- 理论说明：9级分类 -->
   <div class="section">
     <div class="section-title">📖 第106课核心：9级均线分类体系</div>
-    <div style="font-size:12px;color:#8b949e;margin-bottom:12px;">均线：5 / 13 / 21 / 34 / 55 / 89 / 144 / 233日。股票当前反弹能突破到哪根均线，即为对应等级。等级越高越强。</div>
+    <div class="section-sub">均线：5 / 13 / 21 / 34 / 55 / 89 / 144 / 233日。股票当前反弹能突破到哪根均线，即为对应等级。等级越高越强。</div>
     <div class="theory-grid" id="theoryGrid"></div>
   </div>
 
   <!-- 10大板块追踪 -->
   <div class="section">
     <div class="section-title">📊 核心板块强弱追踪（共10个板块 · 各含10只个股）</div>
+    <div class="section-sub">强度＝成分股近 5 个交易日平均层级（1~9）· 点个股看双轨分析</div>
     <div class="sector-grid" id="sectorGrid"></div>
   </div>
 
   <!-- 板块强弱排行 -->
   <div class="section">
     <div class="section-title">📈 板块强弱指标排行（本周 vs 上周）</div>
+    <div class="section-sub">实色条＝本周强度 · 斜纹条＝上周位置，超出部分即本周回落幅度</div>
     <div class="chart-bar-wrap" id="barChart"></div>
   </div>
 
   <!-- 轮动时间线 -->
   <div class="section">
     <div class="section-title">🕐 板块轮动时间线</div>
+    <div class="section-sub">近 4 周每周前三领跑板块</div>
     <div class="timeline-wrap" id="timeline"></div>
   </div>
 
   <!-- 选股建议 -->
   <div class="section">
     <div class="section-title">✅ 本周选股建议（优先级排序）</div>
-    <div id="recArea"></div>
+    <div class="section-sub">缠论第106课：强板块 → 高等级个股 → 等二买确认</div>
+    <div class="rec-grid" id="recArea"></div>
   </div>
 
 </div>
@@ -217,7 +264,7 @@ body{font-family:'Microsoft YaHei',sans-serif;background:#f5f6f8;color:#1f2329;m
     <div class="modal-head">
       <div>
         <div class="modal-title" id="modalTitle">—</div>
-        <div style="font-size:11px;color:#5b6470;margin-top:3px;" id="modalSub">—</div>
+        <div style="font-size:11px;color:#8b949e;margin-top:3px;" id="modalSub">—</div>
       </div>
       <button class="modal-close" onclick="closeModal()">✕</button>
     </div>
@@ -228,7 +275,7 @@ body{font-family:'Microsoft YaHei',sans-serif;background:#f5f6f8;color:#1f2329;m
         <div class="level-info">
           <div class="level-title" id="levelTitle">—</div>
           <div class="level-desc" id="levelDesc">—</div>
-          <div class="level-tag" id="levelTag" style="background:rgba(255,215,0,.1);color:#c89b1a;border:1px solid #c89b1a;">—</div>
+          <div class="level-tag" id="levelTag">—</div>
         </div>
       </div>
       <!-- MA图例 -->
@@ -241,7 +288,7 @@ body{font-family:'Microsoft YaHei',sans-serif;background:#f5f6f8;color:#1f2329;m
         </div>
       </div>
       <!-- 第106课分析提示 -->
-      <div style="margin-top:16px;background:#f5f6f8;border-radius:8px;padding:14px;font-size:12px;color:#5b6470;line-height:1.8;" id="analysisTip"></div>
+      <div class="analysis-tip" id="analysisTip"></div>
     </div>
   </div>
 </div>
@@ -267,26 +314,42 @@ const LEVEL_INFO = [
 // 10大板块数据
 const SECTORS = [
   {
-    name:'金融服务',code:'FIN',strength:6.4,prevStrength:7.8,trend:'down',desc:'银行·证券·保险',
+    name:'半导体芯片',code:'SEMI',strength:7.3,prevStrength:5.6,trend:'up',desc:'集成电路·芯片设计·制造',
+    level:'strong',rec:'强烈推荐',
+    stocks:[
+      {name:'北方华创',code:'002371',level:9},
+      {name:'中微公司',code:'688012',level:9},
+      {name:'卓胜微',code:'300782',level:6},
+      {name:'圣邦股份',code:'300661',level:9},
+      {name:'芯原股份',code:'688521',level:6},
+      {name:'汇顶科技',code:'603160',level:6},
+      {name:'富瀚微',code:'300613',level:9},
+      {name:'恒玄科技',code:'688608',level:5},
+      {name:'思瑞浦',code:'688536',level:9},
+      {name:'晶晨股份',code:'688099',level:3},
+    ]
+  },
+  {
+    name:'金融服务',code:'FIN',strength:7.2,prevStrength:6.7,trend:'up',desc:'银行·证券·保险',
     level:'strong',rec:'强烈推荐',
     stocks:[
       {name:'招商银行',code:'600036',level:9},
-      {name:'中信证券',code:'600030',level:2},
+      {name:'中信证券',code:'600030',level:1},
       {name:'中国平安',code:'601318',level:7},
       {name:'工商银行',code:'601398',level:9},
       {name:'建设银行',code:'601939',level:9},
       {name:'宁波银行',code:'002142',level:9},
-      {name:'东方财富',code:'300059',level:2},
+      {name:'东方财富',code:'300059',level:1},
       {name:'中国人寿',code:'601628',level:8},
       {name:'浦发银行',code:'600000',level:7},
-      {name:'兴业银行',code:'601166',level:1},
+      {name:'兴业银行',code:'601166',level:8},
     ]
   },
   {
-    name:'AI算力产业链',code:'AI',strength:6.2,prevStrength:6.0,trend:'up',desc:'GPU芯片·数据中心·光通信',
-    level:'strong',rec:'推荐',
+    name:'AI算力产业链',code:'AI',strength:6.9,prevStrength:6.0,trend:'up',desc:'GPU芯片·数据中心·光通信',
+    level:'strong',rec:'强烈推荐',
     stocks:[
-      {name:'中芯国际',code:'688981',level:4},
+      {name:'中芯国际',code:'688981',level:3},
       {name:'澜起科技',code:'688008',level:9},
       {name:'光迅科技',code:'002281',level:9},
       {name:'紫光国芯',code:'002049',level:3},
@@ -299,141 +362,129 @@ const SECTORS = [
     ]
   },
   {
-    name:'半导体芯片',code:'SEMI',strength:5.9,prevStrength:5.5,trend:'up',desc:'集成电路·芯片设计·制造',
+    name:'医药生物',code:'MED',strength:6.0,prevStrength:3.7,trend:'up',desc:'创新药·生物科技·医疗器械',
     level:'strong',rec:'推荐',
     stocks:[
-      {name:'北方华创',code:'002371',level:9},
-      {name:'中微公司',code:'688012',level:9},
-      {name:'卓胜微',code:'300782',level:3},
-      {name:'圣邦股份',code:'300661',level:9},
-      {name:'芯原股份',code:'688521',level:5},
-      {name:'汇顶科技',code:'603160',level:6},
-      {name:'富瀚微',code:'300613',level:9},
-      {name:'恒玄科技',code:'688608',level:4},
-      {name:'思瑞浦',code:'688536',level:9},
-      {name:'晶晨股份',code:'688099',level:3},
-    ]
-  },
-  {
-    name:'有色金属',code:'NM',strength:4.3,prevStrength:5.6,trend:'down',desc:'铜·铝·锌·稀土',
-    level:'neutral',rec:'观察',
-    stocks:[
-      {name:'紫金矿业',code:'601899',level:7},
-      {name:'洛阳钼业',code:'603993',level:1},
-      {name:'铜陵有色',code:'000630',level:2},
-      {name:'中国铝业',code:'601600',level:6},
-      {name:'驰宏锌锗',code:'600497',level:9},
-      {name:'盛和资源',code:'600392',level:2},
-      {name:'北方稀土',code:'600111',level:1},
-      {name:'五矿稀土',code:'000831',level:9},
-      {name:'厦门钨业',code:'600549',level:3},
-      {name:'中国稀土',code:'000831',level:9},
-    ]
-  },
-  {
-    name:'医药生物',code:'MED',strength:3.9,prevStrength:4.2,trend:'down',desc:'创新药·生物科技·医疗器械',
-    level:'weak',rec:'规避',
-    stocks:[
-      {name:'恒瑞医药',code:'600276',level:2},
+      {name:'恒瑞医药',code:'600276',level:3},
       {name:'药明康德',code:'603259',level:9},
-      {name:'迈瑞医疗',code:'300760',level:8},
-      {name:'智飞生物',code:'300122',level:2},
+      {name:'迈瑞医疗',code:'300760',level:7},
+      {name:'智飞生物',code:'300122',level:7},
       {name:'长春高新',code:'000661',level:1},
-      {name:'康泰生物',code:'300601',level:2},
-      {name:'复星医药',code:'600196',level:2},
-      {name:'华东医药',code:'000963',level:2},
-      {name:'华海药业',code:'600521',level:8},
+      {name:'康泰生物',code:'300601',level:7},
+      {name:'复星医药',code:'600196',level:7},
+      {name:'华东医药',code:'000963',level:1},
+      {name:'华海药业',code:'600521',level:1},
       {name:'科伦药业',code:'002422',level:9},
     ]
   },
   {
-    name:'消费电子',code:'CE',strength:3.3,prevStrength:3.6,trend:'down',desc:'手机·平板·可穿戴',
-    level:'weak',rec:'规避',
+    name:'房地产开发',code:'RE',strength:5.3,prevStrength:1.8,trend:'up',desc:'开发·建筑·建材',
+    level:'neutral',rec:'可选',
     stocks:[
-      {name:'立讯精密',code:'002475',level:2},
-      {name:'歌尔股份',code:'002241',level:6},
-      {name:'蓝思科技',code:'300433',level:2},
-      {name:'欣旺达',code:'300207',level:7},
-      {name:'长盈精密',code:'300115',level:4},
-      {name:'领益智造',code:'002600',level:4},
-      {name:'东山精密',code:'002384',level:9},
-      {name:'深天马A',code:'000050',level:5},
-      {name:'信维通信',code:'300136',level:4},
-      {name:'硕贝德',code:'300322',level:6},
-    ]
-  },
-  {
-    name:'新型储能',code:'NRG',strength:2.8,prevStrength:2.6,trend:'up',desc:'储能电池·储能系统·能源管理',
-    level:'weak',rec:'规避',
-    stocks:[
-      {name:'宁德时代',code:'300750',level:1},
-      {name:'阳光电源',code:'300274',level:3},
-      {name:'比亚迪',code:'002594',level:1},
-      {name:'科陆电子',code:'002121',level:1},
-      {name:'南都电源',code:'300068',level:7},
-      {name:'亿纬锂能',code:'300014',level:4},
-      {name:'派能科技',code:'688063',level:3},
-      {name:'固德威',code:'688390',level:3},
-      {name:'鹏辉能源',code:'300438',level:2},
-      {name:'昆宇电源',code:'688120',level:9},
-    ]
-  },
-  {
-    name:'房地产开发',code:'RE',strength:2.2,prevStrength:4.2,trend:'down',desc:'开发·建筑·建材',
-    level:'weak',rec:'规避',
-    stocks:[
-      {name:'保利发展',code:'600048',level:7},
-      {name:'万科A',code:'000002',level:7},
+      {name:'保利发展',code:'600048',level:8},
+      {name:'万科A',code:'000002',level:8},
       {name:'招商蛇口',code:'001979',level:6},
       {name:'中国建筑',code:'601668',level:1},
       {name:'海螺水泥',code:'600585',level:1},
       {name:'华侨城A',code:'000069',level:7},
-      {name:'北新建材',code:'000786',level:2},
-      {name:'金地集团',code:'600383',level:6},
-      {name:'滨江集团',code:'002244',level:2},
+      {name:'北新建材',code:'000786',level:1},
+      {name:'金地集团',code:'600383',level:7},
+      {name:'滨江集团',code:'002244',level:3},
       {name:'新城控股',code:'601155',level:7},
     ]
   },
   {
-    name:'新能源汽车',code:'NEV',strength:1.8,prevStrength:2.4,trend:'down',desc:'电池·整车·充电桩',
+    name:'消费电子',code:'CE',strength:4.9,prevStrength:2.9,trend:'up',desc:'手机·平板·可穿戴',
+    level:'neutral',rec:'可选',
+    stocks:[
+      {name:'立讯精密',code:'002475',level:1},
+      {name:'歌尔股份',code:'002241',level:8},
+      {name:'蓝思科技',code:'300433',level:1},
+      {name:'欣旺达',code:'300207',level:7},
+      {name:'长盈精密',code:'300115',level:1},
+      {name:'领益智造',code:'002600',level:1},
+      {name:'东山精密',code:'002384',level:9},
+      {name:'深天马A',code:'000050',level:1},
+      {name:'信维通信',code:'300136',level:1},
+      {name:'硕贝德',code:'300322',level:1},
+    ]
+  },
+  {
+    name:'有色金属',code:'NM',strength:4.5,prevStrength:3.9,trend:'up',desc:'铜·铝·锌·稀土',
+    level:'neutral',rec:'可选',
+    stocks:[
+      {name:'紫金矿业',code:'601899',level:1},
+      {name:'洛阳钼业',code:'603993',level:1},
+      {name:'铜陵有色',code:'000630',level:1},
+      {name:'中国铝业',code:'601600',level:1},
+      {name:'驰宏锌锗',code:'600497',level:9},
+      {name:'盛和资源',code:'600392',level:1},
+      {name:'北方稀土',code:'600111',level:1},
+      {name:'五矿稀土',code:'000831',level:9},
+      {name:'厦门钨业',code:'600549',level:1},
+      {name:'中国稀土',code:'000831',level:9},
+    ]
+  },
+  {
+    name:'光伏新能源',code:'PV',strength:3.5,prevStrength:1.4,trend:'up',desc:'光伏电池·逆变器·装机',
+    level:'weak',rec:'规避',
+    stocks:[
+      {name:'隆基绿能',code:'601012',level:1},
+      {name:'通威股份',code:'600438',level:1},
+      {name:'晶澳科技',code:'002459',level:1},
+      {name:'天合光能',code:'688599',level:1},
+      {name:'爱旭股份',code:'600732',level:4},
+      {name:'福莱特',code:'601865',level:1},
+      {name:'中环股份',code:'002129',level:6},
+      {name:'钧达股份',code:'002865',level:1},
+      {name:'迈为股份',code:'300751',level:6},
+      {name:'捷佳伟创',code:'300724',level:4},
+    ]
+  },
+  {
+    name:'新能源汽车',code:'NEV',strength:3.1,prevStrength:1.5,trend:'up',desc:'电池·整车·充电桩',
     level:'weak',rec:'规避',
     stocks:[
       {name:'比亚迪',code:'002594',level:1},
       {name:'宁德时代',code:'300750',level:1},
       {name:'中国汽研',code:'601965',level:1},
-      {name:'拓普集团',code:'601689',level:3},
-      {name:'均胜电子',code:'600699',level:5},
-      {name:'星宇股份',code:'601799',level:2},
-      {name:'文灿股份',code:'603348',level:1},
-      {name:'博俊科技',code:'301459',level:4},
+      {name:'拓普集团',code:'601689',level:4},
+      {name:'均胜电子',code:'600699',level:7},
+      {name:'星宇股份',code:'601799',level:1},
+      {name:'文灿股份',code:'603348',level:7},
+      {name:'博俊科技',code:'301459',level:1},
       {name:'旭升集团',code:'603305',level:4},
-      {name:'科博达',code:'603786',level:2},
+      {name:'科博达',code:'603786',level:1},
     ]
   },
   {
-    name:'光伏新能源',code:'PV',strength:1.7,prevStrength:2.0,trend:'down',desc:'光伏电池·逆变器·装机',
+    name:'新型储能',code:'NRG',strength:2.9,prevStrength:2.7,trend:'up',desc:'储能电池·储能系统·能源管理',
     level:'weak',rec:'规避',
     stocks:[
-      {name:'隆基绿能',code:'601012',level:2},
-      {name:'通威股份',code:'600438',level:2},
-      {name:'晶澳科技',code:'002459',level:3},
-      {name:'天合光能',code:'688599',level:3},
-      {name:'爱旭股份',code:'600732',level:3},
-      {name:'福莱特',code:'601865',level:2},
-      {name:'中环股份',code:'002129',level:2},
-      {name:'钧达股份',code:'002865',level:3},
-      {name:'迈为股份',code:'300751',level:6},
-      {name:'捷佳伟创',code:'300724',level:3},
+      {name:'宁德时代',code:'300750',level:1},
+      {name:'阳光电源',code:'300274',level:1},
+      {name:'比亚迪',code:'002594',level:1},
+      {name:'科陆电子',code:'002121',level:1},
+      {name:'南都电源',code:'300068',level:1},
+      {name:'亿纬锂能',code:'300014',level:1},
+      {name:'派能科技',code:'688063',level:1},
+      {name:'固德威',code:'688390',level:1},
+      {name:'鹏辉能源',code:'300438',level:1},
+      {name:'昆宇电源',code:'688120',level:9},
     ]
   },
 ];
 
 const TIMELINE = [
-  {date:'2026-08-28',title:'领跑：金融服务(7.6) · 有色金属(7.4) · AI算力产业链(6.2)',desc:'周度强弱指标排序，前三为 金融服务；其后 医药生物(5.9)；半导体芯片(5.4)。'},
-  {date:'2026-09-04',title:'领跑：金融服务(7.8) · AI算力产业链(6.4) · 有色金属(6.4)',desc:'周度强弱指标排序，前三为 金融服务；其后 半导体芯片(6.1)；医药生物(5.2)。'},
-  {date:'2026-09-11',title:'领跑：金融服务(7.8) · AI算力产业链(6.0) · 有色金属(5.6)',desc:'周度强弱指标排序，前三为 金融服务；其后 半导体芯片(5.5)；医药生物(4.2)。'},
-  {date:'2026-09-18',title:'领跑：金融服务(6.4) · AI算力产业链(6.2) · 半导体芯片(5.9)',desc:'周度强弱指标排序，前三为 金融服务；其后 有色金属(4.3)；医药生物(3.9)。'},
+  {date:'2026-09-03',title:'领跑：金融服务(7.6) · 有色金属(6.9) · AI算力产业链(6.6)',desc:'周度强弱指标排序，前三为 金融服务；其后 半导体芯片(6.2)；医药生物(5.3)。'},
+  {date:'2026-09-10',title:'领跑：金融服务(7.9) · 有色金属(6.1) · AI算力产业链(6.0)',desc:'周度强弱指标排序，前三为 金融服务；其后 半导体芯片(5.5)；医药生物(4.7)。'},
+  {date:'2026-09-17',title:'领跑：金融服务(6.7) · AI算力产业链(6.0) · 半导体芯片(5.6)',desc:'周度强弱指标排序，前三为 金融服务；其后 有色金属(3.9)；医药生物(3.7)。'},
+  {date:'2026-09-24',title:'领跑：半导体芯片(7.3) · 金融服务(7.2) · AI算力产业链(6.9)',desc:'周度强弱指标排序，前三为 半导体芯片；其后 医药生物(6.0)；房地产开发(5.3)。'},
 ];
+
+// ─────────────── 通用 ───────────────
+const LV_COLOR = l => LEVEL_INFO[Math.min(Math.max(l,1),9)-1].color;
+const TREND_COLOR = {up:'var(--up)',down:'var(--down)',flat:'var(--gold)'};
 
 // ─────────────── 渲染函数 ───────────────
 function renderTheory(){
@@ -441,7 +492,7 @@ function renderTheory(){
   LEVEL_INFO.forEach(it=>{
     const d = document.createElement('div');
     d.className = 'theory-item';
-    d.style.borderLeftColor = it.color;
+    d.style.borderLeft = '3px solid '+it.color;
     d.innerHTML = `<div class="th-level" style="color:${it.color}">第${it.level}级</div>
       <div class="th-ma">${it.ma}</div>
       <div class="th-desc">${it.desc}</div>`;
@@ -451,12 +502,13 @@ function renderTheory(){
 
 function renderSectors(){
   const g = document.getElementById('sectorGrid');
-  SECTORS.forEach((s,si)=>{
+  const sorted = [...SECTORS].sort((a,b)=>b.strength-a.strength);
+  sorted.forEach((s,si)=>{
     const change = s.strength - s.prevStrength;
-    const changePct = ((change/s.prevStrength)*100).toFixed(1);
-    const arrow = s.trend==='up'?'↗ 上升':s.trend==='down'?'↘ 下降':'→ 横盘';
-    const arrowClass = s.trend==='up'?'val-up':s.trend==='down'?'val-down':'val-flat';
+    const color = TREND_COLOR[s.trend]||TREND_COLOR.flat;
     const badgeClass = s.level==='strong'?'badge-strong':s.level==='weak'?'badge-weak':'badge-neutral';
+    const deltaCls = change>0?'up':change<0?'down':'flat';
+    const deltaTxt = (change>0?'▲ +':change<0?'▼ ':'→ ')+Math.abs(change).toFixed(1);
 
     const card = document.createElement('div');
     card.className = `sector-card ${s.level}`;
@@ -464,22 +516,24 @@ function renderSectors(){
 
     card.innerHTML = `
       <div class="card-head">
-        <div class="card-name">${s.name}</div>
+        <div class="card-rank">${si+1}</div>
+        <div>
+          <div class="card-name">${s.name}</div>
+          <div class="card-desc">${s.desc}</div>
+        </div>
         <div class="card-badge ${badgeClass}">${s.rec}</div>
       </div>
-      <div class="card-stats">
-        <div class="stat-box"><div class="stat-label">强弱指标</div><div class="stat-val" style="color:#c89b1a">${s.strength.toFixed(1)}</div></div>
-        <div class="stat-box"><div class="stat-label">周变化</div><div class="stat-val ${change>=0?'val-up':'val-down'}">${change>=0?'+':''}${change.toFixed(1)}</div></div>
-        <div class="stat-box"><div class="stat-label">涨跌幅</div><div class="stat-val ${change>=0?'val-up':'val-down'}">${change>=0?'+':''}${changePct}%</div></div>
-      </div>
-      <div class="trend-row">
-        <span class="trend-arrow ${arrowClass}">${arrow}</span>
-        <span style="color:#5b6470;font-size:11px;">${s.desc}</span>
+      <div class="strength-row">
+        <div class="strength-num" style="color:${color}">${s.strength.toFixed(1)}<small> / 9</small></div>
+        <div class="strength-track">
+          <div class="strength-fill" style="width:${(s.strength/9*100).toFixed(1)}%;background:${color};"></div>
+        </div>
+        <div class="delta-chip ${deltaCls}">上周 ${s.prevStrength.toFixed(1)} ${deltaTxt}</div>
       </div>
       <div class="stocks-area">
-        <div class="stocks-label">点击个股查看K线分析（双轨制）</div>
+        <div class="stocks-label">点击个股查看 K 线分析（双轨制）</div>
         <div class="stocks-wrap">
-          ${s.stocks.map(st=>`<button class="stock-btn ${st.level>=7?'top':''}" onclick="openStock('${st.code}','${st.name}',${st.level},'${s.name}')">${st.name}<span style="font-size:9px;opacity:.7;margin-left:2px;">L${st.level}</span></button>`).join('')}
+          ${s.stocks.map(st=>`<button class="stock-btn" onclick="openStock('${st.code}','${st.name}',${st.level},'${s.name}')">${st.name}<span class="lv" style="background:${LV_COLOR(st.level)};">${st.level}</span></button>`).join('')}
         </div>
       </div>`;
     g.appendChild(card);
@@ -489,31 +543,38 @@ function renderSectors(){
 function renderBarChart(){
   const wrap = document.getElementById('barChart');
   const sorted = [...SECTORS].sort((a,b)=>b.strength-a.strength);
-  sorted.forEach(s=>{
-    const pct = (s.strength/9*100).toFixed(0);
-    const color = s.level==='strong'?'#d64545':s.level==='weak'?'#2f9e44':'#c89b1a';
+  wrap.innerHTML = sorted.map(s=>{
+    const now = (s.strength/9*100).toFixed(1);
+    const prev = (s.prevStrength/9*100).toFixed(1);
+    const color = TREND_COLOR[s.trend]||TREND_COLOR.flat;
     const change = s.strength-s.prevStrength;
-    wrap.innerHTML += `
+    const dTxt = (change>=0?'▲':'▼')+Math.abs(change).toFixed(1);
+    const dCol = change>=0?'var(--up)':'var(--down)';
+    return `
       <div class="chart-bar-item">
-        <div class="bar-name" title="${s.name}">${s.name.length>5?s.name.slice(0,5)+'…':s.name}</div>
+        <div class="bar-name" title="${s.name}">${s.name.length>6?s.name.slice(0,6)+'…':s.name}</div>
         <div class="bar-track">
-          <div class="bar-fill" style="width:${pct}%;background:${color};"></div>
+          <div class="bar-ghost" style="width:${Math.max(now,prev)}%;"></div>
+          <div class="bar-fill" style="width:${now}%;background:${color};"></div>
         </div>
         <div class="bar-val" style="color:${color}">${s.strength.toFixed(1)}</div>
-        <div style="font-size:10px;width:44px;text-align:right;color:${change>=0?'#d64545':'#2f9e44'}">${change>=0?'▲':'▼'}${Math.abs(change).toFixed(1)}</div>
+        <div class="bar-delta" style="color:${dCol}">${dTxt}</div>
       </div>`;
-  });
+  }).join('') + `
+    <div class="legend-row">
+      <span><i style="background:var(--up);"></i>本周强度（颜色随趋势）</span>
+      <span><i class="bar-ghost" style="position:static;width:18px;height:8px;"></i>上周位置</span>
+    </div>`;
 }
 
 function renderTimeline(){
   const wrap = document.getElementById('timeline');
-  TIMELINE.forEach(t=>{
-    wrap.innerHTML += `<div class="tl-item">
+  wrap.innerHTML = TIMELINE.map(t=>`
+    <div class="tl-item">
       <div class="tl-date">${t.date}</div>
       <div class="tl-title">${t.title}</div>
       <div class="tl-desc">${t.desc}</div>
-    </div>`;
-  });
+    </div>`).join('');
 }
 
 function renderRec(){
@@ -521,38 +582,36 @@ function renderRec(){
   const top3 = SECTORS.filter(s=>s.level==='strong').slice(0,3);
   const mid = SECTORS.filter(s=>s.level==='neutral'&&s.trend==='up');
   const avoid = SECTORS.filter(s=>s.level==='weak'&&s.trend==='down');
-  wrap.innerHTML = `
-  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;">
-    ${top3.map((s,i)=>`
-      <div style="background:#ffffff;border:1px solid #d64545;border-radius:10px;padding:16px;">
-        <div style="color:#d64545;font-weight:bold;margin-bottom:8px;">${['🥇','🥈','🥉'][i]} 优先级${i+1}：${s.name}</div>
-        <div style="font-size:12px;color:#5b6470;line-height:1.8;">
-          ✓ 强弱指标 ${s.strength.toFixed(1)}（持续上升）<br>
-          ✓ 多只股票处于第7-9级强势区间<br>
-          ✓ 建议：板块内高等级个股 + 缠论二买确认后入场
-        </div>
-        <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:4px;">
-          ${s.stocks.filter(st=>st.level>=7).map(st=>`<span style="background:rgba(229,57,53,.1);border:1px solid #d64545;color:#d64545;border-radius:4px;padding:2px 8px;font-size:11px;">${st.name}</span>`).join('')}
-        </div>
-      </div>`).join('')}
-    <div style="background:#ffffff;border:1px solid #c89b1a;border-radius:10px;padding:16px;">
-      <div style="color:#c89b1a;font-weight:bold;margin-bottom:8px;">📌 观察机会：${mid.map(s=>s.name).join(' · ')}</div>
-      <div style="font-size:12px;color:#5b6470;line-height:1.8;">指标处于上升初期，可先建立观察仓。等待板块指标突破5.5以上且缠论二买形成时加仓。</div>
+  const medals=['🥇','🥈','🥉'];
+  let html = top3.map((s,i)=>`
+    <div class="rec-card rec-strong">
+      <div class="rec-title" style="color:var(--up);">${medals[i]||'🏅'} 优先级${i+1}：${s.name}</div>
+      <div class="rec-body">
+        ✓ 强弱指标 ${s.strength.toFixed(1)}（趋势${s.trend==='up'?'向上':s.trend==='down'?'回落':'横盘'}）<br>
+        ✓ 板块内 ${s.stocks.filter(st=>st.level>=7).length} 只个股处于第 7-9 级强势区间<br>
+        ✓ 建议：板块内高等级个股 + 缠论二买确认后入场
+      </div>
+      <div class="rec-chips">
+        ${s.stocks.filter(st=>st.level>=7).map(st=>`<span class="rec-chip" style="background:rgba(214,69,69,.08);color:var(--up);border:1px solid rgba(214,69,69,.4);">${st.name} <b>${st.level}</b></span>`).join('')||'<span style="color:var(--tx3);font-size:11px;">暂无 7 级以上个股</span>'}
+      </div>
+    </div>`).join('');
+  html += `
+    <div class="rec-card rec-neutral">
+      <div class="rec-title" style="color:var(--gold);">📌 观察机会：${mid.length?mid.map(s=>s.name).join(' · '):'暂无'}</div>
+      <div class="rec-body">指标处于上升初期，可先建立观察仓。等待板块指标突破 5.5 以上且缠论二买形成时加仓。</div>
     </div>
-    <div style="background:#ffffff;border:1px solid #2f9e44;border-radius:10px;padding:16px;">
-      <div style="color:#2f9e44;font-weight:bold;margin-bottom:8px;">❌ 规避：${avoid.map(s=>s.name).join(' · ')}</div>
-      <div style="font-size:12px;color:#5b6470;line-height:1.8;">板块强弱指标持续下降，暂无轮动信号。等待触底确认后再考虑介入。</div>
-    </div>
-  </div>`;
+    <div class="rec-card rec-weak">
+      <div class="rec-title" style="color:var(--down);">❌ 规避：${avoid.length?avoid.map(s=>s.name).join(' · '):'暂无'}</div>
+      <div class="rec-body">板块强弱指标持续下降，暂无轮动信号。等待触底确认后再考虑介入。</div>
+    </div>`;
+  wrap.innerHTML = html;
 }
 
 // ─────────────── MA颜色 ───────────────
 function renderMALegend(){
   const wrap = document.getElementById('maLegend');
-  wrap.innerHTML = '';
-  MA_PERIODS.forEach((p,i)=>{
-    wrap.innerHTML += `<div class="ma-item"><div class="ma-dot" style="background:${MA_COLORS[i]};"></div>${MA_NAMES[i]}</div>`;
-  });
+  wrap.innerHTML = MA_PERIODS.map((p,i)=>
+    `<div class="ma-item"><div class="ma-dot" style="background:${MA_COLORS[i]};"></div>${MA_NAMES[i]}</div>`).join('');
 }
 
 // ─────────────── 计算MA ───────────────
@@ -572,155 +631,6 @@ function calcLevel(lastClose, mas){
     if(maVals[i]!==null && lastClose > maVals[i]) level = i+2;
   }
   return Math.min(level,9);
-}
-
-// ─────────────── 绘制K线 + 均线 ───────────────
-function drawKline(canvas, kdata){
-  const DPR = window.devicePixelRatio||1;
-  const N = kdata.length;
-  const BAR = Math.max(8, Math.floor((canvas.parentElement.clientWidth-120)/N));
-  const W = Math.max(canvas.parentElement.clientWidth, N*BAR+120);
-  const H = 440;
-  canvas.width = W*DPR;
-  canvas.height = H*DPR;
-  canvas.style.width = W+'px';
-  canvas.style.height = H+'px';
-  const ctx = canvas.getContext('2d');
-  ctx.scale(DPR,DPR);
-
-  ctx.fillStyle='#f5f6f8';
-  ctx.fillRect(0,0,W,H);
-
-  const PX=60, PY=20, CW=W-PX-10, CH=340;
-  const MACD_Y=PY+CH+20, MACD_H=60;
-
-  const closes = kdata.map(d=>d[2]);
-  const highs  = kdata.map(d=>d[3]);
-  const lows   = kdata.map(d=>d[4]);
-  const opens  = kdata.map(d=>d[1]);
-
-  const allMAData = {};
-  MA_PERIODS.forEach(p=>{ allMAData[p]=calcMA(closes,p); });
-
-  let yMin = Math.min(...lows);
-  let yMax = Math.max(...highs);
-  MA_PERIODS.forEach(p=>{
-    allMAData[p].forEach(v=>{if(v!==null){yMin=Math.min(yMin,v);yMax=Math.max(yMax,v);}});
-  });
-  const pad=(yMax-yMin)*0.05;
-  yMin-=pad; yMax+=pad;
-  const yScale=v=>(PY+CH)-((v-yMin)/(yMax-yMin))*CH;
-
-  ctx.strokeStyle='#f7f9fb';
-  ctx.lineWidth=1;
-  for(let i=0;i<5;i++){
-    const y=PY+i*(CH/4);
-    ctx.beginPath();ctx.moveTo(PX,y);ctx.lineTo(W-10,y);ctx.stroke();
-    const val=(yMax-(yMax-yMin)*i/4).toFixed(2);
-    ctx.fillStyle='#c9d4e0';ctx.font='10px Arial';
-    ctx.fillText(val,2,y+4);
-  }
-
-  const labelStep=Math.max(1,Math.floor(N/8));
-  ctx.fillStyle='#c9d4e0';ctx.font='10px Arial';
-  kdata.forEach((d,i)=>{
-    if(i%labelStep===0){
-      const x=PX+i*BAR+BAR/2;
-      ctx.fillText(d[0].slice(5),x-14,H-4);
-    }
-  });
-
-  kdata.forEach((d,i)=>{
-    const [date,open,close,high,low]=d;
-    const x=PX+i*BAR;
-    const isUp = close>=open;
-    const color = isUp?'#d64545':'#2f9e44';
-    ctx.strokeStyle=color;
-    ctx.fillStyle=color;
-    ctx.lineWidth=1;
-    ctx.beginPath();
-    ctx.moveTo(x+BAR/2,yScale(high));
-    ctx.lineTo(x+BAR/2,yScale(low));
-    ctx.stroke();
-    const oy=yScale(Math.max(open,close));
-    const cy=yScale(Math.min(open,close));
-    const bh=Math.max(1,cy-oy);
-    const bw=Math.max(2,BAR-2);
-    ctx.fillRect(x+1,oy,bw,bh);
-  });
-
-  MA_PERIODS.forEach((p,pi)=>{
-    const vals=allMAData[p];
-    ctx.beginPath();
-    ctx.strokeStyle=MA_COLORS[pi];
-    ctx.lineWidth=1.2;
-    let first=true;
-    vals.forEach((v,i)=>{
-      if(v===null)return;
-      const x=PX+i*BAR+BAR/2;
-      if(first){ctx.moveTo(x,yScale(v));first=false;}
-      else ctx.lineTo(x,yScale(v));
-    });
-    ctx.stroke();
-  });
-
-  const lastClose=closes[closes.length-1];
-  ctx.strokeStyle='rgba(255,215,0,.4)';
-  ctx.lineWidth=0.8;
-  ctx.setLineDash([4,4]);
-  ctx.beginPath();
-  ctx.moveTo(PX,yScale(lastClose));
-  ctx.lineTo(W-10,yScale(lastClose));
-  ctx.stroke();
-  ctx.setLineDash([]);
-  ctx.fillStyle='#c89b1a';ctx.font='bold 11px Arial';
-  ctx.fillText(lastClose.toFixed(2),W-55,yScale(lastClose)-4);
-
-  ctx.fillStyle='#f7f9fb';
-  ctx.fillRect(PX,MACD_Y,CW,MACD_H);
-  ctx.strokeStyle='#e3e6ea';ctx.lineWidth=0.5;
-  ctx.strokeRect(PX,MACD_Y,CW,MACD_H);
-  ctx.fillStyle='#c9d4e0';ctx.font='10px Arial';
-  ctx.fillText('MACD',2,MACD_Y+14);
-
-  function calcEMA(data,n){
-    const k=2/(n+1);
-    const ema=[];
-    data.forEach((v,i)=>{
-      if(i===0){ema.push(v);}
-      else{ema.push(v*k+ema[i-1]*(1-k));}
-    });
-    return ema;
-  }
-  const ema12=calcEMA(closes,12);
-  const ema26=calcEMA(closes,26);
-  const dif=ema12.map((v,i)=>v-ema26[i]);
-  const dea=calcEMA(dif,9);
-  const macdBar=dif.map((v,i)=>2*(v-dea[i]));
-  const mMax=Math.max(...macdBar.map(Math.abs),0.01);
-  const mScale=v=>MACD_Y+MACD_H/2-v/mMax*(MACD_H/2-4);
-  macdBar.forEach((v,i)=>{
-    const x=PX+i*BAR+1;
-    const color=v>=0?'#d64545':'#2f9e44';
-    ctx.fillStyle=color;
-    const ys=mScale(0),ye=mScale(v);
-    ctx.fillRect(x,Math.min(ys,ye),Math.max(1,BAR-2),Math.abs(ye-ys)||1);
-  });
-  ctx.strokeStyle='#c89b1a';ctx.lineWidth=0.8;
-  ctx.beginPath();
-  dif.forEach((v,i)=>{ctx.lineTo(PX+i*BAR+BAR/2,mScale(v));});
-  ctx.stroke();
-  ctx.strokeStyle='#87CEEB';ctx.lineWidth=0.8;
-  ctx.beginPath();
-  dea.forEach((v,i)=>{ctx.lineTo(PX+i*BAR+BAR/2,mScale(v));});
-  ctx.stroke();
-
-  const lastMAs={};
-  MA_PERIODS.forEach(p=>{
-    const arr=allMAData[p];
-    lastMAs[p]=arr[arr.length-1];
-  });
-  return {level:calcLevel(lastClose,lastMAs), lastClose, lastMAs};
 }
 
 // ─────────────── K线 API：腾讯为主（带 CORS，公网可用），东财为备 ───────────────
@@ -823,8 +733,9 @@ async function openStock(code, name, levelFromData, sectorName){
 
 function showLevelInfo(dayLevel, weekLevel){
   const info = LEVEL_INFO[dayLevel-1];
-  document.getElementById('levelNum').textContent=`日线 第${dayLevel}级`;
-  document.getElementById('levelNum').style.color=info.color;
+  const num=document.getElementById('levelNum');
+  num.textContent=`第${dayLevel}级`;
+  num.style.color=info.color;
   document.getElementById('levelTitle').textContent=`日线：${info.ma}`;
   if(weekLevel !== null && weekLevel !== undefined){
     const wInfo = LEVEL_INFO[weekLevel-1];
@@ -837,18 +748,20 @@ function showLevelInfo(dayLevel, weekLevel){
   tag.style.background=`${info.color}22`;
   tag.style.color=info.color;
   tag.style.borderColor=info.color;
+  tag.style.borderStyle='solid';
+  tag.style.borderWidth='1px';
 }
 
 function showAnalysisTip(dayLevel, name, result, weekLevel){
   const tip=document.getElementById('analysisTip');
   const lClose=result?result.lastClose.toFixed(2):'—';
-  
+
   let syncText = '';
   if(weekLevel !== null && weekLevel !== undefined){
     if(weekLevel >= dayLevel){
-      syncText = `<div style="color:#d64545;margin-bottom:8px;">📡 双轨共振：日线第${dayLevel}级 + 周线第${weekLevel}级，周线趋势更强，<strong>趋势可信度高</strong>。</div>`;
+      syncText = `<div style="color:var(--up);margin-bottom:8px;">📡 双轨共振：日线第${dayLevel}级 + 周线第${weekLevel}级，周线趋势更强，<strong>趋势可信度高</strong>。</div>`;
     } else if(weekLevel < dayLevel - 2){
-      syncText = `<div style="color:#c89b1a;margin-bottom:8px;">⚡ 双轨背离：日线第${dayLevel}级但周线仅第${weekLevel}级，短期反弹、中期趋势未确认，<strong>谨慎入场，轻仓观察</strong>。</div>`;
+      syncText = `<div style="color:var(--gold);margin-bottom:8px;">⚡ 双轨背离：日线第${dayLevel}级但周线仅第${weekLevel}级，短期反弹、中期趋势未确认，<strong>谨慎入场，轻仓观察</strong>。</div>`;
     } else {
       syncText = `<div style="color:#FFA07A;margin-bottom:8px;">📊 双轨基本同步：日线第${dayLevel}级，周线第${weekLevel}级，趋势方向一致，可按常规操作。</div>`;
     }
@@ -856,31 +769,180 @@ function showAnalysisTip(dayLevel, name, result, weekLevel){
 
   let advice='';
   if(dayLevel>=8){
-    advice=`<span style="color:#d64545;">📈 强势状态（日线第${dayLevel}级）：${name} 突破大部分均线，处于强势多头区间。<br>操作建议：等待回调到MA55-MA89形成底分型（缠论二买），是最佳入场机会。止损设MA89线下方。</span>`;
+    advice=`<span style="color:var(--up);">📈 强势状态（日线第${dayLevel}级）：${name} 突破大部分均线，处于强势多头区间。<br>操作建议：等待回调到MA55-MA89形成底分型（缠论二买），是最佳入场机会。止损设MA89线下方。</span>`;
   }else if(dayLevel>=6){
     advice=`<span style="color:#FF9800;">📊 偏强状态（日线第${dayLevel}级）：${name} 处于${LEVEL_INFO[dayLevel-1].ma}。<br>操作建议：适度关注，等待底分型 + 板块指标双重确认后入场。</span>`;
   }else if(dayLevel>=4){
-    advice=`<span style="color:#c89b1a;">⏸ 中性状态（日线第${dayLevel}级）：${name} 处于${LEVEL_INFO[dayLevel-1].ma}。<br>操作建议：当前不是最佳时机，观察板块强弱指标 + 等待连续升级信号。</span>`;
+    advice=`<span style="color:var(--gold);">⏸ 中性状态（日线第${dayLevel}级）：${name} 处于${LEVEL_INFO[dayLevel-1].ma}。<br>操作建议：当前不是最佳时机，观察板块强弱指标 + 等待连续升级信号。</span>`;
   }else{
-    advice=`<span style="color:#2f9e44;">⚠️ 弱势状态（日线第${dayLevel}级）：${name} 受均线压制（${LEVEL_INFO[dayLevel-1].ma}）。<br>操作建议：不宜进入，等待突破MA21并形成底分型再评估。</span>`;
+    advice=`<span style="color:var(--down);">⚠️ 弱势状态（日线第${dayLevel}级）：${name} 受均线压制（${LEVEL_INFO[dayLevel-1].ma}）。<br>操作建议：不宜进入，等待突破MA21并形成底分型再评估。</span>`;
   }
   tip.innerHTML=`
-    <div style="color:#c89b1a;font-weight:bold;margin-bottom:10px;">📖 缠论第106课 · 双轨制分析</div>
-    <div style="margin-bottom:8px;font-size:12px;">当前日线收盘价：<span style="color:#fff;font-weight:bold;">${lClose}</span>
+    <div style="color:var(--gold);font-weight:bold;margin-bottom:10px;">📖 缠论第106课 · 双轨制分析</div>
+    <div style="margin-bottom:8px;font-size:12px;">当前日线收盘价：<span style="color:var(--tx);font-weight:bold;">${lClose}</span>
       &nbsp;|&nbsp; 日线级别：<span style="color:${LEVEL_INFO[dayLevel-1].color};font-weight:bold;">第${dayLevel}级</span>
       ${weekLevel!==null&&weekLevel!==undefined?`&nbsp;|&nbsp; 周线级别：<span style="color:${LEVEL_INFO[weekLevel-1].color};font-weight:bold;">第${weekLevel}级</span>`:''}
     </div>
     ${syncText}
     ${result?`<div style="margin-bottom:10px;display:flex;flex-wrap:wrap;gap:6px;">
-      ${MA_PERIODS.map((p,i)=>`<span style="background:#ffffff;border:1px solid ${MA_COLORS[i]};border-radius:4px;padding:2px 8px;font-size:11px;color:${MA_COLORS[i]};">MA${p}: ${result.lastMAs[p]?result.lastMAs[p].toFixed(2):'—'}</span>`).join('')}
+      ${MA_PERIODS.map((p,i)=>`<span style="background:var(--card);border:1px solid ${MA_COLORS[i]};border-radius:4px;padding:2px 8px;font-size:11px;color:${MA_COLORS[i]};">MA${p}: ${result.lastMAs[p]?result.lastMAs[p].toFixed(2):'—'}</span>`).join('')}
     </div>`:''}
     <div>${advice}</div>
-    <div style="margin-top:12px;padding-top:10px;border-top:1px solid #e3e6ea;color:#8b949e;font-size:11px;line-height:1.8;">
-      <strong style="color:#5b6470;">双轨制说明</strong>（缠论第106课应用）<br>
-      ① <span style="color:#8b949e;">日线分级</span> → 判断个股当前强弱位置，用于选股筛选<br>
-      ② <span style="color:#8b949e;">周线走势</span> → 判断中期趋势方向（K线图展示），用于验证入场方向<br>
-      ③ <span style="color:#8b949e;">双轨共振</span> = 日线+周线方向一致 → 信号最强，优先介入
+    <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--line2);color:var(--tx3);font-size:11px;line-height:1.8;">
+      <strong style="color:var(--tx2);">双轨制说明</strong>（缠论第106课应用）<br>
+      ① <span style="color:var(--tx3);">日线分级</span> → 判断个股当前强弱位置，用于选股筛选<br>
+      ② <span style="color:var(--tx3);">周线走势</span> → 判断中期趋势方向（K线图展示），用于验证入场方向<br>
+      ③ <span style="color:var(--tx3);">双轨共振</span> = 日线+周线方向一致 → 信号最强，优先介入
     </div>`;
+}
+
+// ─────────────── 绘制K线 + 均线 ───────────────
+function drawKline(canvas, kdata){
+  const DPR = window.devicePixelRatio||1;
+  const N = kdata.length;
+  const BAR = Math.max(8, Math.floor((canvas.parentElement.clientWidth-120)/N));
+  const W = Math.max(canvas.parentElement.clientWidth, N*BAR+120);
+  const H = 440;
+  canvas.width = W*DPR;
+  canvas.height = H*DPR;
+  canvas.style.width = W+'px';
+  canvas.style.height = H+'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(DPR,DPR);
+
+  ctx.fillStyle='#f5f6f8';
+  ctx.fillRect(0,0,W,H);
+
+  const PX=60, PY=20, CW=W-PX-10, CH=340;
+  const MACD_Y=PY+CH+20, MACD_H=60;
+
+  const closes = kdata.map(d=>d[2]);
+  const highs  = kdata.map(d=>d[3]);
+  const lows   = kdata.map(d=>d[4]);
+  const opens  = kdata.map(d=>d[1]);
+
+  const allMAData = {};
+  MA_PERIODS.forEach(p=>{ allMAData[p]=calcMA(closes,p); });
+
+  let yMin = Math.min(...lows);
+  let yMax = Math.max(...highs);
+  MA_PERIODS.forEach(p=>{
+    allMAData[p].forEach(v=>{if(v!==null){yMin=Math.min(yMin,v);yMax=Math.max(yMax,v);}});
+  });
+  const pad=(yMax-yMin)*0.05;
+  yMin-=pad; yMax+=pad;
+  const yScale=v=>(PY+CH)-((v-yMin)/(yMax-yMin))*CH;
+
+  ctx.strokeStyle='#eef0f3';
+  ctx.lineWidth=1;
+  for(let i=0;i<5;i++){
+    const y=PY+i*(CH/4);
+    ctx.beginPath();ctx.moveTo(PX,y);ctx.lineTo(W-10,y);ctx.stroke();
+    const val=(yMax-(yMax-yMin)*i/4).toFixed(2);
+    ctx.fillStyle='#8b949e';ctx.font='10px Arial';
+    ctx.fillText(val,2,y+4);
+  }
+
+  const labelStep=Math.max(1,Math.floor(N/8));
+  ctx.fillStyle='#8b949e';ctx.font='10px Arial';
+  kdata.forEach((d,i)=>{
+    if(i%labelStep===0){
+      const x=PX+i*BAR+BAR/2;
+      ctx.fillText(d[0].slice(5),x-14,H-4);
+    }
+  });
+
+  kdata.forEach((d,i)=>{
+    const [date,open,close,high,low]=d;
+    const x=PX+i*BAR;
+    const isUp = close>=open;
+    const color = isUp?'#d64545':'#2f9e44';
+    ctx.strokeStyle=color;
+    ctx.fillStyle=color;
+    ctx.lineWidth=1;
+    ctx.beginPath();
+    ctx.moveTo(x+BAR/2,yScale(high));
+    ctx.lineTo(x+BAR/2,yScale(low));
+    ctx.stroke();
+    const oy=yScale(Math.max(open,close));
+    const cy=yScale(Math.min(open,close));
+    const bh=Math.max(1,cy-oy);
+    const bw=Math.max(2,BAR-2);
+    ctx.fillRect(x+1,oy,bw,bh);
+  });
+
+  MA_PERIODS.forEach((p,pi)=>{
+    const vals=allMAData[p];
+    ctx.beginPath();
+    ctx.strokeStyle=MA_COLORS[pi];
+    ctx.lineWidth=1.2;
+    let first=true;
+    vals.forEach((v,i)=>{
+      if(v===null)return;
+      const x=PX+i*BAR+BAR/2;
+      if(first){ctx.moveTo(x,yScale(v));first=false;}
+      else ctx.lineTo(x,yScale(v));
+    });
+    ctx.stroke();
+  });
+
+  const lastClose=closes[closes.length-1];
+  ctx.strokeStyle='rgba(200,155,26,.45)';
+  ctx.lineWidth=0.8;
+  ctx.setLineDash([4,4]);
+  ctx.beginPath();
+  ctx.moveTo(PX,yScale(lastClose));
+  ctx.lineTo(W-10,yScale(lastClose));
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle='#c89b1a';ctx.font='bold 11px Arial';
+  ctx.fillText(lastClose.toFixed(2),W-55,yScale(lastClose)-4);
+
+  ctx.fillStyle='#eef0f3';
+  ctx.fillRect(PX,MACD_Y,CW,MACD_H);
+  ctx.strokeStyle='#e3e6ea';ctx.lineWidth=0.5;
+  ctx.strokeRect(PX,MACD_Y,CW,MACD_H);
+  ctx.fillStyle='#8b949e';ctx.font='10px Arial';
+  ctx.fillText('MACD',2,MACD_Y+14);
+
+  function calcEMA(data,n){
+    const k=2/(n+1);
+    const ema=[];
+    data.forEach((v,i)=>{
+      if(i===0){ema.push(v);}
+      else{ema.push(v*k+ema[i-1]*(1-k));}
+    });
+    return ema;
+  }
+  const ema12=calcEMA(closes,12);
+  const ema26=calcEMA(closes,26);
+  const dif=ema12.map((v,i)=>v-ema26[i]);
+  const dea=calcEMA(dif,9);
+  const macdBar=dif.map((v,i)=>2*(v-dea[i]));
+  const mMax=Math.max(...macdBar.map(Math.abs),0.01);
+  const mScale=v=>MACD_Y+MACD_H/2-v/mMax*(MACD_H/2-4);
+  macdBar.forEach((v,i)=>{
+    const x=PX+i*BAR+1;
+    const color=v>=0?'#d64545':'#2f9e44';
+    ctx.fillStyle=color;
+    const ys=mScale(0),ye=mScale(v);
+    ctx.fillRect(x,Math.min(ys,ye),Math.max(1,BAR-2),Math.abs(ye-ys)||1);
+  });
+  ctx.strokeStyle='#c89b1a';ctx.lineWidth=0.8;
+  ctx.beginPath();
+  dif.forEach((v,i)=>{ctx.lineTo(PX+i*BAR+BAR/2,mScale(v));});
+  ctx.stroke();
+  ctx.strokeStyle='#87CEEB';ctx.lineWidth=0.8;
+  ctx.beginPath();
+  dea.forEach((v,i)=>{ctx.lineTo(PX+i*BAR+BAR/2,mScale(v));});
+  ctx.stroke();
+
+  const lastMAs={};
+  MA_PERIODS.forEach(p=>{
+    const arr=allMAData[p];
+    lastMAs[p]=arr[arr.length-1];
+  });
+  return {level:calcLevel(lastClose,lastMAs), lastClose, lastMAs};
 }
 
 function closeModal(e){

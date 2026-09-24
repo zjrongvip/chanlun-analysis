@@ -1,0 +1,64 @@
+# 板块轮动页 · 每周自动刷新
+# 时间：每周五 16:30 北京时间（= 08:30 UTC，A股收盘后数据已落定）
+# 行为：探测腾讯行情接口连通性 -> 跑 tools/sector_refresh.py 复算板块强弱
+#       -> 若 sector/index.html 有变化则提交推送（分支部署即自动上线）
+# 手动触发：仓库 Actions 页 «Sector weekly refresh» -> Run workflow
+# 失败告警：GitHub 默认会向仓库所有者发送 failure 邮件
+name: Sector weekly refresh
+
+on:
+  schedule:
+    - cron: '30 8 * * 5'   # 周五 08:30 UTC = 北京时间周五 16:30
+  workflow_dispatch:        # 手动触发按钮（首次连通性验证用这个）
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sector-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      # P0 连通性探测：GitHub 境外 runner 能否访问腾讯行情接口。
+      # 探测失败立即终止，避免半途失败产生混淆。
+      - name: Probe Tencent kline API
+        run: |
+          code=$(curl -s -o /tmp/probe.json -w "%{http_code}" \
+            -H "Referer: https://gu.qq.com/" \
+            -H "User-Agent: Mozilla/5.0" \
+            "https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=sh600519,day,,,5,qfq")
+          echo "HTTP status: $code"
+          head -c 300 /tmp/probe.json; echo
+          if [ "$code" != "200" ] || ! grep -q "600519" /tmp/probe.json; then
+            echo "::error::腾讯行情接口在 GitHub runner 上不可达或返回异常"
+            exit 1
+          fi
+          echo "连通性 OK"
+
+      - name: Refresh sector data
+        run: python tools/sector_refresh.py
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet -- sector/index.html; then
+            echo "数据无变化，跳过提交"
+          else
+            git add sector/index.html
+            git commit -m "sector auto-refresh $(TZ=Asia/Shanghai date +%Y-%m-%d)"
+            git push
+            echo "已提交并推送，Pages 分支部署将自动上线"
+          fi

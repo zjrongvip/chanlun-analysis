@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2032%2032%27%3E%3Crect%20width%3D%2732%27%20height%3D%2732%27%20rx%3D%277%27%20fill%3D%27%23ffffff%27%2F%3E%3Crect%20x%3D%278%27%20y%3D%2712%27%20width%3D%2716%27%20height%3D%2711%27%20fill%3D%27rgba%2859%2C91%2C165%2C.10%29%27%20stroke%3D%27%233b5ba5%27%20stroke-width%3D%271.5%27%20stroke-dasharray%3D%273%202%27%2F%3E%3Cpath%20d%3D%27M11%2021%20L16%207%20L21%2015%27%20fill%3D%27none%27%20stroke%3D%27%231c7ed6%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%2F%3E%3Ccircle%20cx%3D%2721%27%20cy%3D%2715%27%20r%3D%272.4%27%20fill%3D%27%23d64545%27%2F%3E%3C%2Fsvg%3E">
-<title>缠论批量扫一买 · 自选股一买扫描</title>
+<title>缠论批量扫描 · 一买 + 二买监控</title>
 <style>
   :root{
     --bg:#f5f6f8; --card:#ffffff; --line:#e3e6ea; --line2:#eef0f3;
@@ -96,16 +96,15 @@
   <a href="../">走势分析台</a>
   <a href="../yimai/">一买选股</a>
   <a href="../multi/">多级别中枢</a>
-  <a class="on" href="../scan/">批量扫一买</a>
+  <a class="on" href="./">批量扫一买</a>
   <a href="../sector/">板块轮动</a>
   <a href="../legacy/">旧版对照</a>
-  <a href="../prd/">PRD</a>
-  <span class="sp">一次扫多只 · 判定口径与一买页完全一致</span>
+  <span class="sp">一次扫多只 · 一买 + 二买同屏监控 · 口径与走势分析台完全一致</span>
 </nav>
 
 <div class="head">
-  <h1>缠论批量扫一买</h1>
-  <span class="sub">自选股一次扫描 · 下跌 + 盘整 + 下跌走完 → 一类买点 · 口径对齐 12/14/15 号脚本</span>
+  <h1>缠论批量扫描</h1>
+  <span class="sub">自选股一次扫描 · 一买（下跌 + 盘整 + 下跌走完）+ 二买（一买后回抽不破一买低点）· 口径对齐 12/14/15 号脚本</span>
 </div>
 
 <div class="ctrl card">
@@ -123,7 +122,8 @@
     <button class="btn" id="csv" disabled>导出 CSV</button>
     <button class="btn" id="demo">填入示例</button>
     <button class="btn" id="clear">清空</button>
-    <label class="ck" style="margin-left:6px"><input type="checkbox" id="onlyHit"> 只看命中</label>
+    <label class="ck" style="margin-left:6px"><input type="checkbox" id="onlyHit"> 只看一买</label>
+    <label class="ck"><input type="checkbox" id="onlyB2"> 只看二买</label>
     <span class="mini" id="cntHint" style="margin-left:auto"></span>
   </div>
 </div>
@@ -149,6 +149,9 @@
           <th class="sortable num" data-k="ago">距今</th>
           <th class="hideSm">中枢 ZD ~ ZG</th>
           <th class="sortable num" data-k="chg">相对一买</th>
+          <th class="sortable" data-k="buy2">二买</th>
+          <th class="sortable num" data-k="b2">二买价</th>
+          <th class="sortable num" data-k="b2chg">相对二买</th>
           <th class="hideSm">笔 / 中枢</th>
         </tr>
       </thead>
@@ -159,8 +162,9 @@
 
 <div class="foot">
   红涨绿跌 · <b>一买</b>＝课17「下跌 + 盘整 + 下跌走完」，走 15 号九道闸门（已与 12/14/15 号脚本逐样本对拍）。<br>
-  「距今」＝一买最低点距最后一根K线的根数；「相对一买」＝最新价相对一买价的涨跌幅。<br>
-  命中 ≠ 交易指令。接口为非官方接口、无 SLA，可能按 IP 限流，扫描量大时请分批。
+  <b>二买</b>＝<b>活动一买</b>（过闸门且至今未跌破）之后回抽不破一买低点且已确认；同一买段多次回抽取最近一次；其后跌破一买低点即作废。<br>
+  「距今」＝一买最低点距最后一根K线的根数；「相对一买/二买」＝最新价相对该买点的涨跌幅（二买日悬停可见）。<br>
+  命中 ≠ 交易指令。二买判定含活动一买回溯（逐根重算，比单判一买慢），扫描耗时会相应增加。接口为非官方接口、无 SLA，可能按 IP 限流，扫描量大时请分批。
 </div>
 
 <!-- ============================ 内核（由 build.py 从一买页面原样注入） ============================ -->
@@ -661,7 +665,7 @@ function resolveBuyPoints(pts, ext) {
 function analyzeExtended(bars, st, macd, opt) {
   opt = opt || {};
   var res = { pos: 'none', posCn: '—', lastZ: null, zsList: [], activeL1: null, buy2: null, buy2First: null,
-              l1Cand: [], buy3: null, div: null, marks: [], hint: '' };
+              l1Cand: [], buy3: null, buy3Fail: null, div: null, marks: [], hint: '' };
   if (!st || !bars || !bars.length) return res;
 
   var bis = st.bis, zs = st.zs, times = st.times, close = st.close;
@@ -721,24 +725,46 @@ function analyzeExtended(bars, st, macd, opt) {
   }
   if (res.buy2) res.marks.push({ kind: '二买', x: res.buy2.x, y: res.buy2.y });
 
-  /* --- 三买：离开中枢后向上突破 ZG，回抽不入中枢 --- */
+  /* --- 三买：离开中枢后向上突破 ZG，回抽不入中枢（v4.9.7 重写为状态机）---
+     ⚠️ 旧实现两个缺口（2026-09-25 审查发现）：
+       ① 找到首个有效回抽即 break，三买之后跌回中枢也不撤——▲常亮、结论卡仍显示成立，
+         把已失败的三买当有效买点（会教错；二买有作废纪律，三买没有，不对称）；
+       ② 一次回抽跌回中枢即永久失效，其后再次突破 ZG 也不再判——漏掉「突破→失败→再突破」。
+     状态机：WAIT_BREAK（等突破）→ WAIT_PULL（等回抽确认）→ ACTIVE3（三买成立，
+             跌破 ZG 即作废、回到 WAIT_BREAK 等下一次突破，可多轮）。
+     规则：① 成立后任何笔 low < ZG → 作废，buy3Fail 记最近失败点供展示层提示，图上▲同撤；
+           ② 作废/回抽失败后重新等突破（与二买「取最近一次有效回抽」口径对齐）；
+           ③ 未确认的回抽笔只能是最后一根，遇之停住等确认（不影响已有结论）。 */
   if (lz) {
-    var broke = null;
-    for (var a = Math.max(0, lz.s1); a < bis.length; a++) {
-      if (bis[a].dir === 1 && bis[a].high > lz.zg) { broke = bis[a]; break; }
-    }
-    if (broke) {
-      res.hint = '已向上突破中枢 ZG ' + lz.zg.toFixed(2) + '，等待回抽确认三买';
-      for (var b2 = 0; b2 < bis.length; b2++) {
-        if (bis[b2].raw0 < broke.raw1) continue;
-        if (bis[b2].dir !== -1) continue;
-        if (bis[b2].low < lz.zg) { res.hint = '回抽已跌回中枢内，三买失效（回到震荡）'; break; }
-        if (bis[b2].confirm_raw == null) { res.hint = '回抽中，尚未确认（等确认K）'; break; }
-        res.buy3 = { x: bis[b2].raw1, y: bis[b2].low, date: times[bis[b2].raw1], zg: lz.zg, ago: n - 1 - bis[b2].raw1 };
-        break;
+    var ST_BREAK = 0, ST_PULL = 1, ST_ACTIVE = 2, s3 = ST_BREAK;
+    for (var a3 = Math.max(0, lz.s1); a3 < bis.length; a3++) {
+      var bi = bis[a3];
+      if (s3 === ST_BREAK) {
+        if (bi.dir === 1 && bi.high > lz.zg) {
+          s3 = ST_PULL;
+          res.hint = '已向上突破中枢 ZG ' + lz.zg.toFixed(2) + '，等待回抽确认三买';
+        }
+      } else if (s3 === ST_PULL) {
+        if (bi.dir !== -1) continue;                       // 只看回抽的下跌笔
+        if (bi.low < lz.zg) {                             // 回抽跌回中枢 → 本次突破不成三买，重新等突破
+          s3 = ST_BREAK;
+          res.hint = '回抽已跌回中枢内，本次突破未成三买（回到震荡，等再次突破）';
+          continue;
+        }
+        if (bi.confirm_raw == null) { res.hint = '回抽中，尚未确认（等确认K）'; break; }
+        res.buy3 = { x: bi.raw1, y: bi.low, date: times[bi.raw1], zg: lz.zg, ago: n - 1 - bi.raw1 };
+        s3 = ST_ACTIVE;                                   // 三买成立，继续盯防作废
+      } else {                                            // ST_ACTIVE：三买成立后的盯防期
+        if (bi.low < lz.zg) {                             // 三买后跌回中枢 → 作废，回到等突破
+          res.buy3Fail = { x: res.buy3.x, y: res.buy3.y, date: res.buy3.date, zg: lz.zg,
+                           failAt: times[bi.raw1], ago: n - 1 - res.buy3.x };
+          res.buy3 = null; s3 = ST_BREAK;
+          res.hint = '三买后已跌回中枢内，前次三买失败（走势退回震荡，等再次突破）';
+          continue;
+        }
       }
-      if (res.buy3) res.marks.push({ kind: '三买', x: res.buy3.x, y: res.buy3.y });
     }
+    if (res.buy3) { res.marks.push({ kind: '三买', x: res.buy3.x, y: res.buy3.y }); res.hint = ''; }
   }
 
   /* --- 背驰量化：与本段前一个同向笔比 MACD 力度 --- */
@@ -784,7 +810,7 @@ if (typeof module !== 'undefined' && module.exports) {
   var rows = [];
   var running = false;
   var aborted = false;
-  var sortKey = null, sortAsc = true, onlyHit = false;
+  var sortKey = null, sortAsc = true, onlyHit = false, onlyB2 = false;
 
   function $(id) { return document.getElementById(id); }
   function n2(v) { return (+v).toFixed(2); }
@@ -859,7 +885,8 @@ if (typeof module !== 'undefined' && module.exports) {
         close: bars[bars.length - 1].close,
         day: bars[bars.length - 1].date.slice(0, 10),
         hit: 0, l1: null, confirm: '', ago: null, zd: null, zg: null,
-        chg: null, nBi: 0, nZs: 0, reason: ''
+        chg: null, nBi: 0, nZs: 0, reason: '',
+        buy2: 0, b2: null, b2Day: '', b2Ref: null, b2Chg: null
       };
       var st = res.st;
       if (st) { row.nBi = st.bis.length; row.nZs = st.zs.length; }
@@ -874,28 +901,51 @@ if (typeof module !== 'undefined' && module.exports) {
       } else {
         row.reason = res.reason || '';
       }
+      /* 二买：走 chan-ext 真源 analyzeExtended（含活动一买状态机），不另写判定。
+         命中时走快速路径（直接传 l1/l1Idx）；未命中时 analyzeExtended 内部回溯逐根重算，较慢 */
+      try {
+        var macd = macdSeries(bars.map(function (b) { return b.close; }));
+        var ext = analyzeExtended(bars, res.st, macd, {
+          l1: res.hit ? res.hit.l1 : null,
+          l1Idx: res.hit ? idxOfDate(bars, res.hit.l1_day) : null,
+          core: { evaluate: evaluate }
+        });
+        if (ext && ext.buy2) {
+          row.buy2 = 1;
+          row.b2 = ext.buy2.y;
+          row.b2Day = ext.buy2.date;
+          row.b2Ref = ext.buy2.ref;
+          row.b2Chg = (row.close - ext.buy2.y) / ext.buy2.y * 100;
+        }
+      } catch (e2) { /* 二买判定失败不阻塞一买结果 */ }
       return row;
     }).catch(function (e) {
-      return { code: code, name: '', ok: false, err: (e && e.message) || String(e), hit: 0 };
+      return { code: code, name: '', ok: false, err: (e && e.message) || String(e), hit: 0, buy2: 0 };
     });
   }
 
   /* ---------- 渲染 ---------- */
   function fmtRow(r, i) {
     if (!r) {
-      return '<tr class="pending"><td>' + i + '</td><td colspan="11" class="mini">'
+      return '<tr class="pending"><td>' + i + '</td><td colspan="14" class="mini">'
         + '<span class="spin"></span>处理中…</td></tr>';
     }
     if (!r.ok) {
       return '<tr class="bad"><td>' + i + '</td><td class="code">' + r.code + '</td>'
-        + '<td colspan="10" class="mini">取数失败：' + r.err + '</td></tr>';
+        + '<td colspan="13" class="mini">取数失败：' + r.err + '</td></tr>';
     }
     var chgTxt = '—', chgCls = '';
     if (r.chg != null) {
       chgTxt = (r.chg >= 0 ? '+' : '') + r.chg.toFixed(2) + '%';
       chgCls = r.chg >= 0 ? 'style="color:#d64545"' : 'style="color:#2f9e44"';
     }
-    return '<tr class="' + (r.hit ? 'hit' : '') + '" data-code="' + r.code + '">'
+    var b2Txt = '—', b2Cls = '';
+    if (r.b2Chg != null) {
+      b2Txt = (r.b2Chg >= 0 ? '+' : '') + r.b2Chg.toFixed(2) + '%';
+      b2Cls = r.b2Chg >= 0 ? 'style="color:#d64545"' : 'style="color:#2f9e44"';
+    }
+    var b2Tip = r.buy2 ? (' title="二买日 ' + (r.b2Day || '—') + ' · 参照一买低点 ' + (r.b2Ref != null ? n2(r.b2Ref) : '—') + '"') : '';
+    return '<tr class="' + (r.hit || r.buy2 ? 'hit' : '') + '" data-code="' + r.code + '">'
       + '<td>' + i + '</td>'
       + '<td class="code">' + r.code + '</td>'
       + '<td class="name">' + (r.name || '—') + '</td>'
@@ -907,6 +957,9 @@ if (typeof module !== 'undefined' && module.exports) {
       + '<td class="num">' + (r.ago != null ? r.ago + ' 根' : '—') + '</td>'
       + '<td class="hideSm mini">' + (r.zd != null ? n2(r.zd) + ' ~ ' + n2(r.zg) : '—') + '</td>'
       + '<td class="num"' + (chgCls ? ' ' + chgCls : '') + '>' + chgTxt + '</td>'
+      + '<td' + b2Tip + '>' + (r.buy2 ? '<span class="yes">✓ 成立</span>' : '<span class="no">—</span>') + '</td>'
+      + '<td class="num">' + (r.b2 != null ? n2(r.b2) : '—') + '</td>'
+      + '<td class="num"' + (b2Cls ? ' ' + b2Cls : '') + '>' + b2Txt + '</td>'
       + '<td class="hideSm mini">' + r.nBi + ' / ' + r.nZs + '</td>'
       + '</tr>';
   }
@@ -914,6 +967,7 @@ if (typeof module !== 'undefined' && module.exports) {
   function visibleRows() {
     var list = rows.map(function (r, i) { return { r: r, i: i + 1 }; });
     if (onlyHit) list = list.filter(function (x) { return x.r && x.r.hit; });
+    if (onlyB2) list = list.filter(function (x) { return x.r && x.r.buy2; });
     if (sortKey) {
       list.sort(function (a, b) {
         var va = val(a.r, sortKey), vb = val(b.r, sortKey);
@@ -931,6 +985,7 @@ if (typeof module !== 'undefined' && module.exports) {
   function val(r, k) {
     if (!r) return null;
     if (k === 'hit') return r.hit || 0;
+    if (k === 'buy2') return r.buy2 || 0;
     return r[k] == null ? null : r[k];
   }
 
@@ -938,17 +993,19 @@ if (typeof module !== 'undefined' && module.exports) {
     var list = visibleRows();
     var tb = $('tbody');
     if (!list.length) {
-      tb.innerHTML = '<tr><td colspan="12" class="empty">' + (onlyHit ? '当前没有命中的票。' : '暂无数据。') + '</td></tr>';
+      tb.innerHTML = '<tr><td colspan="15" class="empty">' + (onlyB2 ? '当前没有二买成立的票。' : (onlyHit ? '当前没有命中的票。' : '暂无数据。')) + '</td></tr>';
     } else {
       tb.innerHTML = list.map(function (x) { return fmtRow(x.r, x.i); }).join('');
     }
     var hitN = rows.filter(function (r) { return r && r.hit; }).length;
+    var b2N = rows.filter(function (r) { return r && r.buy2; }).length;
     var okN = rows.filter(function (r) { return r && r.ok; }).length;
     var badN = rows.filter(function (r) { return r && !r.ok; }).length;
     $('stat').innerHTML =
       '<div><span class="lbl">代码总数</span><span class="n">' + rows.length + '</span></div>'
       + '<div><span class="lbl">已完成</span><span class="n">' + okN + '</span></div>'
-      + '<div><span class="lbl">命 中</span><span class="n" style="color:' + (hitN ? '#d64545' : '#8b949e') + '">' + hitN + '</span></div>'
+      + '<div><span class="lbl">一 买</span><span class="n" style="color:' + (hitN ? '#d64545' : '#8b949e') + '">' + hitN + '</span></div>'
+      + '<div><span class="lbl">二 买</span><span class="n" style="color:' + (b2N ? '#2f9e44' : '#8b949e') + '">' + b2N + '</span></div>'
       + (badN ? '<div><span class="lbl">失败</span><span class="n" style="color:#e8863c">' + badN + '</span></div>' : '')
       + '<div style="flex:1;min-width:160px"><span class="lbl">' + PERIODS[period].label + ' · 进度</span>'
       + '<div id="bar"><i style="width:' + (rows.length ? Math.round(okN / rows.length * 100) : 0) + '%"></i></div></div>';
@@ -991,24 +1048,27 @@ if (typeof module !== 'undefined' && module.exports) {
 
   /* ---------- 导出 CSV ---------- */
   function exportCsv() {
-    var head = ['代码', '名称', '最新价', '数据截止', '一买', '一买价', '确认日', '距今根数', '中枢ZD', '中枢ZG', '相对一买%', '笔数', '中枢数', '备注'];
+    var head = ['代码', '名称', '最新价', '数据截止', '一买', '一买价', '确认日', '距今根数', '中枢ZD', '中枢ZG', '相对一买%', '二买', '二买价', '二买日', '参照一买低点', '相对二买%', '笔数', '中枢数', '备注'];
     var lines = [head.join(',')];
     visibleRows().forEach(function (x) {
       var r = x.r;
       if (!r) return;
-      if (!r.ok) { lines.push([r.code, '', '', '', '取数失败', '', '', '', '', '', '', '', '', r.err].join(',')); return; }
+      if (!r.ok) { lines.push([r.code, '', '', '', '取数失败', '', '', '', '', '', '', '', '', '', '', '', '', '', r.err].join(',')); return; }
       lines.push([
         r.code, r.name, r.close, r.day, r.hit ? '命中' : '未命中',
         r.l1 == null ? '' : r.l1, r.confirm, r.ago == null ? '' : r.ago,
         r.zd == null ? '' : r.zd, r.zg == null ? '' : r.zg,
-        r.chg == null ? '' : r.chg.toFixed(2), r.nBi, r.nZs, r.reason
+        r.chg == null ? '' : r.chg.toFixed(2),
+        r.buy2 ? '成立' : '未成立', r.b2 == null ? '' : r.b2, r.b2Day || '',
+        r.b2Ref == null ? '' : r.b2Ref, r.b2Chg == null ? '' : r.b2Chg.toFixed(2),
+        r.nBi, r.nZs, r.reason
       ].join(','));
     });
     var blob = new Blob(['\ufeff' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
     var a = document.createElement('a');
     var d = new Date();
     a.href = URL.createObjectURL(blob);
-    a.download = '缠论一买扫描_' + d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2) + '.csv';
+    a.download = '缠论扫描_一买二买_' + d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2) + '.csv';
     document.body.appendChild(a); a.click();
     setTimeout(function () { document.body.removeChild(a); URL.revokeObjectURL(a.href); }, 500);
   }
@@ -1065,6 +1125,7 @@ if (typeof module !== 'undefined' && module.exports) {
     updateCnt();
   });
   $('onlyHit').addEventListener('change', function () { onlyHit = this.checked; renderTable(); });
+  $('onlyB2').addEventListener('change', function () { onlyB2 = this.checked; renderTable(); });
 
   var pbtns = document.querySelectorAll('.pbtn');
   for (var i = 0; i < pbtns.length; i++) {

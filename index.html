@@ -305,9 +305,9 @@
 
 <nav class="nav">
   <a class="on" href="./">走势分析台</a>
-  <a href="yimai/">一买选股</a>
-  <a href="multi/">多级别中枢</a>
   <a href="scan/">批量扫一买</a>
+  <a href="multi/">多级别中枢</a>
+  <a href="yimai/">一买选股</a>
   <a href="sector/">板块轮动</a>
   <a href="legacy/">旧版对照</a>
   <a href="prd/">PRD</a>
@@ -448,7 +448,7 @@
   <b>指数条</b>：8 大指数实时点位与涨跌幅（腾讯行情）。<b>行业浏览</b>：49 个新浪行业，鼠标滚轮或 ‹ › 切行业、点行业名展开全部；成分股条可滚轮或拖动左右查看，点任意一只即载入图表。<b>搜索</b>：输入代码 / 名称 / 拼音，↑↓ 选择、回车确认。<br>
   <b>控制台</b>：停在走势图右侧（走势图 4/5 · 控制台 1/5，两者等高）；点工具条右端的「收起」可整块隐藏、走势图随即占满整行，选择会被记住；成分股列表支持滚轮翻看。<br>
   <b>自动刷新</b>：页面每 5 分钟重拉一次当前标的行情并重算结构（保留你当前的缩放视窗，不会跳回默认视图），指数条另每 2 分钟刷新一次；工具条上的「HH:MM 更新」就是最近一次刷新的时刻。<br>
-  口径：<b>一买</b>走 15 号 10 道闸门（已与 12/14/15 号脚本逐样本对拍；v4.8 起含<b>本级别背驰闸门</b>——本笔下跌的 MACD 柱面积须<b>小于</b>前一同向下跌笔，面积更大者只是加速下跌途中的新低）；当下未命中时另在最近 250 根内回溯，给出「确认后至今未被跌破、且本段未被后来新高刷新」的<b>活动一买</b>；<b>二卖</b>＝一卖后第一根不破一卖高点的反弹，且必须早于一买（一买之后不再取二卖）；<b>二买</b>＝<b>活动一买</b>之后回抽不破<b>一买低点</b>且已确认（同一买段可多次回抽，取最近一次；无活动一买则不判；其后跌破一买低点即作废）；<b>三买</b>＝向上突破中枢 ZG 后回抽不跌回中枢；<b>背驰</b>＝同向相邻两笔的 MACD 柱力度衰减且创极端价。<br>
+  口径：<b>一买</b>走 15 号 10 道闸门（已与 12/14/15 号脚本逐样本对拍；v4.8 起含<b>本级别背驰闸门</b>——本笔下跌的 MACD 柱面积须<b>小于</b>前一同向下跌笔，面积更大者只是加速下跌途中的新低）；当下未命中时另在最近 250 根内回溯，给出「确认后至今未被跌破、且本段未被后来新高刷新」的<b>活动一买</b>；<b>二卖</b>＝一卖后第一根不破一卖高点的反弹，且必须早于一买（一买之后不再取二卖）；<b>二买</b>＝<b>活动一买</b>之后回抽不破<b>一买低点</b>且已确认（同一买段可多次回抽，取最近一次；无活动一买则不判；其后跌破一买低点即作废）；<b>三买</b>＝向上突破中枢 ZG 后回抽不跌回中枢（<b>v4.9.7 起含作废与重试</b>：三买后任何笔跌回中枢内即作废并撤标记、提示失败；作废后若再次突破 ZG 且回抽不破，重新判定）；<b>背驰</b>＝同向相邻两笔的 MACD 柱力度衰减且创极端价。<br>
   任一级别的一个买点 ≠ 交易指令；小级别信号须结合实时价与更大级别结构确认。行情接口为非官方接口、无 SLA，可能按 IP 限流。
 </div>
 
@@ -955,7 +955,7 @@ function resolveBuyPoints(pts, ext) {
 function analyzeExtended(bars, st, macd, opt) {
   opt = opt || {};
   var res = { pos: 'none', posCn: '—', lastZ: null, zsList: [], activeL1: null, buy2: null, buy2First: null,
-              l1Cand: [], buy3: null, div: null, marks: [], hint: '' };
+              l1Cand: [], buy3: null, buy3Fail: null, div: null, marks: [], hint: '' };
   if (!st || !bars || !bars.length) return res;
 
   var bis = st.bis, zs = st.zs, times = st.times, close = st.close;
@@ -1015,24 +1015,46 @@ function analyzeExtended(bars, st, macd, opt) {
   }
   if (res.buy2) res.marks.push({ kind: '二买', x: res.buy2.x, y: res.buy2.y });
 
-  /* --- 三买：离开中枢后向上突破 ZG，回抽不入中枢 --- */
+  /* --- 三买：离开中枢后向上突破 ZG，回抽不入中枢（v4.9.7 重写为状态机）---
+     ⚠️ 旧实现两个缺口（2026-09-25 审查发现）：
+       ① 找到首个有效回抽即 break，三买之后跌回中枢也不撤——▲常亮、结论卡仍显示成立，
+         把已失败的三买当有效买点（会教错；二买有作废纪律，三买没有，不对称）；
+       ② 一次回抽跌回中枢即永久失效，其后再次突破 ZG 也不再判——漏掉「突破→失败→再突破」。
+     状态机：WAIT_BREAK（等突破）→ WAIT_PULL（等回抽确认）→ ACTIVE3（三买成立，
+             跌破 ZG 即作废、回到 WAIT_BREAK 等下一次突破，可多轮）。
+     规则：① 成立后任何笔 low < ZG → 作废，buy3Fail 记最近失败点供展示层提示，图上▲同撤；
+           ② 作废/回抽失败后重新等突破（与二买「取最近一次有效回抽」口径对齐）；
+           ③ 未确认的回抽笔只能是最后一根，遇之停住等确认（不影响已有结论）。 */
   if (lz) {
-    var broke = null;
-    for (var a = Math.max(0, lz.s1); a < bis.length; a++) {
-      if (bis[a].dir === 1 && bis[a].high > lz.zg) { broke = bis[a]; break; }
-    }
-    if (broke) {
-      res.hint = '已向上突破中枢 ZG ' + lz.zg.toFixed(2) + '，等待回抽确认三买';
-      for (var b2 = 0; b2 < bis.length; b2++) {
-        if (bis[b2].raw0 < broke.raw1) continue;
-        if (bis[b2].dir !== -1) continue;
-        if (bis[b2].low < lz.zg) { res.hint = '回抽已跌回中枢内，三买失效（回到震荡）'; break; }
-        if (bis[b2].confirm_raw == null) { res.hint = '回抽中，尚未确认（等确认K）'; break; }
-        res.buy3 = { x: bis[b2].raw1, y: bis[b2].low, date: times[bis[b2].raw1], zg: lz.zg, ago: n - 1 - bis[b2].raw1 };
-        break;
+    var ST_BREAK = 0, ST_PULL = 1, ST_ACTIVE = 2, s3 = ST_BREAK;
+    for (var a3 = Math.max(0, lz.s1); a3 < bis.length; a3++) {
+      var bi = bis[a3];
+      if (s3 === ST_BREAK) {
+        if (bi.dir === 1 && bi.high > lz.zg) {
+          s3 = ST_PULL;
+          res.hint = '已向上突破中枢 ZG ' + lz.zg.toFixed(2) + '，等待回抽确认三买';
+        }
+      } else if (s3 === ST_PULL) {
+        if (bi.dir !== -1) continue;                       // 只看回抽的下跌笔
+        if (bi.low < lz.zg) {                             // 回抽跌回中枢 → 本次突破不成三买，重新等突破
+          s3 = ST_BREAK;
+          res.hint = '回抽已跌回中枢内，本次突破未成三买（回到震荡，等再次突破）';
+          continue;
+        }
+        if (bi.confirm_raw == null) { res.hint = '回抽中，尚未确认（等确认K）'; break; }
+        res.buy3 = { x: bi.raw1, y: bi.low, date: times[bi.raw1], zg: lz.zg, ago: n - 1 - bi.raw1 };
+        s3 = ST_ACTIVE;                                   // 三买成立，继续盯防作废
+      } else {                                            // ST_ACTIVE：三买成立后的盯防期
+        if (bi.low < lz.zg) {                             // 三买后跌回中枢 → 作废，回到等突破
+          res.buy3Fail = { x: res.buy3.x, y: res.buy3.y, date: res.buy3.date, zg: lz.zg,
+                           failAt: times[bi.raw1], ago: n - 1 - res.buy3.x };
+          res.buy3 = null; s3 = ST_BREAK;
+          res.hint = '三买后已跌回中枢内，前次三买失败（走势退回震荡，等再次突破）';
+          continue;
+        }
       }
-      if (res.buy3) res.marks.push({ kind: '三买', x: res.buy3.x, y: res.buy3.y });
     }
+    if (res.buy3) { res.marks.push({ kind: '三买', x: res.buy3.x, y: res.buy3.y }); res.hint = ''; }
   }
 
   /* --- 背驰量化：与本段前一个同向笔比 MACD 力度 --- */
@@ -2039,6 +2061,10 @@ if (typeof module !== 'undefined' && module.exports) {
       h += '<div class="box on3"><div class="bt">三买 · 突破后回抽不入中枢</div>'
         + '<div class="bv">' + n2(e.buy3.y) + ' @ ' + e.buy3.date + '</div>'
         + '<div class="bm">ZG ' + n2(e.buy3.zg) + ' · 距今 ' + e.buy3.ago + ' ' + u + '</div></div>';
+    } else if (e.buy3Fail) {
+      h += '<div class="box"><div class="bt">三买</div><div class="bv" style="color:#c96a6a">前次三买已失败</div>'
+        + '<div class="bm">' + n2(e.buy3Fail.y) + ' @ ' + e.buy3Fail.date + ' 曾成立，'
+        + e.buy3Fail.failAt + ' 跌回中枢 ZG ' + n2(e.buy3Fail.zg) + ' 内作废（▲已撤，等再次突破）</div></div>';
     } else {
       h += '<div class="box"><div class="bt">三买</div><div class="bv" style="color:#8b949e">未成立</div>'
         + '<div class="bm">' + (e.hint || '需先向上突破中枢 ZG，再回抽不破') + '</div></div>';

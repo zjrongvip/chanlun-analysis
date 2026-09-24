@@ -854,14 +854,42 @@ if (typeof module !== 'undefined' && module.exports) {
     return s;
   }
 
-  /* ---------- 数据层：腾讯 fqkline（带 CORS，公网可用） ---------- */
-  function fetchKline(code, pk, cnt) {
+  /* ---------- 数据层：双源自动降级（与首页同架构，2026-09-25） ----------
+     日/周/月 → 腾讯 fqkline（主）＋东方财富 push2his（备）。
+     腾讯接口偶发被 WAF 拦截（领导实测），失败自动切东财，不再单点故障；
+     成功过的源记进 localStorage（与首页共用键，偏好互通），下次优先用它。 */
+  var SRC_KEY = 'chanlun_yimai_src';
+  var SRC_LABEL = { tencent: '腾讯行情', eastmoney: '东方财富' };
+  function getPreferred() {
+    try { var v = localStorage.getItem(SRC_KEY); if (v === 'eastmoney' || v === 'tencent') return v; } catch (e) { }
+    return 'tencent';
+  }
+  function setPreferred(s) { try { localStorage.setItem(SRC_KEY, s); } catch (e) { } }
+
+  function fetchJson(url, ms) {
+    return new Promise(function (resolve, reject) {
+      var ctl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+      var done = false;
+      var timer = setTimeout(function () {
+        if (done) return; done = true;
+        if (ctl) { try { ctl.abort(); } catch (e) { } }
+        reject(new Error('请求超时'));
+      }, ms || 12000);
+      fetch(url, { cache: 'no-store', signal: ctl ? ctl.signal : undefined })
+        .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+        .then(function (j) { if (done) return; done = true; clearTimeout(timer); resolve(j); })
+        .catch(function (e) {
+          if (done) return; done = true; clearTimeout(timer);
+          reject(e instanceof SyntaxError ? new Error('返回内容异常（疑似被WAF拦截）') : e);
+        });
+    });
+  }
+
+  /* --- 腾讯 fqkline（day/week/month，前复权） --- */
+  function fetchTencent(code, pk, cnt) {
     var sym = txSymbol(code);
     var url = TX + '?param=' + sym + ',' + pk + ',,,' + cnt + ',qfq&_=' + Date.now();
-    return fetch(url, { cache: 'no-store' }).then(function (r) {
-      if (!r.ok) throw new Error('HTTP ' + r.status);
-      return r.json();
-    }).then(function (j) {
+    return fetchJson(url, 12000).then(function (j) {
       var node = j && j.data && j.data[sym];
       if (!node) throw new Error('接口返回空数据');
       var arr = node['qfq' + pk] || node[pk];
@@ -872,8 +900,59 @@ if (typeof module !== 'undefined' && module.exports) {
           date: a[0], open: +a[1], close: +a[2], high: +a[3], low: +a[4], vol: +a[5]
         };
       });
-      return { bars: bars, name: name, day: bars[bars.length - 1].date };
+      return { bars: bars, name: name };
     });
+  }
+
+  /* --- 东方财富 push2his（klt: 101=日 102=周 103=月，前复权） ---
+     起始日按周期放宽：周线要 320 根（约2600自然日）、月线 200 根（约6400自然日），
+     否则回退源拿不到足够的月线根数，MA233 会失真。 */
+  function emKlt(pk) { return pk === 'day' ? 101 : pk === 'week' ? 102 : 103; }
+  function emBeg(pk) {
+    var days = pk === 'day' ? 800 : pk === 'week' ? 2600 : 6400;
+    var d = new Date(Date.now() - days * 86400000);
+    return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+  }
+  function fetchEastmoney(code, pk) {
+    var secid = (/^[69]/.test(code) ? '1.' : '0.') + code;   // 沪市=1.，深/北=0.
+    var url = 'https://push2his.eastmoney.com/api/qt/stock/kline/get'
+      + '?secid=' + secid
+      + '&fields1=f1,f2,f3,f4,f5,f6'
+      + '&fields2=f51,f52,f53,f54,f55,f56'
+      + '&klt=' + emKlt(pk) + '&fqt=1'
+      + '&beg=' + emBeg(pk) + '&end=2050-01-01'
+      + '&lmt=10000&_=' + Date.now();
+    return fetchJson(url, 12000).then(function (j) {
+      var d = j && j.data;
+      if (!d || !d.klines || !d.klines.length) throw new Error('接口返回空数据');
+      var bars = d.klines.map(function (s) {
+        var q = s.split(',');
+        return { date: q[0], open: +q[1], close: +q[2], high: +q[3], low: +q[4], vol: +q[5] };
+      });
+      return { bars: bars, name: d.name || '' };
+    });
+  }
+
+  /* --- 双源链：成功源优先，失败自动降级，错误信息合并上报 --- */
+  function fetchKline(code, pk, cnt) {
+    var list = getPreferred() === 'eastmoney' ? ['eastmoney', 'tencent'] : ['tencent', 'eastmoney'];
+    var errs = [];
+    var chain = Promise.reject();
+    list.forEach(function (src) {
+      chain = chain.catch(function () {
+        var p = src === 'tencent' ? fetchTencent(code, pk, cnt) : fetchEastmoney(code, pk);
+        return p.then(function (res) {
+          if (!res.bars || res.bars.length < 60) throw new Error('可用K线不足 60 根');
+          res.source = src;
+          setPreferred(src);
+          return res;
+        }).catch(function (e) {
+          errs.push(SRC_LABEL[src] + '：' + (e && e.message ? e.message : e));
+          throw e;
+        });
+      });
+    });
+    return chain.catch(function () { throw new Error(errs.join('；')); });
   }
 
   /* ---------- 窗口：日线＝最近 800 自然日；其余＝最近 N 根 ---------- */
@@ -1198,10 +1277,16 @@ if (typeof module !== 'undefined' && module.exports) {
 
       /* 汇总 */
       var lastBar = analyses[0].bars[analyses[0].bars.length - 1];
+      var srcs = [];
+      for (var s2 = 0; s2 < list.length; s2++) {
+        var sn = list[s2].data.source;
+        if (sn && srcs.indexOf(sn) < 0) srcs.push(sn);
+      }
       var s = '<div class="srow"><span class="sname">' + (name || '—') + '</span>'
         + '<span class="scode">' + code + '</span>'
         + '<span class="sclose">最新 ' + n2(lastBar.close) + '</span>'
         + '<span class="tag">数据截止 ' + lastBar.date.slice(0, 10) + '</span>'
+        + '<span class="tag">数据源：' + (srcs.length ? srcs.map(function (x) { return SRC_LABEL[x] || x; }).join('+') : '—') + '</span>'
         + (asof ? '<span class="tag warn">回看 ' + asof + '</span>' : '')
         + '</div><div style="display:flex;gap:6px;flex-wrap:wrap">';
       for (var t = 0; t < analyses.length; t++) {

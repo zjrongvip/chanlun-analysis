@@ -101,16 +101,17 @@
   #chartBox{position:relative;width:100%}
   #chart{display:block;width:100%;border-radius:6px;cursor:crosshair}
   #tip{
-    position:absolute;pointer-events:none;display:none;z-index:5;
+    position:absolute;left:8px;top:8px;pointer-events:none;display:none;z-index:70;
     background:rgba(255,255,255,.97);border:1px solid var(--line);border-radius:8px;
-    box-shadow:0 6px 20px rgba(20,30,45,.12);padding:8px 10px;font-size:12.5px;
-    min-width:172px;font-variant-numeric:tabular-nums;
+    box-shadow:0 6px 20px rgba(20,30,45,.12);padding:6px 8px;font-size:12.5px;
+    width:max-content;max-width:calc(100% - 16px);white-space:nowrap;
+    font-variant-numeric:tabular-nums;
   }
-  #tip .t{font-weight:650;margin-bottom:4px}
-  #tip .l{display:flex;justify-content:space-between;gap:14px;color:var(--tx2)}
+  #tip .t{font-weight:650;margin-bottom:3px}
+  #tip .l{display:flex;justify-content:space-between;gap:10px;color:var(--tx2)}
   #tip .l b{color:var(--tx);font-weight:600}
-  #tip .sep{height:1px;background:var(--line2);margin:5px 0}
-  #tip .note{color:var(--zs);font-size:12px}
+  #tip .sep{height:1px;background:var(--line2);margin:4px 0}
+  #tip .note{color:var(--zs);font-size:12px;white-space:normal}
   /* ---- 侧栏 ---- */
   aside{display:flex;flex-direction:column;gap:12px}
   .panel{padding:11px 13px}
@@ -138,8 +139,8 @@
   .spin{display:inline-block;width:11px;height:11px;border:2px solid #cfd8e3;border-top-color:var(--blue);border-radius:50%;animation:sp .7s linear infinite;vertical-align:-1px;margin-right:7px}
   @keyframes sp{to{transform:rotate(360deg)}}
   /* ---- 站点导航 ---- */
-  .nav{display:flex;gap:5px;align-items:center;flex-wrap:wrap;padding:3px 8px;margin-bottom:6px}
-  .nav a{font-size:12px;color:var(--tx2);text-decoration:none;border:1px solid var(--line2);background:#fafbfc;padding:2px 9px;border-radius:14px}
+  .nav{display:flex;gap:4px;align-items:center;flex-wrap:wrap;padding:0 2px;margin-bottom:4px}
+  .nav a{font-size:11.5px;color:var(--tx2);text-decoration:none;border:1px solid var(--line2);background:#fafbfc;line-height:1.55;padding:1px 7px;border-radius:10px}
   .nav a:hover{border-color:#c9d4e0;color:var(--tx)}
   .nav a.on{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:600}
   .nav .sp{margin-left:auto;color:var(--tx3);font-size:11.5px}
@@ -971,10 +972,18 @@ if (typeof module !== 'undefined' && module.exports) {
       axisY: PAD.t + innerH
     };
   }
+  /* 右侧恒定预留「半厘米」固定宽度的空白（CSS 1cm = 96/2.54px ≈ 37.8px，半厘米 ≈ 18.9px）
+     —— 固定像素，不随缩放/可见根数变化：绘图区只占 innerW - RIGHT_PX */
+  var RIGHT_PX = Math.round(5 * 96 / 25.4);
   function span() { return Math.max(1, S.vx1 - S.vx0 + 1); }
-  function xOf(i) { var p = panes(); return p.x0 + ((i - S.vx0 + 0.5) / span()) * p.innerW; }
-  function idxAtX(px) { var p = panes(); return S.vx0 + ((px - p.x0) / p.innerW) * span() - 0.5; }
-  function barW() { var p = panes(); return Math.max(0.6, (p.innerW / span()) * 0.7); }
+  function plotW() { return Math.max(40, panes().innerW - RIGHT_PX); }
+  /* 分母 span()-0.65 的来历：0.5 = 视图右端固有的半槽（vx1 收在 n-0.5，末根 = vx1-0.5），
+     0.15 = K 线实体右缘到槽右缘（(1-0.7)/2）。减掉后「末根实体右缘」正好落在绘图区右边界，
+     右侧留白因此恒等于 RIGHT_PX，不随缩放变大变小。 */
+  function slotW() { return plotW() / Math.max(1, span() - 0.65); }
+  function xOf(i) { var p = panes(); return p.x0 + (i - S.vx0 + 0.5) * slotW(); }
+  function idxAtX(px) { var p = panes(); return S.vx0 + (px - p.x0) / slotW() - 0.5; }
+  function barW() { return Math.max(0.6, slotW() * 0.7); }
 
   function clampView() {
     var n = S.bars.length;
@@ -985,7 +994,8 @@ if (typeof module !== 'undefined' && module.exports) {
       S.vx0 = c - minSpan / 2; S.vx1 = c + minSpan / 2;
     }
     var s = span();
-    if (s > n) { S.vx0 = 0; S.vx1 = n - 1; return; }
+    /* 全览也收在 n-0.5：与常态视图同一口径，末根实体右缘才正好贴住绘图区右边界 */
+    if (s > n) { S.vx0 = -0.5; S.vx1 = n - 0.5; return; }
     if (S.vx0 < -0.5) { S.vx0 = -0.5; S.vx1 = S.vx0 + s; }
     if (S.vx1 > n - 0.5) { S.vx1 = n - 0.5; S.vx0 = S.vx1 - s; }
   }
@@ -1082,7 +1092,7 @@ if (typeof module !== 'undefined' && module.exports) {
 
     /* --- 主图裁剪区 --- */
     ctx.save();
-    ctx.beginPath(); ctx.rect(p.x0, p.main.y0 - 2, p.innerW, p.main.h + 6); ctx.clip();
+    ctx.beginPath(); ctx.rect(p.x0, p.main.y0 - 2, plotW(), p.main.h + 6); ctx.clip();
 
     /* 1) 中枢 */
     if (st && S.layers.zs) {
@@ -1259,7 +1269,7 @@ if (typeof module !== 'undefined' && module.exports) {
       mn = -amp; mx = amp;
       var my = function (v) { return mm.y1 - ((v - mn) / (mx - mn)) * mm.h; };
       ctx.save();
-      ctx.beginPath(); ctx.rect(p.x0, mm.y0 - 2, p.innerW, mm.h + 4); ctx.clip();
+      ctx.beginPath(); ctx.rect(p.x0, mm.y0 - 2, plotW(), mm.h + 4); ctx.clip();
       ctx.strokeStyle = '#eef0f3'; ctx.lineWidth = 1;
       ctx.beginPath(); ctx.moveTo(p.x0, Math.round(my(0)) + 0.5); ctx.lineTo(p.x1, Math.round(my(0)) + 0.5); ctx.stroke();
       var zy = my(0);
@@ -1314,7 +1324,7 @@ if (typeof module !== 'undefined' && module.exports) {
   }
 
   /* ---------------------------------------------------------------- tooltip */
-  function showTip(px, py) {
+  function showTip() {
     var i = S.hover;
     if (i < 0 || i >= S.bars.length) { tipEl.style.display = 'none'; return; }
     var b = S.bars[i];
@@ -1343,14 +1353,7 @@ if (typeof module !== 'undefined' && module.exports) {
     }
     if (notes.length) html += '<div class="sep"></div><div class="note">' + notes.join(' · ') + '</div>';
     tipEl.innerHTML = html;
-    tipEl.style.display = 'block';
-    var bw = tipEl.offsetWidth, bh = tipEl.offsetHeight;
-    var left = px + 16, top = py - bh / 2;
-    if (left + bw > S.W - 4) left = px - bw - 16;
-    if (top < 0) top = 4;
-    if (top + bh > S.H - 4) top = S.H - bh - 4;
-    tipEl.style.left = left + 'px';
-    tipEl.style.top = top + 'px';
+    tipEl.style.display = 'block';   /* 位置由 CSS 固定在图表左上角，不随鼠标移动 */
   }
 
   /* ------------------------------------------------------------ 事件绑定 */
@@ -1362,8 +1365,8 @@ if (typeof module !== 'undefined' && module.exports) {
     var anchor = idxAtX(mx);
     var f = e.deltaY < 0 ? 0.86 : 1.16;
     var ns = Math.max(20, Math.min(S.bars.length, span() * f));
-    var ratio = (anchor - S.vx0) / span();
-    S.vx0 = anchor - ratio * ns;
+    /* 缩放后让光标下的那根 K 线保持原位：槽宽随可见根数变化，按新槽宽反解 vx0（右侧留白是固定像素，不进公式） */
+    S.vx0 = anchor + 0.5 - (mx - panes().x0) * (ns - 0.65) / plotW();
     S.vx1 = S.vx0 + ns - 1;
     clampView(); draw();
   }, { passive: false });
@@ -1376,7 +1379,7 @@ if (typeof module !== 'undefined' && module.exports) {
     var rect = cv.getBoundingClientRect();
     if (S.drag) {
       var dxPx = e.clientX - S.drag.x;
-      var perPx = span() / panes().innerW;
+      var perPx = 1 / slotW();
       var shift = dxPx * perPx;
       S.vx0 = S.drag.v0 - shift; S.vx1 = S.drag.v1 - shift;
       clampView(); draw();
@@ -1389,7 +1392,7 @@ if (typeof module !== 'undefined' && module.exports) {
     var i = Math.round(idxAtX(e.clientX - rect.left));
     if (i < 0) i = 0; if (i > S.bars.length - 1) i = S.bars.length - 1;
     if (i !== S.hover) { S.hover = i; draw(); }
-    showTip(e.clientX - rect.left, e.clientY - rect.top);
+    showTip();
   });
   window.addEventListener('mouseup', function () {
     if (S.drag) { S.drag = null; cv.style.cursor = 'crosshair'; }

@@ -18,11 +18,11 @@
   body{
     background:var(--bg); color:var(--tx);
     font:14px/1.5 -apple-system,"Segoe UI","Microsoft YaHei",system-ui,sans-serif;
-    padding:8px 12px 28px;
+    padding:6px 10px 24px;
   }
-  .head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin:12px 0}
-  .head h1{font-size:18px;margin:0;font-weight:650;letter-spacing:.2px}
-  .head .sub{color:var(--tx3);font-size:12.5px}
+  .head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:8px 0 6px}
+  .head h1{font-size:16px;margin:0;font-weight:650;letter-spacing:.2px}
+  .head .sub{color:var(--tx3);font-size:11.5px}
   .card{background:var(--card);border:1px solid var(--line);border-radius:10px}
   /* ---- 控制条 ---- */
   .ctrl{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 12px;margin-bottom:12px}
@@ -44,7 +44,7 @@
   .browse{position:relative;padding:10px 12px;margin-bottom:12px}
   .browse .row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
   .browse .row + .row{margin-top:8px;padding-top:8px;border-top:1px solid var(--line2)}
-  .browse .rlab{font-size:11.5px;color:var(--tx3);flex:none;letter-spacing:.5px}
+  /* `.rlab`（「指数」/「行业」前导标签）已于 v4.9.4 / v4.9.6 全部删除，样式一并清掉 */
   .idxbar{display:flex;gap:6px;flex-wrap:wrap;flex:1;min-width:0}
   .ixchip{border:1px solid var(--line2);background:#fafbfc;border-radius:7px;padding:3px 9px;cursor:pointer;
     user-select:none;line-height:1.3;min-width:97px;flex:none}
@@ -73,15 +73,18 @@
     cursor:pointer;font:12px/22px inherit;color:var(--tx2)}
   .mini2:hover{background:#f7f9fb;color:var(--tx)}
   .mini2.on{border-color:var(--blue);color:var(--blue);font-weight:600}
-  .stkstrip{display:flex;gap:6px;overflow-x:auto;padding-bottom:3px;flex:1;min-width:0}
-  .stkstrip::-webkit-scrollbar{height:7px}
-  .stkstrip::-webkit-scrollbar-thumb{background:#d5dbe3;border-radius:4px}
-  .skchip{border:1px solid var(--line2);background:#fafbfc;border-radius:7px;padding:3px 9px;cursor:pointer;
-    user-select:none;flex:none;line-height:1.3;white-space:nowrap}
+  /* 成分股：纵向双列铺开（不再横向滚动）；装不下时滚轮翻看，滚动条隐藏 */
+  .stkstrip{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:3px 6px;
+    align-content:start;overflow-y:auto;flex:1;min-height:0;
+    scrollbar-width:none;-ms-overflow-style:none}
+  .stkstrip::-webkit-scrollbar{width:0;height:0;display:none}
+  .stkstrip .empty{grid-column:1/-1}
+  .skchip{border:1px solid var(--line2);background:#fafbfc;border-radius:6px;padding:1px 7px;cursor:pointer;
+    user-select:none;display:flex;align-items:center;gap:6px;min-width:0;line-height:1.45}
   .skchip:hover{border-color:#c9d4e0;background:#fff}
   .skchip.on{border-color:var(--blue);background:#f2f8fe}
-  .skchip .nm{display:block;font-size:12px;max-width:92px;overflow:hidden;text-overflow:ellipsis}
-  .skchip .pct{font-size:11.5px;font-weight:650;font-variant-numeric:tabular-nums}
+  .skchip .nm{flex:1;min-width:0;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .skchip .pct{flex:none;font-size:11.5px;font-weight:650;font-variant-numeric:tabular-nums}
   /* ---- 搜索下拉 ---- */
   .srcwrap{position:relative}
   .srcdrop{position:absolute;top:36px;left:0;z-index:40;width:292px;max-height:292px;overflow-y:auto;
@@ -91,11 +94,14 @@
   .sritem:hover,.sritem.hi{background:#f2f8fe}
   .sritem .c{color:var(--tx3);font-size:12px;font-variant-numeric:tabular-nums}
   .sritem .t{margin-left:auto;font-size:11px;color:var(--tx3);border:1px solid var(--line2);border-radius:20px;padding:1px 6px}
-  /* ---- 行业选择弹层 ---- */
-  .secpop{position:absolute;z-index:40;background:#fff;border:1px solid var(--line);border-radius:9px;
-    box-shadow:0 8px 24px rgba(20,30,45,.14);width:330px;max-height:340px;overflow-y:auto;padding:6px;display:none}
-  .secpop.on{display:block}
-  .spitem{padding:5px 8px;border-radius:6px;cursor:pointer;display:flex;align-items:center;gap:8px;font-size:13px}
+  /* ---- 行业全集：在控制台内部整块展开（不再浮到图上） ---- */
+  .secpop{position:absolute;inset:0;z-index:5;background:#fff;border:1px solid var(--line);border-radius:8px;
+    padding:6px;display:none;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px 6px;align-content:start;
+    overflow-y:auto;scrollbar-width:none;-ms-overflow-style:none}
+  .secpop::-webkit-scrollbar{width:0;display:none}
+  .secpop.on{display:grid}
+  .spitem{padding:1px 6px;border-radius:5px;cursor:pointer;display:flex;align-items:center;gap:6px;
+    font-size:12.5px;line-height:1.35;min-width:0}
   .spitem:hover{background:#f2f8fe}
   .spitem.on{background:#f2f8fe}
   .spitem .nm2{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -109,7 +115,6 @@
     .sortbox{margin-left:0;width:100%}
     .hintx{display:none}
     .srcdrop{width:250px}
-    .secpop{width:265px}
   }
   /* ---- 周期切换 ---- */
   .periods{display:flex;border:1px solid var(--line);border-radius:7px;overflow:hidden;height:34px;flex:none}
@@ -125,8 +130,6 @@
   .badge.hit{color:var(--up)}
   .badge.active{color:#1c7ed6}
   .badge.miss{color:var(--tx2)}
-  .vname{font-size:15px;font-weight:600}
-  .vcode{color:var(--tx3);font-size:13px;font-variant-numeric:tabular-nums}
   .tag{font-size:11.5px;padding:2px 8px;border-radius:20px;border:1px solid var(--line);color:var(--tx2);background:#fafbfc}
   .tag.warn{color:#a2621a;border-color:#f0dcbc;background:#fffaf0}
   .tag.ok{color:#1f7a35;border-color:#c7e6ce;background:#f4fbf5}
@@ -158,22 +161,23 @@
   }
   #chartCard{padding:8px 8px 4px;position:relative;margin-bottom:8px}
   .layers{display:flex;gap:14px;align-items:center;flex-wrap:wrap;padding:0 4px 6px;border-bottom:1px solid var(--line2);margin-bottom:6px}
-  .layers label{font-size:12.5px;color:var(--tx2);cursor:pointer;user-select:none;display:flex;align-items:center;gap:5px}
+  .layers label{font-size:12.5px;color:var(--tx2);cursor:pointer;user-select:none;display:flex;align-items:center;gap:4px}
   .layers input{cursor:pointer;margin:0}
   .mini{height:26px;padding:0 9px;font-size:12.5px;line-height:24px;border-radius:6px}
-  #chartBox{position:relative;width:100%}
+  #chartBox{position:relative;flex:1 1 0;min-width:0;width:auto}
   #chart{display:block;width:100%;border-radius:6px;cursor:crosshair}
   #tip{
-    position:absolute;pointer-events:none;display:none;z-index:5;
+    position:absolute;left:8px;top:8px;pointer-events:none;display:none;z-index:70;
     background:rgba(255,255,255,.97);border:1px solid var(--line);border-radius:8px;
-    box-shadow:0 6px 20px rgba(20,30,45,.12);padding:8px 10px;font-size:12.5px;
-    min-width:172px;font-variant-numeric:tabular-nums;
+    box-shadow:0 6px 20px rgba(20,30,45,.12);padding:6px 8px;font-size:12.5px;
+    width:max-content;max-width:calc(100% - 16px);white-space:nowrap;
+    font-variant-numeric:tabular-nums;
   }
-  #tip .t{font-weight:650;margin-bottom:4px}
-  #tip .l{display:flex;justify-content:space-between;gap:14px;color:var(--tx2)}
+  #tip .t{font-weight:650;margin-bottom:3px}
+  #tip .l{display:flex;justify-content:space-between;gap:10px;color:var(--tx2)}
   #tip .l b{color:var(--tx);font-weight:600}
-  #tip .sep{height:1px;background:var(--line2);margin:5px 0}
-  #tip .note{color:var(--zs);font-size:12px}
+  #tip .sep{height:1px;background:var(--line2);margin:4px 0}
+  #tip .note{color:var(--zs);font-size:12px;white-space:normal}
   /* ---- 图下方信息区 ---- */
   .panel{padding:11px 13px}
   .panel h3{margin:0 0 8px;font-size:13px;font-weight:650;color:var(--tx);letter-spacing:.3px}
@@ -200,8 +204,9 @@
   .spin{display:inline-block;width:11px;height:11px;border:2px solid #cfd8e3;border-top-color:var(--blue);border-radius:50%;animation:sp .7s linear infinite;vertical-align:-1px;margin-right:7px}
   @keyframes sp{to{transform:rotate(360deg)}}
   /* ---- 站点导航 ---- */
-  .nav{display:flex;gap:5px;align-items:center;flex-wrap:wrap;padding:3px 8px;margin-bottom:6px}
-  .nav a{font-size:12px;color:var(--tx2);text-decoration:none;border:1px solid var(--line2);background:#fafbfc;padding:2px 9px;border-radius:14px}
+  /* 站内导航：压低高度与内距，够用即可，省出一条空隙给走势图 */
+  .nav{display:flex;gap:4px;align-items:center;flex-wrap:wrap;padding:0 2px;margin-bottom:4px}
+  .nav a{font-size:11.5px;line-height:1.55;color:var(--tx2);text-decoration:none;border:1px solid var(--line2);background:#fafbfc;padding:1px 7px;border-radius:10px}
   .nav a:hover{border-color:#c9d4e0;color:var(--tx)}
   .nav a.on{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:600}
   /* ---- 走势全景 ---- */
@@ -218,59 +223,82 @@
   .zsrow:last-child{border-bottom:none}
   .zsrow .k{color:var(--tx2)}
   .zsrow .v{font-weight:600}
-  /* ---- 悬浮控制台（半透明 · 可拖动 · 可收起） ---- */
+  /* ---- 控制台：停靠在走势图右侧（4:1），可收起让走势图全屏 ---- */
+  #chartRow{display:flex;align-items:stretch;gap:10px}
+  #chartCard.fphide #fp{display:none}
   #fp{
-    position:fixed;left:16px;top:104px;z-index:60;
-    width:min(440px,calc(100vw - 32px));
-    background:rgba(255,255,255,.76);
-    backdrop-filter:blur(12px) saturate(1.4);
-    -webkit-backdrop-filter:blur(12px) saturate(1.4);
-    border:1px solid rgba(206,215,226,.85);border-radius:12px;
-    box-shadow:0 10px 32px rgba(20,30,45,.15);
+    /* 1/5 = (行宽 - 间距)/5 = 20% - 间距/5（间距 10px → 减 2px），与 4/5 的走势图严格成 4:1 */
+    position:relative;flex:0 0 calc(20% - 2px);min-width:200px;
+    display:flex;flex-direction:column;overflow:hidden;
+    background:#fff;border:1px solid var(--line);border-radius:10px;
   }
-  #fp.min{width:auto;max-width:none}
-  #fp.dragging{box-shadow:0 18px 46px rgba(20,30,45,.26)}
-  #fp .fph{display:flex;align-items:center;gap:8px;padding:6px 9px;cursor:grab;user-select:none}
-  #fp .fph.grab{cursor:grabbing}
-  #fp .fph .dots{color:#b3bec9;font-size:12px;letter-spacing:2px;flex:none}
-  #fp .fpt{font-size:12px;font-weight:650;color:var(--tx2);letter-spacing:.4px;flex:none}
-  #fp .fps{font-size:11px;color:var(--tx3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
-  #fp.min .fps{display:none}
-  #fp .fph .sp2{margin-left:auto;display:flex;gap:5px;flex:none}
-  .fpb2{border:1px solid rgba(210,218,228,.9);background:rgba(255,255,255,.72);border-radius:6px;
-    height:24px;padding:0 9px;cursor:pointer;font:12px/22px inherit;color:var(--tx2);white-space:nowrap}
-  .fpb2:hover{background:#fff;color:var(--tx);border-color:#c3cfdc}
-  #fp .browse{margin:0;padding:9px 10px 10px;position:relative;border-top:1px solid rgba(226,231,237,.9)}
-  #fp.min .browse{display:none}
-  #fp .browse .row + .row{border-top:1px solid rgba(226,231,237,.9)}
-  #fp .secname{max-width:150px;min-width:0}
-  #fp .secname #secNameTx{max-width:110px}
-  #fp .secmeta{flex:1;min-width:0}
+  /* 行情摘要（原在结论卡顶部、现已上移到工具条 MACD 之后）：与工具条同高，字体收一号 */
+  /* 行情摘要（原在结论卡顶部、现已上移到工具条 MACD 之后）：与工具条同高，字体收一号
+     ⚠️ `margin:0` 必须显式写 —— 它带 class `vhead`，会继承结论卡那条 `.vhead{margin-bottom:10px}`，
+        在 `align-items:center` 下把摘要顶高 5px（比选框高一截），只看工具条高度是发现不了的 */
+  #vheadBox{display:flex;align-items:center;gap:5px;flex-wrap:wrap;min-width:0;margin:0;
+    padding-left:10px;border-left:1px solid var(--line2)}
+  #vheadBox:empty{display:none}
+  .vhead.vh-compact{margin:0;gap:6px;flex-wrap:wrap}
+  #vheadBox .badge{font-size:12.5px;letter-spacing:.2px}
+  #vheadBox .tag{font-size:11px;padding:1px 6px}
+  /* 内容区：纵向铺满、单一滚动源（成分股），横向滚动一律取消 */
+  #fp .browse{margin:0;padding:10px;position:relative;border-top:none;
+    display:flex;flex-direction:column;gap:8px;flex:1;min-height:0;overflow:hidden}
+  #fp .fprow{display:flex;align-items:center;gap:7px;flex-wrap:wrap;min-width:0}
+  #fp .fprow.bd{padding-top:8px;border-top:1px solid var(--line2)}
+  #fp .secbody{position:relative;display:flex;flex-direction:column;gap:8px;flex:1;min-height:0}
+  #fp .fpfill{display:flex;flex-direction:column;gap:6px;flex:1;min-height:0}
+  #fp .fplab{font-size:11.5px;color:var(--tx3);letter-spacing:.5px;flex:none}
+  #fp .fplab b{color:var(--tx2);font-weight:600}
+  #fp .secname{flex:0 1 auto;min-width:0}
+  #fp .secname #secNameTx{max-width:none}
+  /* 行业行右侧那段数值（涨跌幅 · 只数 · 成交额 · 领涨）完整要 261px，
+     而控制台只有 1/5 宽（1366 窗口实测 236px）—— 原来 flex:1 1 0 会被压到只剩 65px、
+     截掉 196px，正是领导说的「右侧的数值看不清」。这里让它折到下一行占满整宽（面板本就有垂直余量，
+     领导也要求过「内容尽量往下延展」），宁可多占一行也不截字。 */
+  #fp .secnav{flex-wrap:wrap}
+  #fp .secmeta{flex:1 1 100%;min-width:0;white-space:normal;overflow:visible;text-overflow:clip;line-height:1.45}
+  /* 位置指示（第几个/共几个）跟 ‹ › 箭头是一组，留在行业名那一行，不跟着数值折下去 */
+  #fp .secpos{flex:none;font-size:11.5px;color:var(--tx3);font-variant-numeric:tabular-nums}
+  #fp .secmeta .seg{white-space:nowrap}
+  #fp .secmeta .sep{color:var(--tx3);margin:0 5px}
   #fp .sortbox{margin-left:0;width:100%}
   #fp .idxbar{gap:5px}
+  #fp .ixchip{flex:1 1 calc(50% - 3px);min-width:0}
+  #fp .hintx{display:none}
+  /* 代码框的 min-width 是首行的兜底：flex-basis:0 的 srcwrap 本来不参与收缩，
+     空间不够时靠它把「名称」压成省略号，而不是让 6 位代码被切掉 */
+  #fp .srcwrap{flex:1;min-width:74px}
+  #fp input[type=text]{width:100%}
+  #fp .srcdrop{width:100%}
+  /* 控制台首行拆三段：标的名称 · 代码框 · 收起按钮（三段永远同一行，不换行） */
+  #fp .fprow.fptop{flex-wrap:nowrap;gap:6px}
+  #fp .fname{flex:0 1 auto;min-width:0;max-width:6.5em;font-size:12.5px;font-weight:650;
+    letter-spacing:.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #fp .fptoggle{padding:0 8px}
+  /* 行业全集在窄面板里两列铺开：让出「只数」给名称，只数在选中行的 meta 里看 */
+  #fp .spitem .ct{display:none}
+  #fp .spitem .pct2{width:46px}
   .vsep{width:1px;height:20px;background:var(--line);flex:none}
-  /* 周期条并入图表工具条 */
-  #chartCard .layers{gap:10px}
+  /* 周期条并入图表工具条（v4.9.5 再压一档：整条要跟摘要并成一行，横向寸土寸金） */
+  #chartCard .layers{gap:7px}
   #chartCard .periods{height:28px}
-  #chartCard .pbtn{line-height:28px;padding:0 9px;font-size:12.5px}
+  #chartCard .pbtn{line-height:28px;padding:0 7px;font-size:12.5px}
+  /* 收起按钮全站只有一个：展开时在控制台首行右端；收起后面板整体隐藏，由 JS 挪回工具条右端，
+     否则按钮跟着面板一起藏起来，就再也展不开了。
+     摘要条不再吃 margin-left:auto —— 让它紧跟在 MACD 之后，中间不空出一块（领导要求压缩空间） */
+  .fptoggle{margin-left:auto;flex:none}
+  @media (max-width:900px){
+    #chartRow{flex-direction:column}
+    #fp{min-width:0}
+    /* 上下堆叠时不再「等高」，成分列表压一个上限，避免面板被 150+ 只撑到一米长 */
+    #fp .stkstrip{max-height:340px}
+  }
   @media (max-width:720px){
-    #fp{left:8px;width:calc(100vw - 16px)}
-    #fp .fps{display:none}
-    #fp .browse{padding:8px 9px 9px}
     .vsep{display:none}
     #chartCard .pbtn{padding:0 6px;font-size:12px}
   }
-  /* ---- 收起后的细条：下方两个快捷键（逐个切指数 / 切板块） ---- */
-  #fp.min{width:auto;max-width:calc(100vw - 16px)}
-  #fp .quick{display:none}
-  #fp.min .quick{display:flex;gap:6px;padding:0 8px 8px;max-width:100%}
-  .qbtn{display:flex;align-items:center;gap:6px;min-width:0;border:1px solid rgba(210,218,228,.9);
-    background:rgba(255,255,255,.8);border-radius:6px;height:26px;padding:0 8px;cursor:pointer;
-    font:12px/24px inherit;color:var(--tx2);white-space:nowrap}
-  .qbtn:hover{background:#fff;color:var(--tx);border-color:#c3cfdc}
-  .qbtn .qk{color:var(--tx3);flex:none}
-  .qbtn .qv{font-weight:650;color:var(--tx);min-width:0;overflow:hidden;text-overflow:ellipsis}
-  .qbtn .qa{color:#8ea3b8;flex:none}
 </style>
 </head>
 <body>
@@ -284,58 +312,6 @@
   <a href="legacy/">旧版对照</a>
   <a href="prd/">PRD</a>
 </nav>
-
-<div id="fp">
-  <div class="fph" id="fpH">
-    <span class="dots">⠿</span>
-    <span class="fpt">控制台</span>
-    <span class="fps">拖动此栏可移动 · 双击标题栏复位</span>
-    <span class="sp2">
-      <button class="fpb2" id="fpMin" title="收起为细条，仅留指数 / 板块快捷键">收起</button>
-    </span>
-  </div>
-  <div class="browse">
-    <div class="row">
-      <div class="srcwrap">
-        <input id="code" type="text" placeholder="代码 / 名称 / 拼音，如 600036、招商银行" value="000001" autocomplete="off">
-        <div class="srcdrop" id="srcdrop"></div>
-      </div>
-      <span class="hintx">↑↓ 选择 · 回车确认</span>
-    </div>
-    <div class="row">
-    <span class="rlab">指数</span>
-    <div class="idxbar" id="idxbar"></div>
-  </div>
-  <div class="row">
-    <span class="rlab">行业</span>
-    <div class="secnav" id="secnav">
-      <button class="arw" id="secPrev" title="上一个行业（也可用鼠标滚轮切换）">‹</button>
-      <div class="secname" id="secName" title="点击展开全部行业（按成交额由大到小排列）"><span id="secNameTx">加载中…</span><span class="caret">▾</span></div>
-      <button class="arw" id="secNext" title="下一个行业（也可用鼠标滚轮切换）">›</button>
-      <span class="secmeta" id="secMeta"></span>
-    </div>
-    <span class="sortbox">
-      <button class="mini2 on" data-sort="changepercent">涨幅</button>
-      <button class="mini2" data-sort="amount">成交额</button>
-      <button class="mini2" data-sort="symbol">代码</button>
-      <span class="hintx">滚轮换行业</span>
-    </span>
-  </div>
-  <div class="row">
-    <span class="rlab">成分</span>
-    <div class="stkstrip" id="stkstrip"><span class="empty">选择行业后显示成分股</span></div>
-  </div>
-  <div class="secpop" id="secpop"></div>
-  </div>
-  <div class="quick" id="fpQuick">
-    <button class="qbtn" id="fpIdxNext" title="点一下切到下一个指数；Shift+点击或右键切上一个">
-      <span class="qk">指数</span><span class="qv" id="fpIdxName">上证指数</span><span class="qa">›</span>
-    </button>
-    <button class="qbtn" id="fpSecNext" title="点一下切到下一个行业；Shift+点击或右键切上一个">
-      <span class="qk">板块</span><span class="qv" id="fpSecName">—</span><span class="qa">›</span>
-    </button>
-  </div>
-</div>
 
 <div class="card" id="chartCard">
   <div class="layers">
@@ -354,10 +330,50 @@
     <label><input type="checkbox" id="L_zs" checked>中枢</label>
     <label><input type="checkbox" id="L_pts" checked>买卖点</label>
     <label><input type="checkbox" id="L_macd" checked>MACD</label>
+    <span class="vhead" id="vheadBox"></span>
   </div>
-  <div id="chartBox">
-    <canvas id="chart"></canvas>
-    <div id="tip"></div>
+  <div id="chartRow">
+    <div id="chartBox">
+      <canvas id="chart"></canvas>
+      <div id="tip"></div>
+    </div>
+    <div id="fp">
+      <div class="browse">
+        <div class="fprow fptop">
+          <span class="fname" id="fpName">上证指数</span>
+          <div class="srcwrap">
+            <input id="code" type="text" placeholder="代码 / 名称 / 拼音" value="000001" autocomplete="off">
+            <div class="srcdrop" id="srcdrop"></div>
+          </div>
+          <button class="btn mini fptoggle" id="fpToggle" title="收起控制台，让走势图占满整行" aria-pressed="false">收起 ▸</button>
+        </div>
+        <div class="fprow bd">
+          <div class="idxbar" id="idxbar"></div>
+        </div>
+        <div class="secbody">
+          <div class="fprow bd">
+            <div class="secnav" id="secnav">
+              <button class="arw" id="secPrev" title="上一个行业（也可用鼠标滚轮切换）">‹</button>
+              <div class="secname" id="secName" title="点击展开全部行业（按成交额由大到小排列）"><span id="secNameTx">加载中…</span><span class="caret">▾</span></div>
+              <button class="arw" id="secNext" title="下一个行业（也可用鼠标滚轮切换）">›</button>
+              <span class="secpos" id="secPos"></span>
+              <span class="secmeta" id="secMeta"></span>
+            </div>
+            <span class="sortbox">
+              <button class="mini2 on" data-sort="changepercent">涨幅</button>
+              <button class="mini2" data-sort="amount">成交额</button>
+              <button class="mini2" data-sort="symbol">代码</button>
+              <span class="hintx">滚轮换行业</span>
+            </span>
+          </div>
+          <div class="fpfill">
+            <div class="fplab">成分 <b id="stkLab"></b></div>
+            <div class="stkstrip" id="stkstrip"><span class="empty">选择行业后显示成分股</span></div>
+          </div>
+        </div>
+        <div class="secpop" id="secpop"></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -367,7 +383,7 @@
 </div>
 
 <div class="card" id="verdict">
-  <div class="empty">输入代码 / 名称 / 拼音后回车确认（或从下拉中选取），也可用悬浮控制台上的指数条、行业浏览快速切换。支持沪深主板 / 创业板 / 科创板 / 北交所，以及上证、深证、创业板、科创50、沪深300、中证500/1000 等指数。</div>
+  <div class="empty">输入代码 / 名称 / 拼音后回车确认（或从下拉中选取），也可用右侧控制台上的指数条、行业浏览快速切换。支持沪深主板 / 创业板 / 科创板 / 北交所，以及上证、深证、创业板、科创50、沪深300、中证500/1000 等指数。</div>
 </div>
 
 <div class="below">
@@ -430,7 +446,8 @@
 <div class="foot">
   红涨绿跌 · 滚轮缩放 · 按住拖拽平移 · 双击复位。MACD 柱按国内习惯取 2×(DIF−DEA)。<br>
   <b>指数条</b>：8 大指数实时点位与涨跌幅（腾讯行情）。<b>行业浏览</b>：49 个新浪行业，鼠标滚轮或 ‹ › 切行业、点行业名展开全部；成分股条可滚轮或拖动左右查看，点任意一只即载入图表。<b>搜索</b>：输入代码 / 名称 / 拼音，↑↓ 选择、回车确认。<br>
-  <b>悬浮控制台</b>：按住标题栏可拖动，点「收起」缩成细条（双击标题栏复位）；收起后细条下方两个快捷键可逐个切换<b>指数</b>与<b>行业</b>，Shift+点击或右键反向切换。<br>
+  <b>控制台</b>：停在走势图右侧（走势图 4/5 · 控制台 1/5，两者等高）；点工具条右端的「收起」可整块隐藏、走势图随即占满整行，选择会被记住；成分股列表支持滚轮翻看。<br>
+  <b>自动刷新</b>：页面每 5 分钟重拉一次当前标的行情并重算结构（保留你当前的缩放视窗，不会跳回默认视图），指数条另每 2 分钟刷新一次；工具条上的「HH:MM 更新」就是最近一次刷新的时刻。<br>
   口径：<b>一买</b>走 15 号 10 道闸门（已与 12/14/15 号脚本逐样本对拍；v4.8 起含<b>本级别背驰闸门</b>——本笔下跌的 MACD 柱面积须<b>小于</b>前一同向下跌笔，面积更大者只是加速下跌途中的新低）；当下未命中时另在最近 250 根内回溯，给出「确认后至今未被跌破、且本段未被后来新高刷新」的<b>活动一买</b>；<b>二卖</b>＝一卖后第一根不破一卖高点的反弹，且必须早于一买（一买之后不再取二卖）；<b>二买</b>＝<b>活动一买</b>之后回抽不破<b>一买低点</b>且已确认（同一买段可多次回抽，取最近一次；无活动一买则不判；其后跌破一买低点即作废）；<b>三买</b>＝向上突破中枢 ZG 后回抽不跌回中枢；<b>背驰</b>＝同向相邻两笔的 MACD 柱力度衰减且创极端价。<br>
   任一级别的一个买点 ≠ 交易指令；小级别信号须结合实时价与更大级别结构确认。行情接口为非官方接口、无 SLA，可能按 IP 限流。
 </div>
@@ -1379,10 +1396,18 @@ if (typeof module !== 'undefined' && module.exports) {
       axisY: PAD.t + innerH
     };
   }
+  /* 右侧恒定预留「半厘米」固定宽度的空白（CSS 1cm = 96/2.54px ≈ 37.8px，半厘米 ≈ 18.9px）
+     —— 固定像素，不随缩放/可见根数变化：绘图区只占 innerW - RIGHT_PX */
+  var RIGHT_PX = Math.round(5 * 96 / 25.4);
   function span() { return Math.max(1, S.vx1 - S.vx0 + 1); }
-  function xOf(i) { var p = panes(); return p.x0 + ((i - S.vx0 + 0.5) / span()) * p.innerW; }
-  function idxAtX(px) { var p = panes(); return S.vx0 + ((px - p.x0) / p.innerW) * span() - 0.5; }
-  function barW() { var p = panes(); return Math.max(0.6, (p.innerW / span()) * 0.7); }
+  function plotW() { return Math.max(40, panes().innerW - RIGHT_PX); }
+  /* 分母 span()-0.65 的来历：0.5 = 视图右端固有的半槽（vx1 收在 n-0.5，末根 = vx1-0.5），
+     0.15 = K 线实体右缘到槽右缘（(1-0.7)/2）。减掉后「末根实体右缘」正好落在绘图区右边界，
+     右侧留白因此恒等于 RIGHT_PX，不随缩放变大变小。 */
+  function slotW() { return plotW() / Math.max(1, span() - 0.65); }
+  function xOf(i) { var p = panes(); return p.x0 + (i - S.vx0 + 0.5) * slotW(); }
+  function idxAtX(px) { var p = panes(); return S.vx0 + (px - p.x0) / slotW() - 0.5; }
+  function barW() { return Math.max(0.6, slotW() * 0.7); }
 
   function clampView() {
     var n = S.bars.length;
@@ -1393,7 +1418,8 @@ if (typeof module !== 'undefined' && module.exports) {
       S.vx0 = c - minSpan / 2; S.vx1 = c + minSpan / 2;
     }
     var s = span();
-    if (s > n) { S.vx0 = 0; S.vx1 = n - 1; return; }
+    /* 全览也收在 n-0.5：与常态视图同一口径，末根实体右缘才正好贴住绘图区右边界 */
+    if (s > n) { S.vx0 = -0.5; S.vx1 = n - 0.5; return; }
     if (S.vx0 < -0.5) { S.vx0 = -0.5; S.vx1 = S.vx0 + s; }
     if (S.vx1 > n - 0.5) { S.vx1 = n - 0.5; S.vx0 = S.vx1 - s; }
   }
@@ -1407,6 +1433,13 @@ if (typeof module !== 'undefined' && module.exports) {
   }
 
   /* ------------------------------------------------------------------ 绘图 */
+  /* 停靠态（宽屏）下把控制台高度钉死为画布高度，保证「等高」不被内容撑破 */
+  function syncFpHeight(h) {
+    var fp = $('fp'), row = $('chartRow'), card = $('chartCard');
+    if (!fp || !row || !card) return;
+    var docked = getComputedStyle(row).flexDirection === 'row' && !card.classList.contains('fphide');
+    fp.style.height = docked ? h + 'px' : '';
+  }
   function resize() {
     var box = $('chartBox');
     var w = Math.max(520, box.clientWidth || 900);
@@ -1416,6 +1449,7 @@ if (typeof module !== 'undefined' && module.exports) {
     cv.style.height = h + 'px';
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     S.W = w; S.H = h;
+    syncFpHeight(h);
     draw();
   }
 
@@ -1490,7 +1524,7 @@ if (typeof module !== 'undefined' && module.exports) {
 
     /* --- 主图裁剪区 --- */
     ctx.save();
-    ctx.beginPath(); ctx.rect(p.x0, p.main.y0 - 2, p.innerW, p.main.h + 6); ctx.clip();
+    ctx.beginPath(); ctx.rect(p.x0, p.main.y0 - 2, plotW(), p.main.h + 6); ctx.clip();
 
     /* 1) 中枢 */
     if (st && S.layers.zs) {
@@ -1668,7 +1702,7 @@ if (typeof module !== 'undefined' && module.exports) {
       mn = -amp; mx = amp;
       var my = function (v) { return mm.y1 - ((v - mn) / (mx - mn)) * mm.h; };
       ctx.save();
-      ctx.beginPath(); ctx.rect(p.x0, mm.y0 - 2, p.innerW, mm.h + 4); ctx.clip();
+      ctx.beginPath(); ctx.rect(p.x0, mm.y0 - 2, plotW(), mm.h + 4); ctx.clip();
       ctx.strokeStyle = '#eef0f3'; ctx.lineWidth = 1;
       ctx.beginPath(); ctx.moveTo(p.x0, Math.round(my(0)) + 0.5); ctx.lineTo(p.x1, Math.round(my(0)) + 0.5); ctx.stroke();
       var zy = my(0);
@@ -1739,7 +1773,7 @@ if (typeof module !== 'undefined' && module.exports) {
   }
 
   /* ---------------------------------------------------------------- tooltip */
-  function showTip(px, py) {
+  function showTip() {
     var i = S.hover;
     if (i < 0 || i >= S.bars.length) { tipEl.style.display = 'none'; return; }
     var b = S.bars[i];
@@ -1768,14 +1802,7 @@ if (typeof module !== 'undefined' && module.exports) {
     }
     if (notes.length) html += '<div class="sep"></div><div class="note">' + notes.join(' · ') + '</div>';
     tipEl.innerHTML = html;
-    tipEl.style.display = 'block';
-    var bw = tipEl.offsetWidth, bh = tipEl.offsetHeight;
-    var left = px + 16, top = py - bh / 2;
-    if (left + bw > S.W - 4) left = px - bw - 16;
-    if (top < 0) top = 4;
-    if (top + bh > S.H - 4) top = S.H - bh - 4;
-    tipEl.style.left = left + 'px';
-    tipEl.style.top = top + 'px';
+    tipEl.style.display = 'block';   /* 位置由 CSS 固定在图表左上角，不随鼠标移动 */
   }
 
   /* ------------------------------------------------------------ 事件绑定 */
@@ -1787,8 +1814,8 @@ if (typeof module !== 'undefined' && module.exports) {
     var anchor = idxAtX(mx);
     var f = e.deltaY < 0 ? 0.86 : 1.16;
     var ns = Math.max(20, Math.min(S.bars.length, span() * f));
-    var ratio = (anchor - S.vx0) / span();
-    S.vx0 = anchor - ratio * ns;
+    /* 缩放后让光标下的那根 K 线保持原位：槽宽随可见根数变化，按新槽宽反解 vx0（右侧留白是固定像素，不进公式） */
+    S.vx0 = anchor + 0.5 - (mx - panes().x0) * (ns - 0.65) / plotW();
     S.vx1 = S.vx0 + ns - 1;
     clampView(); draw();
   }, { passive: false });
@@ -1801,7 +1828,7 @@ if (typeof module !== 'undefined' && module.exports) {
     var rect = cv.getBoundingClientRect();
     if (S.drag) {
       var dxPx = e.clientX - S.drag.x;
-      var perPx = span() / panes().innerW;
+      var perPx = 1 / slotW();
       var shift = dxPx * perPx;
       S.vx0 = S.drag.v0 - shift; S.vx1 = S.drag.v1 - shift;
       clampView(); draw();
@@ -1814,7 +1841,7 @@ if (typeof module !== 'undefined' && module.exports) {
     var i = Math.round(idxAtX(e.clientX - rect.left));
     if (i < 0) i = 0; if (i > S.bars.length - 1) i = S.bars.length - 1;
     if (i !== S.hover) { S.hover = i; draw(); }
-    showTip(e.clientX - rect.left, e.clientY - rect.top);
+    showTip();
   });
   window.addEventListener('mouseup', function () {
     if (S.drag) { S.drag = null; cv.style.cursor = 'crosshair'; }
@@ -1836,6 +1863,15 @@ if (typeof module !== 'undefined' && module.exports) {
     if (S.hit) fitView(Math.max(0, S.hit.x0 - 22), S.bars.length - 1);
     else fitView(Math.max(0, S.bars.length - 200), S.bars.length - 1);
   }
+  /* 自动刷新不能打断用户正在看的区间：记「视窗右端距最新一根的偏移 + 可见根数」，
+     刷新后按同样的口径挪到新数据上；贴右端看当下 → 自动跟着新数据走，看历史 → 停在原来那几根 */
+  function viewAnchor() { return { off: (S.bars.length - 1) - S.vx1, span: span() }; }
+  function restoreView(a) {
+    if (!a || !S.bars.length) return;
+    S.vx1 = (S.bars.length - 1) - a.off;
+    S.vx0 = S.vx1 + 1 - Math.max(1, a.span);
+    clampView();
+  }
 
   /* ------------------------------------------------------------- 结果渲染 */
   function idxOfDate(ds) {
@@ -1843,26 +1879,47 @@ if (typeof module !== 'undefined' && module.exports) {
     return -1;
   }
 
+  /* 「是否命中 + 数据截止 / 根数 / 数据源 / 笔·中枢」这一行，已按领导要求从结论卡顶部搬到
+     工具条 MACD 之后，并与周期行合并成同一行（名称 / 代码在这行删掉，改由控制台首行承担）；
+     这里只负责往 #vheadBox 里填内容 */
+  function setVhead(html) { var b = $('vheadBox'); if (b) b.innerHTML = html || ''; }
+  /* 控制台首行最前面那一段：当前标的的中文名称（原在工具条摘要里，现已挪到这里） */
+  function setPickName(nm) {
+    var e = $('fpName');
+    if (!e) return;
+    nm = nm || '';
+    e.textContent = nm || '—';
+    e.title = nm ? nm : '尚未确定标的名称';
+  }
+  function hm(d) { return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); }
+
   function renderVerdict() {
     var el = $('verdict');
     var h = S.hit;
-    if (!S.bars.length) return;
-    var head = '<div class="vhead">'
+    if (!S.bars.length) { setVhead(''); return; }
+    /* 名称 / 代码已按领导要求从这行删掉 —— 控制台首行「名称 + 代码框」已经能看出当前标的，
+       留在这里只会把工具条顶成两行 */
+    var head = '<div class="vhead vh-compact">'
       + '<span class="badge ' + (h ? 'hit' : (S.al1 ? 'active' : 'miss')) + '">'
-      + (h ? '✅ 一买确认' : (S.al1 ? '● 一买有效 · 未跌破' : '— 未命中')) + '</span>'
-      + '<span class="vname">' + (S.meta.name || '') + '</span>'
-      + '<span class="vcode">' + S.meta.code + '</span>';
+      + (h ? '✅ 一买确认' : (S.al1 ? '● 一买有效 · 未跌破' : '— 未命中')) + '</span>';
     var tags = [];
     var lastDay = S.bars[S.bars.length - 1].date;
     var live = lastBarLive(S.bars, P());
-    tags.push('<span class="tag">级别 ' + P().label + '</span>');
-    tags.push('<span class="tag' + (live ? ' warn' : '') + '">数据截止 ' + lastDay
-      + (live ? ' · ' + liveName(P()) + '进行中' : '') + '</span>');
-    tags.push('<span class="tag">' + barLabel() + ' ' + S.bars.length + ' 根</span>');
-    if (S.meta.source) tags.push('<span class="tag">源 ' + (SRC_LABEL[S.meta.source] || '') + '</span>');
-    if (P().kind === 'minute') tags.push('<span class="tag warn">小级别信号 · 需大级别配合</span>');
-    if (S.st) tags.push('<span class="tag">笔 ' + S.st.bis.length + ' · 中枢 ' + S.st.zs.length + '</span>');
+    /* v4.9.5 瘦身：这一行要跟周期条并成一行，宽度得省着花。
+       「级别 日」删掉 —— 上方周期条已经把当前周期高亮成蓝底了，纯重复；
+       「日线 535 根」的「日线」同理删掉，只留根数；「源 XXX」去掉「源 」前缀 */
+    tags.push('<span class="tag' + (live ? ' warn' : '') + '" title="数据截止 ' + lastDay
+      + (live ? ' · ' + liveName(P()) + '尚未走完' : '') + '">截止 ' + lastDay
+      + (live ? ' · 进行中' : '') + '</span>');
+    tags.push('<span class="tag" title="' + barLabel() + ' ' + S.bars.length + ' 根">' + S.bars.length + ' 根</span>');
+    if (S.meta.source) tags.push('<span class="tag">' + (SRC_LABEL[S.meta.source] || '') + '</span>');
+    if (S.refreshAt) tags.push('<span class="tag" title="页面每 5 分钟自动刷新一次">' + hm(S.refreshAt) + ' 更新</span>');
+    if (S.refreshErr) tags.push('<span class="tag warn" title="最近一次自动刷新取数失败，图表仍是上一次的数据">刷新失败</span>');
+    if (P().kind === 'minute') tags.push('<span class="tag warn">小级别 · 需大级别配合</span>');
+    if (S.st) tags.push('<span class="tag" title="笔 ' + S.st.bis.length + ' · 中枢 ' + S.st.zs.length + '">'
+      + '笔' + S.st.bis.length + ' · 枢' + S.st.zs.length + '</span>');
     head += tags.join('') + '</div>';
+    setVhead(head);
 
     if (h) {
       var confIdx = idxOfDate(h.time);
@@ -1892,7 +1949,7 @@ if (typeof module !== 'undefined' && module.exports) {
         + row('相对一买点', (chg >= 0 ? '+' : '') + chg.toFixed(2) + '%', 'color:' + (chg >= 0 ? '#d64545' : '#2f9e44'))
         + row('笔 / 中枢', h.n_bi + ' / ' + h.n_zs)
         + '</div>';
-      el.innerHTML = head + renderPano() + body;
+      el.innerHTML = renderPano() + body;
       el.className = 'card hit';
     } else if (S.al1) {
       /* 历史一买仍有效：闸门当下不再命中（闸门 5 已被更低点封印），但一买未被跌破，仍是最新有效买点 */
@@ -1925,7 +1982,7 @@ if (typeof module !== 'undefined' && module.exports) {
               + S.ext.l1Cand.map(function (c) { return n2(c.y) + ' @ ' + (S.bars[c.x] ? S.bars[c.x].date : ''); }).join('、')
               + '　—— 不满足「一卖之后最低」等闸门，未认定为一买。</div>'
             : '');
-      el.innerHTML = head + renderPano() + bodyA;
+      el.innerHTML = renderPano() + bodyA;
       el.className = 'card';
     } else {
       var lastBi = S.st && S.st.bis.length ? S.st.bis[S.st.bis.length - 1] : null;
@@ -1948,7 +2005,7 @@ if (typeof module !== 'undefined' && module.exports) {
         + row('笔数', S.st ? S.st.bis.length : 0)
         + row('最新收盘', n2(S.bars[S.bars.length - 1].close))
         + '</div>';
-      el.innerHTML = head + renderPano() + body2;
+      el.innerHTML = renderPano() + body2;
       el.className = 'card';
     }
   }
@@ -2042,118 +2099,59 @@ if (typeof module !== 'undefined' && module.exports) {
 
   /* ---------------------------------------------------------------- 主流程 */
   var RUNSEQ = 0;                                /* 周期连点时只认最后一次结果 */
-  /* ============ 悬浮控制台：拖动 / 收起 / 位置记忆 ============ */
-  function initFloatPanel() {
-    var fp = $('fp'), hd = $('fpH'), btnMin = $('fpMin');
-    if (!fp || !hd) return;
-    var KEY = 'chanlun_fp_v1';
-    var dragging = false, sx = 0, sy = 0, ox = 0, oy = 0;
+  /* ============ 控制台：停靠在走势图右侧 · 可收起（收起后走势图全屏） ============ */
+  /* 面板标题栏（「控制台 / 停靠在走势图右侧 / 收起」那一行）已按领导要求整行删除。
+     收起按钮全站只有一个，按领导新要求放在控制台首行最右端（名称 · 代码框 · 收起）；
+     但面板一收起就被 display:none 藏起来，按钮会跟着消失 —— 所以 apply() 里把它挪回工具条右端。
+     两者共用同一个 DOM 节点与同一份文案逻辑，不会出现状态分叉。 */
+  function initConsole() {
+    var card = $('chartCard'), row = $('chartRow');
+    var btnTop = $('fpToggle');
+    var slotBar = document.querySelector('#chartCard .layers');   /* 收起态：工具条右端 */
+    var slotHead = document.querySelector('#fp .fprow.fptop');   /* 展开态：控制台首行右端 */
+    if (!card || !row) return;
+    var KEY = 'chanlun_fp_hide_v1';
 
-    function defaultPos() {
-      var cc = document.getElementById('chartCard');
-      if (cc) {
-        var r = cc.getBoundingClientRect();
-        return { x: window.innerWidth <= 720 ? 8 : 16, y: Math.max(6, r.top + 52) };
-      }
-      return { x: 16, y: 104 };
-    }
-    function place(x, y) {
-      var maxX = Math.max(4, window.innerWidth - fp.offsetWidth - 4);
-      var maxY = Math.max(4, window.innerHeight - Math.max(34, fp.offsetHeight) - 4);
-      x = Math.max(4, Math.min(x, maxX));
-      y = Math.max(4, Math.min(y, maxY));
-      fp.style.left = Math.round(x) + 'px';
-      fp.style.top = Math.round(y) + 'px';
-      fp.style.right = 'auto';
-    }
+    function isHidden() { return card.classList.contains('fphide'); }
     function syncBtn() {
-      if (!btnMin) return;
-      var m = fp.classList.contains('min');
-      btnMin.textContent = m ? '展开' : '收起';
-      btnMin.title = m ? '展开控制台（全部控件）' : '收起为细条，仅留指数 / 板块快捷键';
+      var h = isHidden();
+      if (btnTop) {
+        btnTop.textContent = h ? '◂ 控制台' : '收起 ▸';
+        btnTop.title = h ? '展开控制台（停靠在走势图右侧）' : '收起控制台，让走势图占满整行';
+        btnTop.setAttribute('aria-pressed', h ? 'true' : 'false');
+      }
     }
-    function save() {
-      try {
-        localStorage.setItem(KEY, JSON.stringify({
-          x: fp.offsetLeft, y: fp.offsetTop, min: fp.classList.contains('min')
-        }));
-      } catch (e) { }
+    function placeBtn() {
+      if (!btnTop) return;
+      var tgt = isHidden() ? slotBar : slotHead;
+      if (tgt && btnTop.parentNode !== tgt) tgt.appendChild(btnTop);
     }
-
-    try {
-      var sv = JSON.parse(localStorage.getItem(KEY) || 'null');
-      if (sv && typeof sv.x === 'number') place(sv.x, sv.y);
-      else { var d0 = defaultPos(); place(d0.x, d0.y); }
-      fp.classList.add('min');        /* 领导定：默认收起，图表优先；位置仍按记忆 */
-    } catch (e) { }
-    syncBtn();
-
-    hd.addEventListener('pointerdown', function (e) {
-      if (e.target.closest('button')) return;
-      dragging = true;
-      sx = e.clientX; sy = e.clientY;
-      ox = fp.offsetLeft; oy = fp.offsetTop;
-      fp.classList.add('dragging'); hd.classList.add('grab');
-      try { hd.setPointerCapture(e.pointerId); } catch (err) { }
-      e.preventDefault();
-    });
-    hd.addEventListener('pointermove', function (e) {
-      if (!dragging) return;
-      place(ox + e.clientX - sx, oy + e.clientY - sy);
-    });
-    function release(e) {
-      if (!dragging) return;
-      dragging = false;
-      fp.classList.remove('dragging'); hd.classList.remove('grab');
-      try { hd.releasePointerCapture(e.pointerId); } catch (err) { }
-      save();
+    /* 收起 = 整个面板隐藏，画布随之占满整行；宽度变了必须重算画布并重绘 */
+    function apply(hide, persist) {
+      var changed = card.classList.contains('fphide') !== !!hide;
+      card.classList.toggle('fphide', !!hide);
+      placeBtn();
+      syncBtn();
+      if (changed) resize();
+      if (persist) { try { localStorage.setItem(KEY, hide ? '1' : '0'); } catch (e) { } }
     }
-    hd.addEventListener('pointerup', release);
-    hd.addEventListener('pointercancel', release);
+    function toggle() { apply(!isHidden(), true); }
 
-    if (btnMin) btnMin.onclick = function () {
-      fp.classList.toggle('min');
-      syncBtn(); syncQuick();
-      place(fp.offsetLeft, fp.offsetTop);
-      save();
-    };
-    /* 双击标题栏 = 复位到默认位置（原「复位」按钮已并入此手势） */
-    hd.addEventListener('dblclick', function (e) {
-      if (e.target.closest('button')) return;
-      var d = defaultPos(); place(d.x, d.y); save();
-    });
-
-    window.addEventListener('resize', function () { place(fp.offsetLeft, fp.offsetTop); });
+    var sv = null;
+    try { sv = localStorage.getItem(KEY); } catch (e) { }
+    apply(sv === '1', false);                    /* 默认展开：停靠在右侧 */
+    if (btnTop) btnTop.onclick = toggle;
   }
 
-  /* ---- 收起后的两个快捷键：逐个切换指数 / 行业 ---- */
-  function curIdxPos() {
-    if (!S.pick) return -1;
-    for (var i = 0; i < INDEXES.length; i++) if (INDEXES[i].sym === S.pick.sym) return i;
-    return -1;
-  }
-  function syncQuick() {
-    var a = $('fpIdxName'), b = $('fpSecName');
-    if (a) { var p = curIdxPos(); a.textContent = (p >= 0 ? INDEXES[p].name : "—"); }
-    if (b) { var t = curSect(); b.textContent = t ? t.name : "—"; }
-  }
-  function fpIdxStep(d) {
-    if (!INDEXES.length) return;
-    var p = curIdxPos();
-    var i = (p < 0) ? (d > 0 ? 0 : INDEXES.length - 1)
-                    : (p + d + INDEXES.length) % INDEXES.length;
-    var it = INDEXES[i];
-    pickSymbol(it.sym, it.name, it.sym.slice(2));
-    syncQuick();
-  }
-  function fpSecStep(d) { secMove(d); syncQuick(); }
-
-  function run() {
+  /* silent = 每 5 分钟的后台自动刷新：不读输入框、不闪「正在拉取」、保留当前缩放视窗 */
+  function run(silent) {
     /* 指数条 / 板块成分股 / 搜索下拉选中的标的带显式市场前缀，优先于输入框裸码 */
     var raw = $('code').value.trim();
-    var parsed = (S.pick && raw === S.pick.code)
+    var parsed = (silent && S.pick)
       ? mkParsed(S.pick.code, S.pick.sym.slice(0, 2))
-      : parseCode(raw);
+      : ((S.pick && raw === S.pick.code)
+        ? mkParsed(S.pick.code, S.pick.sym.slice(0, 2))
+        : parseCode(raw));
     if (!parsed) {
       $('verdict').className = 'card';
       $('verdict').innerHTML = '<div class="reason">请输入 6 位代码，或股票名称 / 拼音，例如 <b>600036</b>、<b>招商银行</b>、<b>sh000001</b>（上证指数）</div>';
@@ -2164,9 +2162,15 @@ if (typeof module !== 'undefined' && module.exports) {
     var asofDate = null;                         /* 日期选择已取消：固定取最新 */
     $('headSub').textContent = p.label + '笔 · 分型 → 笔 → 中枢 → 走势段 → 一买/二买/三买 + 背驰量化 · 口径对齐 12/14/15 号脚本';
 
+    var keep = (silent && S.bars.length) ? viewAnchor() : null;   /* 刷新前后停在同一个视窗 */
     var seq = ++RUNSEQ;
-    $('verdict').className = 'card';
-    $('verdict').innerHTML = '<div class="loading"><span class="spin"></span>正在拉取 ' + parsed.code + ' 的 ' + barLabel() + '并计算结构…</div>';
+    if (!silent) {
+      $('verdict').className = 'card';
+      $('verdict').innerHTML = '<div class="loading"><span class="spin"></span>正在拉取 ' + parsed.code + ' 的 ' + barLabel() + '并计算结构…</div>';
+      setVhead('');
+      /* 换了标的但名字还没拉回来时先挂个「…」，别把上一只的名字留在那儿误导 */
+      setPickName((S.pick && S.pick.name) ? S.pick.name : '…');
+    }
 
     fetchAny(parsed, p, asofDate).then(function (res) {
       if (seq !== RUNSEQ) return;
@@ -2174,6 +2178,7 @@ if (typeof module !== 'undefined' && module.exports) {
       if (bars.length < 60) throw new Error('可用' + barLabel() + '不足 60 根（当前 ' + bars.length + '），无法构建结构');
       S.bars = bars;
       S.meta = { code: parsed.code, name: res.name, source: res.source };
+      setPickName(res.name);
       S.macd = macdSeries(bars.map(function (b) { return b.close; }));
 
       var out = evaluate(bars, { code: parsed.code, name: res.name });
@@ -2201,13 +2206,20 @@ if (typeof module !== 'undefined' && module.exports) {
         S.pts = resolveBuyPoints(_rawPts, S.ext);
       } else { S.pts = []; S.l1Blocked = null; }
 
+      S.refreshAt = new Date(); S.refreshErr = false;   /* 供工具条显示「NN:NN 更新」 */
       renderVerdict();
       renderSide();
-      fitCurrent();
+      if (keep) restoreView(keep); else fitCurrent();
       resize();
     }).catch(function (err) {
       if (seq !== RUNSEQ) return;
+      if (silent) {                              /* 后台刷新失败：保留现有图表，只在摘要里挂一个提示 */
+        S.refreshErr = true;
+        renderVerdict();
+        return;
+      }
       S.bars = []; S.st = null; S.hit = null; S.pts = []; S.macd = null; S.ext = null; S.al1 = null; S.l1Blocked = null;
+      setVhead('');
       $('verdict').className = 'card';
       $('verdict').innerHTML = '<div class="reason">取数失败：<b>' + err.message + '</b><br>'
         + '<span style="font-size:12.5px;color:#7a6a6a">已按周期依次尝试可用数据源（分时→新浪；日/周/月→腾讯、东财）。常见原因：代码不存在或已退市 / 本机网络限制 / 接口对高频请求临时限流（稍等 1–2 分钟再试）。<br>'
@@ -2301,11 +2313,11 @@ if (typeof module !== 'undefined' && module.exports) {
     $('idxbar').querySelectorAll('.ixchip').forEach(function (c) {
       c.classList.toggle('on', !!S.pick && c.dataset.sym === S.pick.sym);
     });
-    syncQuick();
   }
 
   /* ---------------- 行业浏览 ---------------- */
   var SECT = { list: [], pos: 0, sort: 'changepercent', stocks: [], wheelAt: 0, req: 0 };
+  var SORT_LABEL = { changepercent: '按涨幅', amount: '按成交额', symbol: '按代码' };
 
   function loadSectors() {
     return scriptGlobal(bust('https://vip.stock.finance.sina.com.cn/q/view/newSinaHy.php'),
@@ -2329,12 +2341,15 @@ if (typeof module !== 'undefined' && module.exports) {
     var t = curSect();
     if (!t) return;
     $('secNameTx').textContent = t.name;
-    $('secMeta').innerHTML = '<b class="' + pctCls(t.pct) + '">' + pctTx(t.pct) + '</b>'
-      + ' · ' + t.count + ' 只'
-      + (t.amt ? ' · 额 ' + (t.amt / 1e8).toFixed(0) + ' 亿' : '')
-      + (t.lead ? ' · 领涨 ' + t.lead : '')
-      + ' <span style="color:var(--tx3)">' + (SECT.pos + 1) + '/' + SECT.list.length + '</span>';
-    syncQuick();
+    $('secPos').textContent = (SECT.pos + 1) + '/' + SECT.list.length;
+    /* 每段包一个 nowrap 的 .seg，分隔符单独成 .sep —— 窄面板折行时只会断在「·」处，
+       不会把「康强电子」这类词从中间劈开（中文默认任意处可断，靠 nowrap 兜） */
+    var segs = ['<b class="' + pctCls(t.pct) + '">' + pctTx(t.pct) + '</b>',
+      t.count + ' 只'];
+    if (t.amt) segs.push('额 ' + (t.amt / 1e8).toFixed(0) + ' 亿');
+    if (t.lead) segs.push('领涨 ' + t.lead);
+    $('secMeta').innerHTML = segs.map(function (x) { return '<span class="seg">' + x + '</span>'; })
+      .join('<span class="sep">·</span>');
   }
   /* 每个行业成分股按 100 条/页翻页取全（新浪单页上限 100） */
   function fetchNodePage(t, page) {
@@ -2343,32 +2358,40 @@ if (typeof module !== 'undefined' && module.exports) {
     return scriptGlobal(bust(url), '_cb', 14000).then(function (a) { return a || []; })
       .catch(function () { return null; });
   }
-  function loadSecStocks(t) {
+  /* silent = 自动刷新：保留现有列表内容与滚动位置，失败也不覆盖（避免每 5 分钟闪一下） */
+  function loadSecStocks(t, silent) {
     if (!t) return Promise.resolve();
     var seq = ++SECT.req;                       /* 快速切换时作废旧回填 */
     SECT.stocks = [];
-    $('stkstrip').innerHTML = '<span class="empty">加载 ' + t.name + ' 成分股…</span>';
+    if (!silent) $('stkstrip').innerHTML = '<span class="empty">加载 ' + t.name + ' 成分股…</span>';
     var acc = [];
     function step(page) {
       if (seq !== SECT.req) return Promise.resolve();
       return fetchNodePage(t, page).then(function (a) {
         if (seq !== SECT.req) return;
         if (a === null) {                       /* 单页失败 */
-          if (!acc.length) $('stkstrip').innerHTML = '<span class="empty">成分股加载失败，请稍后重试</span>';
-          else { SECT.stocks = acc; renderStrip(); }
+          if (!acc.length) {
+            if (!silent) $('stkstrip').innerHTML = '<span class="empty">成分股加载失败，请稍后重试</span>';
+          } else { SECT.stocks = acc; renderStrip(silent); }
           return;
         }
         acc = acc.concat(a);
         if (a.length >= 100 && page < 8) return step(page + 1);
         SECT.stocks = acc;
-        renderStrip();
+        renderStrip(silent);
       });
     }
     return step(1);
   }
-  function renderStrip() {
-    var box = $('stkstrip');
-    if (!SECT.stocks.length) { box.innerHTML = '<span class="empty">该行业暂无成分股数据</span>'; return; }
+  function renderStrip(silent) {
+    var box = $('stkstrip'), lab = $('stkLab');
+    if (!SECT.stocks.length) {
+      box.innerHTML = '<span class="empty">该行业暂无成分股数据</span>';
+      if (lab) lab.textContent = '';
+      return;
+    }
+    if (lab) lab.textContent = '共 ' + SECT.stocks.length + ' 只 · ' + SORT_LABEL[SECT.sort];
+    if (!silent) box.scrollTop = 0;
     box.innerHTML = SECT.stocks.map(function (x) {
       var sym = String(x.symbol || ''), code = x.code || sym.slice(2), p = +x.changepercent;
       return '<div class="skchip" data-sym="' + sym + '" data-code="' + code + '" data-name="' + x.name + '">'
@@ -2390,19 +2413,14 @@ if (typeof module !== 'undefined' && module.exports) {
     SECT.pos = (SECT.pos + d + SECT.list.length) % SECT.list.length;
     renderSecName(); renderSecPop(); loadSecStocks(curSect());
   }
-  function openSecPop() { $('secpop').classList.add('on'); renderSecPop(); positionSecPop(); }
+  /* 行业全集：在控制台内部整块展开（原悬浮弹层已在停靠布局里取消） */
+  function openSecPop() { $('secpop').classList.add('on'); renderSecPop(); }
   function closeSecPop() { $('secpop').classList.remove('on'); }
-  function positionSecPop() {
-    var b = document.querySelector('.browse').getBoundingClientRect();
-    var t = $('secName').getBoundingClientRect();
-    $('secpop').style.left = Math.max(6, Math.round(t.left - b.left)) + 'px';
-    $('secpop').style.top = Math.round(t.bottom - b.top + 4) + 'px';
-  }
   function renderSecPop() {
     var pop = $('secpop');
     if (!pop.classList.contains('on')) return;
     pop.innerHTML = SECT.list.map(function (t, i) {
-      return '<div class="spitem' + (i === SECT.pos ? ' on' : '') + '" data-i="' + i + '">'
+      return '<div class="spitem' + (i === SECT.pos ? ' on' : '') + '" data-i="' + i + '" title="' + t.name + '">'
         + '<span class="nm2">' + t.name + '</span>'
         + '<span class="ct">' + t.count + '只</span>'
         + '<span class="pct2 ' + pctCls(t.pct) + '">' + pctTx(t.pct) + '</span></div>';
@@ -2414,14 +2432,16 @@ if (typeof module !== 'undefined' && module.exports) {
         closeSecPop();
       };
     });
+    /* 当前行业居中（只滚这层覆盖面板，不动页面） */
     var cur = pop.querySelector('.spitem.on');
-    if (cur && cur.scrollIntoView) cur.scrollIntoView({ block: 'nearest' });
+    if (cur) pop.scrollTop = Math.max(0, cur.offsetTop - pop.clientHeight / 2 + cur.offsetHeight / 2);
   }
 
   /* ---------------- 选中载入 ---------------- */
   function pickSymbol(sym, name, code) {
     S.pick = { code: code || sym.slice(2), sym: sym, name: name || '' };
     $('code').value = S.pick.code;
+    setPickName(S.pick.name);                   /* 指数条 / 行业成分 / 搜索下拉都带中文名，先亮出来 */
     closeSrc(); closeSecPop();
     markIdxOn(); markStripOn();
     run();
@@ -2499,18 +2519,6 @@ if (typeof module !== 'undefined' && module.exports) {
   }
 
   /* ---------------- 事件绑定 ---------------- */
-  /* 收起细条上的两个快捷键：左键下一个 · Shift / 右键上一个 */
-  (function () {
-    var qi = $('fpIdxNext'), qs = $('fpSecNext');
-    if (qi) {
-      qi.onclick = function (e) { fpIdxStep(e.shiftKey ? -1 : 1); };
-      qi.oncontextmenu = function (e) { e.preventDefault(); fpIdxStep(-1); };
-    }
-    if (qs) {
-      qs.onclick = function (e) { fpSecStep(e.shiftKey ? -1 : 1); };
-      qs.oncontextmenu = function (e) { e.preventDefault(); fpSecStep(-1); };
-    }
-  })();
   $('secPrev').onclick = function () { secMove(-1); };
   $('secNext').onclick = function () { secMove(1); };
   $('secName').onclick = function (e) {
@@ -2519,19 +2527,12 @@ if (typeof module !== 'undefined' && module.exports) {
   };
   /* 行业行：滚轮切换行业 */
   $('secnav').addEventListener('wheel', function (e) {
-    if (e.target.closest && e.target.closest('.stkstrip')) return;
     if (Math.abs(e.deltaY) < 4) return;
     e.preventDefault();
     var now = Date.now();
     if (now - SECT.wheelAt < 220) return;
     SECT.wheelAt = now;
     secMove(e.deltaY > 0 ? 1 : -1);
-  }, { passive: false });
-  /* 成分股条：竖向滚轮转横向滚动 */
-  $('stkstrip').addEventListener('wheel', function (e) {
-    if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
-    e.preventDefault();
-    this.scrollLeft += e.deltaY;
   }, { passive: false });
   document.querySelectorAll('[data-sort]').forEach(function (b) {
     b.onclick = function () {
@@ -2590,10 +2591,30 @@ if (typeof module !== 'undefined' && module.exports) {
   loadIndexQuotes();
   setInterval(function () { if (!document.hidden) loadIndexQuotes(); }, 120000);
   loadSectors().catch(function (e) {
+    $('secPos').textContent = '';
     $('secMeta').innerHTML = '行业数据加载失败：' + e.message;
   });
 
-  initFloatPanel();
+  initConsole();
+  setPickName(S.pick && S.pick.name);          /* 深链 ?code= 时先留空，拉完再补真实名称 */
+
+  /* ---------------- 自动刷新：每 5 分钟一次 ----------------
+     重拉当前标的的行情 → 重算结构/买卖点 → 重绘；顺带刷新指数条与当前行业成分股。
+     三处都走「silent」通道：不读输入框（避免把用户没提交的输入当成指令）、
+     不闪加载态、不动缩放视窗、不重置成分股滚动位置。 */
+  var REFRESH_MS = 300000, lastRefreshAt = Date.now();
+  function autoRefresh() {
+    if (document.hidden) return;
+    lastRefreshAt = Date.now();
+    if (S.pick && S.pick.code) run(true);
+    loadIndexQuotes();
+    if (SECT.list.length) loadSecStocks(curSect(), true);
+  }
+  setInterval(autoRefresh, REFRESH_MS);
+  /* 后台标签页的定时器会被浏览器节流，切回前台时若已超时，立刻补一次 */
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden && Date.now() - lastRefreshAt >= REFRESH_MS) autoRefresh();
+  });
 
   resize();
   draw();

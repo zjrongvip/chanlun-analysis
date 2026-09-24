@@ -58,12 +58,17 @@
   .sclose{font-size:15px;font-weight:650;font-variant-numeric:tabular-nums}
   .tag{font-size:11.5px;padding:2px 8px;border-radius:20px;border:1px solid var(--line);color:var(--tx2);background:#fafbfc}
   .tag.warn{color:#a2621a;border-color:#f0dcbc;background:#fffaf0}
-  .tag.ok{color:#1f7a35;border-color:#c7e6ce;background:#f4fbf5}
-  .tag.bad{color:#a32b2b;border-color:#f0c4c4;background:#fff5f5}
+  .tag.ok{color:#a32b2b;border-color:#eab8b4;background:#fdf0ef;font-weight:700;box-shadow:0 1px 4px rgba(214,69,69,.14)}
+  .tag.act{color:#1c5fa8;border-color:#c7d9f0;background:#f5f9fe;font-weight:600}
+  .tag.off{color:var(--tx3);border-color:var(--line2);background:#fafbfc;opacity:.78}
   .reson{margin-top:8px;font-size:12.5px;color:var(--tx2);line-height:1.6;border-top:1px dashed var(--line2);padding-top:8px}
+  .reson.hot{border:1px solid #eab8b4;border-left:4px solid #d98a84;background:#fdf3f2;border-radius:8px;padding:9px 13px;font-size:13px;color:#7a2e2a}
 
   /* ---- 级别面板 ---- */
   .lvl{margin-bottom:12px;padding:12px 14px}
+  .lvl.hit{border-color:#eec7c3;border-top:3px solid #d98a84;box-shadow:0 2px 10px rgba(214,69,69,.08)}
+  .hitbadge{font-size:11px;font-weight:700;color:#a32b2b;background:#fdf0ef;border:1px solid #eab8b4;border-radius:10px;padding:1px 8px}
+  .actbadge{font-size:11px;font-weight:600;color:#1c5fa8;background:#f5f9fe;border:1px solid #c7d9f0;border-radius:10px;padding:1px 8px}
   .lhead{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:8px}
   .ltitle{font-size:14.5px;font-weight:650}
   .lmeta{font-size:12px;color:var(--tx3);font-variant-numeric:tabular-nums}
@@ -75,10 +80,14 @@
   .ibox .bt{font-size:11.5px;color:var(--tx3);margin-bottom:3px}
   .ibox .bv{font-size:13px;font-weight:600;font-variant-numeric:tabular-nums}
   .ibox .bm{font-size:11.5px;color:var(--tx2);margin-top:2px;line-height:1.5}
-  .ibox.on1{border-color:#c7d9f0;background:#f5f9fe}
-  .ibox.on2{border-color:#c7e6ce;background:#f6fcf7}
-  .ibox.on3{border-color:#bfe3e8;background:#f5fbfc}
+  .ibox.on1{border-color:#eab8b4;background:#fdf0ef;border-left:3px solid #d98a84}
+  .ibox.on1 .bv{color:#a32b2b}
+  .ibox.on1a{border-color:#c7d9f0;background:#f5f9fe;border-left:3px solid #6d9fd4}
+  .ibox.on1a .bv{color:#1c5fa8}
+  .ibox.on2{border-color:#c7e6ce;background:#f6fcf7;border-left:3px solid #57a86b}
+  .ibox.on3{border-color:#bfe3e8;background:#f5fbfc;border-left:3px solid #3f96a3}
   .ibox.div{border-color:#f0dcbc;background:#fffaf0}
+  .ibox.off{opacity:.8}
   .zslist{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:0 22px;max-width:580px}
   .zsrow{display:flex;justify-content:space-between;font-size:12px;padding:2px 0;border-bottom:1px dashed var(--line2);font-variant-numeric:tabular-nums}
   .zsrow:last-child{border-bottom:none}
@@ -121,11 +130,10 @@
 <nav class="nav">
   <a href="../">走势分析台</a>
   <a href="../yimai/">一买选股</a>
-  <a class="on" href="../multi/">多级别中枢</a>
+  <a class="on" href="./">多级别中枢</a>
   <a href="../scan/">批量扫一买</a>
   <a href="../sector/">板块轮动</a>
   <a href="../legacy/">旧版对照</a>
-  <a href="../prd/">PRD</a>
   <span class="sp">分型 → 笔 → 中枢 → 买卖点 · 口径对齐 12/14/15 号脚本</span>
 </nav>
 
@@ -658,7 +666,7 @@ function resolveBuyPoints(pts, ext) {
 function analyzeExtended(bars, st, macd, opt) {
   opt = opt || {};
   var res = { pos: 'none', posCn: '—', lastZ: null, zsList: [], activeL1: null, buy2: null, buy2First: null,
-              l1Cand: [], buy3: null, div: null, marks: [], hint: '' };
+              l1Cand: [], buy3: null, buy3Fail: null, div: null, marks: [], hint: '' };
   if (!st || !bars || !bars.length) return res;
 
   var bis = st.bis, zs = st.zs, times = st.times, close = st.close;
@@ -718,24 +726,46 @@ function analyzeExtended(bars, st, macd, opt) {
   }
   if (res.buy2) res.marks.push({ kind: '二买', x: res.buy2.x, y: res.buy2.y });
 
-  /* --- 三买：离开中枢后向上突破 ZG，回抽不入中枢 --- */
+  /* --- 三买：离开中枢后向上突破 ZG，回抽不入中枢（v4.9.7 重写为状态机）---
+     ⚠️ 旧实现两个缺口（2026-09-25 审查发现）：
+       ① 找到首个有效回抽即 break，三买之后跌回中枢也不撤——▲常亮、结论卡仍显示成立，
+         把已失败的三买当有效买点（会教错；二买有作废纪律，三买没有，不对称）；
+       ② 一次回抽跌回中枢即永久失效，其后再次突破 ZG 也不再判——漏掉「突破→失败→再突破」。
+     状态机：WAIT_BREAK（等突破）→ WAIT_PULL（等回抽确认）→ ACTIVE3（三买成立，
+             跌破 ZG 即作废、回到 WAIT_BREAK 等下一次突破，可多轮）。
+     规则：① 成立后任何笔 low < ZG → 作废，buy3Fail 记最近失败点供展示层提示，图上▲同撤；
+           ② 作废/回抽失败后重新等突破（与二买「取最近一次有效回抽」口径对齐）；
+           ③ 未确认的回抽笔只能是最后一根，遇之停住等确认（不影响已有结论）。 */
   if (lz) {
-    var broke = null;
-    for (var a = Math.max(0, lz.s1); a < bis.length; a++) {
-      if (bis[a].dir === 1 && bis[a].high > lz.zg) { broke = bis[a]; break; }
-    }
-    if (broke) {
-      res.hint = '已向上突破中枢 ZG ' + lz.zg.toFixed(2) + '，等待回抽确认三买';
-      for (var b2 = 0; b2 < bis.length; b2++) {
-        if (bis[b2].raw0 < broke.raw1) continue;
-        if (bis[b2].dir !== -1) continue;
-        if (bis[b2].low < lz.zg) { res.hint = '回抽已跌回中枢内，三买失效（回到震荡）'; break; }
-        if (bis[b2].confirm_raw == null) { res.hint = '回抽中，尚未确认（等确认K）'; break; }
-        res.buy3 = { x: bis[b2].raw1, y: bis[b2].low, date: times[bis[b2].raw1], zg: lz.zg, ago: n - 1 - bis[b2].raw1 };
-        break;
+    var ST_BREAK = 0, ST_PULL = 1, ST_ACTIVE = 2, s3 = ST_BREAK;
+    for (var a3 = Math.max(0, lz.s1); a3 < bis.length; a3++) {
+      var bi = bis[a3];
+      if (s3 === ST_BREAK) {
+        if (bi.dir === 1 && bi.high > lz.zg) {
+          s3 = ST_PULL;
+          res.hint = '已向上突破中枢 ZG ' + lz.zg.toFixed(2) + '，等待回抽确认三买';
+        }
+      } else if (s3 === ST_PULL) {
+        if (bi.dir !== -1) continue;                       // 只看回抽的下跌笔
+        if (bi.low < lz.zg) {                             // 回抽跌回中枢 → 本次突破不成三买，重新等突破
+          s3 = ST_BREAK;
+          res.hint = '回抽已跌回中枢内，本次突破未成三买（回到震荡，等再次突破）';
+          continue;
+        }
+        if (bi.confirm_raw == null) { res.hint = '回抽中，尚未确认（等确认K）'; break; }
+        res.buy3 = { x: bi.raw1, y: bi.low, date: times[bi.raw1], zg: lz.zg, ago: n - 1 - bi.raw1 };
+        s3 = ST_ACTIVE;                                   // 三买成立，继续盯防作废
+      } else {                                            // ST_ACTIVE：三买成立后的盯防期
+        if (bi.low < lz.zg) {                             // 三买后跌回中枢 → 作废，回到等突破
+          res.buy3Fail = { x: res.buy3.x, y: res.buy3.y, date: res.buy3.date, zg: lz.zg,
+                           failAt: times[bi.raw1], ago: n - 1 - res.buy3.x };
+          res.buy3 = null; s3 = ST_BREAK;
+          res.hint = '三买后已跌回中枢内，前次三买失败（走势退回震荡，等再次突破）';
+          continue;
+        }
       }
-      if (res.buy3) res.marks.push({ kind: '三买', x: res.buy3.x, y: res.buy3.y });
     }
+    if (res.buy3) { res.marks.push({ kind: '三买', x: res.buy3.x, y: res.buy3.y }); res.hint = ''; }
   }
 
   /* --- 背驰量化：与本段前一个同向笔比 MACD 力度 --- */
@@ -1073,13 +1103,15 @@ if (typeof module !== 'undefined' && module.exports) {
     var st = r.st, ext = r.ext;
     var last = r.st.close[r.st.close.length - 1];
     var wrap = document.createElement('div');
-    wrap.className = 'card lvl';
+    wrap.className = 'card lvl' + (r.hit ? ' hit' : '');
 
     var posCn = ext.posCn || '—';
     var posColor = ext.pos === 'above' ? 'var(--up)' : (ext.pos === 'below' ? 'var(--down)' : 'var(--tx2)');
 
     var h = '<div class="lhead">'
       + '<span class="ltitle">' + lv.label + '</span>'
+      + (r.hit ? '<span class="hitbadge">✓ 一买命中</span>'
+               : (ext.activeL1 ? '<span class="actbadge">◎ 一买有效</span>' : ''))
       + '<span class="lmeta">窗口 ' + r.st.times.length + ' 根 · 笔 ' + st.bis.length
       + ' · 中枢 ' + st.zs.length + ' · 分型 ' + st.fx.length + '</span>'
       + '<span class="lpos" style="color:' + posColor + '">' + posCn + '</span>'
@@ -1089,27 +1121,27 @@ if (typeof module !== 'undefined' && module.exports) {
 
     h += '<div class="lconcl">';
     if (r.hit) {
-      h += box('on1', '一买 · 已确认', n2(r.hit.l1) + ' @ ' + r.hit.l1_day,
+      h += box('on1', '✓ 一买 · 已确认', n2(r.hit.l1) + ' @ ' + r.hit.l1_day,
         '中枢 ' + n2(r.hit.zd) + '~' + n2(r.hit.zg) + '<br>最新 ' + n2(r.hit.close)
         + ' · 距一买 ' + (r.hit.close >= r.hit.l1 ? '+' : '') + ((r.hit.close - r.hit.l1) / r.hit.l1 * 100).toFixed(1) + '%');
     } else if (r.ext && r.ext.activeL1) {
       var AL = r.ext.activeL1, LC = r.st.close[r.st.close.length - 1];
-      h += box('on1', '一买 · 有效（未跌破）', n2(AL.low) + ' @ ' + AL.day,
+      h += box('on1a', '◎ 一买 · 有效（未跌破）', n2(AL.low) + ' @ ' + AL.day,
         '确认 ' + AL.confirmDay + ' · 距今 ' + AL.ago + ' 根<br>最新 ' + n2(LC)
         + ' · 距一买 ' + (LC >= AL.low ? '+' : '') + ((LC - AL.low) / AL.low * 100).toFixed(1) + '%');
     } else {
-      h += box('', '一买', '<span style="color:#8b949e">未命中</span>', (r.reason || '').slice(0, 40));
+      h += box('off', '一买', '<span style="color:#8b949e">✗ 未命中</span>', (r.reason || '').slice(0, 80));
     }
     h += ext.buy2
-      ? box('on2', '二买 · 回抽不破一买低点', n2(ext.buy2.y) + ' @ ' + ext.buy2.date, '一买低点 ' + n2(ext.buy2.ref) + ' · 距今 ' + ext.buy2.ago + ' 根')
-      : box('', '二买', '<span style="color:#8b949e">未成立</span>', '需先有活动一买（过九道闸门且至今未跌破），再回抽不破一买低点且已确认');
+      ? box('on2', '✓ 二买 · 回抽不破一买低点', n2(ext.buy2.y) + ' @ ' + ext.buy2.date, '一买低点 ' + n2(ext.buy2.ref) + ' · 距今 ' + ext.buy2.ago + ' 根')
+      : box('off', '二买', '<span style="color:#8b949e">✗ 未成立</span>', '需先有活动一买（过九道闸门且至今未跌破），再回抽不破一买低点且已确认');
     h += ext.buy3
-      ? box('on3', '三买 · 回抽不入中枢', n2(ext.buy3.y) + ' @ ' + ext.buy3.date, 'ZG ' + n2(ext.buy3.zg) + ' · 距今 ' + ext.buy3.ago + ' 根')
-      : box('', '三买', '<span style="color:#8b949e">未成立</span>', ext.hint || '需先向上突破中枢 ZG');
+      ? box('on3', '✓ 三买 · 回抽不入中枢', n2(ext.buy3.y) + ' @ ' + ext.buy3.date, 'ZG ' + n2(ext.buy3.zg) + ' · 距今 ' + ext.buy3.ago + ' 根')
+      : box('off', '三买', '<span style="color:#8b949e">✗ 未成立</span>', ext.hint || '需先向上突破中枢 ZG');
     h += ext.div
-      ? box('div', ext.div.type + ' · 力度衰减', (ext.div.ratio * 100).toFixed(0) + '%',
+      ? box('div', '✓ ' + ext.div.type + ' · 力度衰减', (ext.div.ratio * 100).toFixed(0) + '%',
         '本段 ' + ext.div.now.toFixed(2) + ' vs 前段 ' + ext.div.prev.toFixed(2) + '<br>确认于 ' + ext.div.day)
-      : box('', '背驰量化', '<span style="color:#8b949e">' + (ext.power ? '无背驰' : '—') + '</span>',
+      : box('off', '背驰量化', '<span style="color:#8b949e">' + (ext.power ? '无背驰' : '—') + '</span>',
         ext.power ? ('力度 ' + ext.power.now.toFixed(2) + ' vs ' + ext.power.prev.toFixed(2)) : '可用笔数不足');
     h += '</div>';
 
@@ -1174,10 +1206,12 @@ if (typeof module !== 'undefined' && module.exports) {
         + '</div><div style="display:flex;gap:6px;flex-wrap:wrap">';
       for (var t = 0; t < analyses.length; t++) {
         var aa = analyses[t];
-        var cls = aa.hit ? 'ok' : '';
         var lvLive = !asof && aa.bars && aa.bars.length && lastBarLive(aa.bars, aa.lv);
-        s += '<span class="tag ' + cls + '">' + aa.lv.label + '：'
-          + (aa.hit ? '一买 ' + n2(aa.hit.l1) : '无一买')
+        var cls, txt;
+        if (aa.hit) { cls = 'ok'; txt = '✓ 一买 ' + n2(aa.hit.l1); }
+        else if (aa.ext && aa.ext.activeL1) { cls = 'act'; txt = '◎ 一买有效 ' + n2(aa.ext.activeL1.low); }
+        else { cls = 'off'; txt = '✗ 无一买'; }
+        s += '<span class="tag ' + cls + '">' + aa.lv.label + '：' + txt
           + (lvLive ? ' · ' + liveName(aa.lv) + '进行中' : '') + '</span>';
       }
       s += '</div>';
@@ -1188,7 +1222,7 @@ if (typeof module !== 'undefined' && module.exports) {
       var posBelow = analyses.filter(function (a) { return a.ext && a.ext.pos === 'below'; }).length;
       var note = '';
       if (hits.length >= 2) {
-        note = '<b style="color:#1c7ed6">多级别共振</b>：' + hits.map(function (a) { return a.lv.label; }).join('、')
+        note = '🔔 <b style="color:#a32b2b">多级别共振</b>：' + hits.map(function (a) { return a.lv.label; }).join('、')
           + ' 同时出现一买，信号强度更高（但仍需结合当下实时价与止损）。';
       } else if (hits.length === 1) {
         note = '仅 <b>' + hits[0].lv.label + '</b> 出现一买。'
@@ -1199,7 +1233,7 @@ if (typeof module !== 'undefined' && module.exports) {
       }
       if (posAbove >= 2) note += ' 位置：多数级别处于<b style="color:#d64545">中枢上方</b>（上涨趋势区）。';
       else if (posBelow >= 2) note += ' 位置：多数级别处于<b style="color:#2f9e44">中枢下方</b>（下跌趋势区）。';
-      s += '<div class="reson">' + note + '</div>';
+      s += '<div class="reson' + (hits.length >= 2 ? ' hot' : '') + '">' + note + '</div>';
 
       var sm = $('summary');
       sm.innerHTML = s;
